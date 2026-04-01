@@ -45,47 +45,23 @@ def emit_dict(name, data, out_lines):
 
 
 def main():
-    word_bitmaps = {
-        "VANCOUVER_EN": render_bitmap("Vancouver", ARIAL_BOLD, size=60, stroke=1, pad=2),
-        "TOKYO_EN": render_bitmap("Tokyo", ARIAL_BOLD, size=60, stroke=1, pad=2),
-    }
+    ui_big_chars = "".join(sorted(set("VancouverTokyo")))
+    # Keep hierarchy: headers medium, time very large, date compact.
+    font_ui_big = build_font(ui_big_chars, ARIAL_BOLD, size=32, stroke=1)
 
-    jp_bitmaps = {
-        "VANCOUVER_KATAKANA": render_bitmap("\u30d0\u30f3\u30af\u30fc\u30d0\u30fc", ARIAL_UNICODE, size=48, stroke=1, pad=2),
-        "TOKYO_KANJI": render_bitmap("\u6771\u4eac", ARIAL_UNICODE, size=53, stroke=1, pad=2),
-    }
+    # Shared JP glyph map is much lighter than storing full phrase bitmaps.
+    jp_chars = "".join(sorted(set("バンクーバー東京月火水木金土日曜日")))
+    font_jp = build_font(jp_chars, ARIAL_UNICODE, size=30, stroke=0)
 
-    weekday_en = {
-        "MONDAY": render_bitmap("Monday", ARIAL_BOLD, size=36, stroke=1, pad=2),
-        "TUESDAY": render_bitmap("Tuesday", ARIAL_BOLD, size=36, stroke=1, pad=2),
-        "WEDNESDAY": render_bitmap("Wednesday", ARIAL_BOLD, size=36, stroke=1, pad=2),
-        "THURSDAY": render_bitmap("Thursday", ARIAL_BOLD, size=36, stroke=1, pad=2),
-        "FRIDAY": render_bitmap("Friday", ARIAL_BOLD, size=36, stroke=1, pad=2),
-        "SATURDAY": render_bitmap("Saturday", ARIAL_BOLD, size=36, stroke=1, pad=2),
-        "SUNDAY": render_bitmap("Sunday", ARIAL_BOLD, size=36, stroke=1, pad=2),
-    }
-
-    weekday_jp = {
-        "MONDAY": render_bitmap("\u6708\u66dc\u65e5", ARIAL_UNICODE, size=38, stroke=1, pad=2),
-        "TUESDAY": render_bitmap("\u706b\u66dc\u65e5", ARIAL_UNICODE, size=38, stroke=1, pad=2),
-        "WEDNESDAY": render_bitmap("\u6c34\u66dc\u65e5", ARIAL_UNICODE, size=38, stroke=1, pad=2),
-        "THURSDAY": render_bitmap("\u6728\u66dc\u65e5", ARIAL_UNICODE, size=38, stroke=1, pad=2),
-        "FRIDAY": render_bitmap("\u91d1\u66dc\u65e5", ARIAL_UNICODE, size=38, stroke=1, pad=2),
-        "SATURDAY": render_bitmap("\u571f\u66dc\u65e5", ARIAL_UNICODE, size=38, stroke=1, pad=2),
-        "SUNDAY": render_bitmap("\u65e5\u66dc\u65e5", ARIAL_UNICODE, size=38, stroke=1, pad=2),
-    }
-
-    font_time = build_font("0123456789:", ARIAL_BOLD, size=110, stroke=2)
-    font_date = build_font("0123456789-", ARIAL_BOLD, size=42, stroke=1)
+    font_time = build_font("0123456789:", ARIAL_BOLD, size=90, stroke=1)
+    font_date = build_font("0123456789/-年月日", ARIAL_UNICODE, size=22, stroke=0)
 
     out = []
     out.append('"""Generated custom bitmap assets for InkyFrame text rendering."""')
     out.append("")
 
-    emit_dict("WORD_BITMAPS", word_bitmaps, out)
-    emit_dict("JP_BITMAPS", jp_bitmaps, out)
-    emit_dict("WEEKDAY_EN_BITMAPS", weekday_en, out)
-    emit_dict("WEEKDAY_JP_BITMAPS", weekday_jp, out)
+    emit_dict("FONT_UI_BIG", font_ui_big, out)
+    emit_dict("FONT_JP", font_jp, out)
     emit_dict("FONT_TIME", font_time, out)
     emit_dict("FONT_DATE", font_date, out)
 
