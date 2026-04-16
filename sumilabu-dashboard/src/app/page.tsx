@@ -1,5 +1,6 @@
 import Image from "next/image";
 
+import { AutoRefreshControl } from "@/components/auto-refresh-control";
 import { RecentEventsTable } from "@/components/recent-events-table";
 import { WidgetCanvas } from "@/components/widget-canvas";
 import { prisma } from "@/lib/prisma";
@@ -411,6 +412,7 @@ export default async function Home({ searchParams }: PageProps) {
                 <span className="text-stone-500">Latest ingest</span>
                 <span className="font-mono text-xs text-stone-700">{fmtTime(latestEvent?.receivedAt)}</span>
               </div>
+              <AutoRefreshControl defaultMs={60000} />
             </div>
           </div>
 
