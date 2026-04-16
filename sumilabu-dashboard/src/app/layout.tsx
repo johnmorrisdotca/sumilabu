@@ -15,6 +15,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "SumiLabu Fleet Dashboard",
   description: "Telemetry dashboard for SumiLabu device projects.",
+  icons: {
+    icon: "/sumilabu-foxmark.svg",
+  },
 };
 
 export default function RootLayout({

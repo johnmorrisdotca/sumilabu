@@ -1,8 +1,12 @@
+import Image from "next/image";
+
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
 const STALE_AFTER_SECONDS = Number(process.env.STALE_AFTER_SECONDS || "900");
+const EXPECTED_HEARTBEAT_SECONDS = Number(process.env.EXPECTED_HEARTBEAT_SECONDS || "300");
+const HEARTBEAT_TIMELINE_SLOTS = 12;
 const CHART_WIDTH = 720;
 const CHART_HEIGHT = 240;
 const CHART_PADDING_X = 28;
@@ -41,11 +45,61 @@ type ChartPoint = {
   event: string;
 };
 
+type HeartbeatSlot = {
+  count: number;
+  label: string;
+  hasPing: boolean;
+};
+
+type DeviceHealth = {
+  deviceId: string;
+  status: "healthy" | "warning" | "offline";
+  lastSeenAt: Date | null;
+  lastPingAgeSeconds: number | null;
+  maxGapSeconds: number | null;
+  latestGapSeconds: number | null;
+  missedHeartbeats: number;
+  timeline: HeartbeatSlot[];
+};
+
 function fmtTime(ts?: Date | null): string {
   if (!ts) {
     return "never";
   }
   return ts.toISOString().replace("T", " ").slice(0, 19);
+}
+
+function fmtDuration(totalSeconds?: number | null): string {
+  if (totalSeconds === null || totalSeconds === undefined) {
+    return "-";
+  }
+
+  if (totalSeconds < 60) {
+    return `${totalSeconds}s`;
+  }
+
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+
+  if (minutes > 0 && seconds > 0) {
+    return `${minutes}m ${seconds}s`;
+  }
+
+  return `${minutes}m`;
+}
+
+function fmtAge(ts?: Date | null): string {
+  if (!ts) {
+    return "never";
+  }
+
+  const ageSeconds = Math.max(0, Math.floor((Date.now() - ts.getTime()) / 1000));
+  return `${fmtDuration(ageSeconds)} ago`;
 }
 
 function isOnline(ts?: Date | null): boolean {
@@ -103,6 +157,111 @@ function eventBreakdown(events: RecentEvent[]): Array<{ label: string; value: nu
     .sort((left, right) => right.value - left.value);
 }
 
+function buildHeartbeatTimeline(events: RecentEvent[], nowMs: number): HeartbeatSlot[] {
+  const slotSizeMs = EXPECTED_HEARTBEAT_SECONDS * 1000;
+  const windowStartMs = nowMs - HEARTBEAT_TIMELINE_SLOTS * slotSizeMs;
+  const counts = Array.from({ length: HEARTBEAT_TIMELINE_SLOTS }, () => 0);
+
+  for (const event of events) {
+    const eventMs = event.receivedAt.getTime();
+    if (eventMs < windowStartMs || eventMs > nowMs) {
+      continue;
+    }
+
+    const slotIndex = Math.min(
+      HEARTBEAT_TIMELINE_SLOTS - 1,
+      Math.max(0, Math.floor((eventMs - windowStartMs) / slotSizeMs)),
+    );
+
+    counts[slotIndex] += 1;
+  }
+
+  return counts.map((count, index) => {
+    const secondsAgo = (HEARTBEAT_TIMELINE_SLOTS - 1 - index) * EXPECTED_HEARTBEAT_SECONDS;
+
+    return {
+      count,
+      hasPing: count > 0,
+      label: secondsAgo === 0 ? "now" : `-${fmtDuration(secondsAgo)}`,
+    };
+  });
+}
+
+function buildDeviceHealth(device: DeviceCard, events: RecentEvent[], nowMs: number): DeviceHealth {
+  let maxGapSeconds: number | null = null;
+  let latestGapSeconds: number | null = null;
+
+  for (let index = 0; index < events.length - 1; index += 1) {
+    const gapSeconds = Math.max(
+      0,
+      Math.floor((events[index].receivedAt.getTime() - events[index + 1].receivedAt.getTime()) / 1000),
+    );
+
+    if (maxGapSeconds === null || gapSeconds > maxGapSeconds) {
+      maxGapSeconds = gapSeconds;
+    }
+
+    if (index === 0) {
+      latestGapSeconds = gapSeconds;
+    }
+  }
+
+  const lastPingAgeSeconds = device.lastSeenAt
+    ? Math.max(0, Math.floor((nowMs - device.lastSeenAt.getTime()) / 1000))
+    : null;
+  const timeline = buildHeartbeatTimeline(events, nowMs);
+  const missedHeartbeats = lastPingAgeSeconds
+    ? Math.max(0, Math.floor(lastPingAgeSeconds / EXPECTED_HEARTBEAT_SECONDS) - 1)
+    : HEARTBEAT_TIMELINE_SLOTS;
+
+  let status: DeviceHealth["status"] = "healthy";
+
+  if (!device.lastSeenAt || !isOnline(device.lastSeenAt)) {
+    status = "offline";
+  } else if (
+    (lastPingAgeSeconds !== null && lastPingAgeSeconds > EXPECTED_HEARTBEAT_SECONDS * 1.5)
+    || (latestGapSeconds !== null && latestGapSeconds > EXPECTED_HEARTBEAT_SECONDS * 2)
+    || timeline.some((slot) => !slot.hasPing)
+  ) {
+    status = "warning";
+  }
+
+  return {
+    deviceId: device.deviceId,
+    status,
+    lastSeenAt: device.lastSeenAt,
+    lastPingAgeSeconds,
+    maxGapSeconds,
+    latestGapSeconds,
+    missedHeartbeats,
+    timeline,
+  };
+}
+
+function statusPillClasses(status: DeviceHealth["status"]): string {
+  if (status === "offline") {
+    return "bg-red-100 text-red-700";
+  }
+
+  if (status === "warning") {
+    return "bg-amber-100 text-amber-800";
+  }
+
+  return "bg-emerald-100 text-emerald-700";
+}
+
+function statusLabel(status: DeviceHealth["status"]): string {
+  if (status === "offline") {
+    return "offline";
+  }
+
+  if (status === "warning") {
+    return "gap risk";
+  }
+
+  return "healthy";
+}
+
 type PageProps = {
   searchParams?: Promise<{ project?: string }>;
 };
@@ -133,24 +292,58 @@ export default async function Home({ searchParams }: PageProps) {
     ? (params.project as string)
     : (process.env.DEFAULT_PROJECT_KEY || availableProjects[0] || "default");
 
-  const devices: DeviceCard[] = await prisma.device.findMany({
-    where: { projectKey: selectedProject },
-    orderBy: { lastSeenAt: "desc" },
-    include: {
-      events: {
-        orderBy: { receivedAt: "desc" },
-        take: 1,
+  const [devices, projectEvents] = await Promise.all([
+    prisma.device.findMany({
+      where: { projectKey: selectedProject },
+      orderBy: { lastSeenAt: "desc" },
+      include: {
+        events: {
+          orderBy: { receivedAt: "desc" },
+          take: 1,
+        },
       },
-    },
-  });
+    }),
+    prisma.deviceEvent.findMany({
+      where: { projectKey: selectedProject },
+      orderBy: { receivedAt: "desc" },
+      take: 240,
+    }),
+  ]);
 
-  const recentEvents: RecentEvent[] = await prisma.deviceEvent.findMany({
-    where: { projectKey: selectedProject },
-    orderBy: { receivedAt: "desc" },
-    take: 60,
-  });
+  const recentEvents: RecentEvent[] = projectEvents.slice(0, 60);
+  const nowMs = Date.now();
+  const eventsByDevice = new Map<string, RecentEvent[]>();
+
+  for (const event of projectEvents) {
+    const list = eventsByDevice.get(event.deviceId) || [];
+    list.push(event);
+    eventsByDevice.set(event.deviceId, list);
+  }
+
+  const eventGapSeconds = new Map<string, number | null>();
+
+  for (const events of eventsByDevice.values()) {
+    for (let index = 0; index < events.length; index += 1) {
+      const current = events[index];
+      const previous = events[index + 1];
+      const gapSeconds = previous
+        ? Math.max(0, Math.floor((current.receivedAt.getTime() - previous.receivedAt.getTime()) / 1000))
+        : null;
+
+      eventGapSeconds.set(current.id, gapSeconds);
+    }
+  }
 
   const onlineDevices = devices.filter((device) => isOnline(device.lastSeenAt)).length;
+  const deviceHealth = devices.map((device) => buildDeviceHealth(device, eventsByDevice.get(device.deviceId) || [], nowMs));
+  const offlineDevices = deviceHealth.filter((device) => device.status === "offline").length;
+  const warningDevices = deviceHealth.filter((device) => device.status === "warning").length;
+  const longestSilenceSeconds = deviceHealth.length > 0
+    ? Math.max(...deviceHealth.map((device) => device.lastPingAgeSeconds || 0))
+    : 0;
+  const longestObservedGapSeconds = deviceHealth.length > 0
+    ? Math.max(...deviceHealth.map((device) => device.maxGapSeconds || 0))
+    : 0;
   const chartPoints = buildMemChartPoints(recentEvents);
   const chartLine = chartPath(chartPoints);
   const chartMin = chartPoints.length ? Math.min(...chartPoints.map((point) => point.memFree)) : null;
@@ -163,12 +356,24 @@ export default async function Home({ searchParams }: PageProps) {
       <main className="mx-auto max-w-7xl p-6 md:p-8">
         <header className="mb-6 overflow-hidden rounded-[28px] border border-stone-300/80 bg-[radial-gradient(circle_at_top_left,#fff7ed_0%,#f5efe5_42%,#ebe1d3_100%)] p-6 shadow-[0_12px_40px_rgba(68,54,40,0.10)]">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-3xl">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.3em] text-stone-500">SumiLabu Fleet</p>
-              <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Telemetry for live SumiLabu products</h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-stone-600 md:text-base">
-                The InkyFrame is the first supported SumiLabu app. This dashboard tracks heartbeat, mode changes, memory data, and recent ingest activity for each project partition.
-              </p>
+            <div className="flex items-start gap-4 max-w-3xl">
+              <div className="relative hidden h-20 w-20 shrink-0 overflow-hidden rounded-full border border-stone-300/80 bg-white/70 shadow-[0_8px_24px_rgba(68,54,40,0.12)] sm:block">
+                <Image
+                  src="/sumilabu-foxmark.svg"
+                  alt="SumiLabu fox logo"
+                  fill
+                  sizes="80px"
+                  className="object-cover"
+                  priority
+                />
+              </div>
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.3em] text-stone-500">SumiLabu Fleet</p>
+                <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Telemetry for live SumiLabu products</h1>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-stone-600 md:text-base">
+                  The InkyFrame is the first supported SumiLabu app. This dashboard tracks heartbeat, mode changes, memory data, and recent ingest activity for each project partition.
+                </p>
+              </div>
             </div>
 
             <div className="grid min-w-[280px] gap-3 rounded-2xl border border-stone-300/80 bg-white/75 p-4 backdrop-blur">
@@ -223,6 +428,113 @@ export default async function Home({ searchParams }: PageProps) {
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-stone-500">Top Event</p>
             <p className="mt-3 text-2xl font-semibold">{breakdown[0]?.label || "-"}</p>
             <p className="mt-2 text-sm text-stone-600">{breakdown[0]?.value || 0} events in the current sample window.</p>
+          </article>
+        </section>
+
+        <section className="mb-6 grid gap-6 xl:grid-cols-[0.95fr_1.55fr]">
+          <article className="rounded-[28px] border border-stone-300/80 bg-white/90 p-5 shadow-sm">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold">Gap Watch</h2>
+                <p className="text-sm text-stone-600">The page judges device health against an expected ping cadence of {EXPECTED_HEARTBEAT_SECONDS}s.</p>
+              </div>
+              <span className="rounded-full bg-stone-900 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-stone-50">
+                Live gap detection
+              </span>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">Offline devices</p>
+                <p className="mt-2 text-3xl font-semibold text-red-700">{offlineDevices}</p>
+                <p className="mt-1 text-sm text-stone-600">No ping within the stale window.</p>
+              </div>
+              <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">Gap risk</p>
+                <p className="mt-2 text-3xl font-semibold text-amber-700">{warningDevices}</p>
+                <p className="mt-1 text-sm text-stone-600">Devices that are alive but already showing heartbeat gaps.</p>
+              </div>
+              <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">Longest silence now</p>
+                <p className="mt-2 text-3xl font-semibold">{fmtDuration(longestSilenceSeconds)}</p>
+                <p className="mt-1 text-sm text-stone-600">Time since the least recently seen device last pinged.</p>
+              </div>
+              <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">Longest recent gap</p>
+                <p className="mt-2 text-3xl font-semibold">{fmtDuration(longestObservedGapSeconds)}</p>
+                <p className="mt-1 text-sm text-stone-600">Largest event-to-event hole in the recent sample window.</p>
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-3">
+              {deviceHealth.length > 0 ? deviceHealth.map((device) => (
+                <div key={device.deviceId} className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="font-mono text-sm font-semibold text-stone-800">{selectedProject}/{device.deviceId}</p>
+                      <p className="mt-1 text-sm text-stone-600">Last ping {fmtAge(device.lastSeenAt)}</p>
+                    </div>
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${statusPillClasses(device.status)}`}>
+                      {statusLabel(device.status)}
+                    </span>
+                  </div>
+                  <div className="mt-3 grid gap-2 text-sm text-stone-600 sm:grid-cols-3">
+                    <div>Current silence <span className="font-mono text-stone-800">{fmtDuration(device.lastPingAgeSeconds)}</span></div>
+                    <div>Latest gap <span className="font-mono text-stone-800">{fmtDuration(device.latestGapSeconds)}</span></div>
+                    <div>Missed beats <span className="font-mono text-stone-800">{device.missedHeartbeats}</span></div>
+                  </div>
+                </div>
+              )) : (
+                <div className="rounded-2xl border border-dashed border-stone-300 bg-stone-50 p-6 text-sm text-stone-500">
+                  No devices have reported into this project yet.
+                </div>
+              )}
+            </div>
+          </article>
+
+          <article className="rounded-[28px] border border-stone-300/80 bg-white/90 p-5 shadow-sm">
+            <div className="mb-4 flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold">Heartbeat Radar</h2>
+                <p className="text-sm text-stone-600">Each block covers one expected heartbeat window. Missing blocks make device silence obvious at a glance.</p>
+              </div>
+              <p className="text-xs uppercase tracking-[0.18em] text-stone-500">Oldest to newest</p>
+            </div>
+
+            <div className="space-y-4">
+              {deviceHealth.length > 0 ? deviceHealth.map((device) => (
+                <div key={device.deviceId} className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="font-mono text-sm font-semibold text-stone-800">{device.deviceId}</p>
+                      <p className="text-sm text-stone-600">{fmtAge(device.lastSeenAt)} • max recent gap {fmtDuration(device.maxGapSeconds)}</p>
+                    </div>
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${statusPillClasses(device.status)}`}>
+                      {statusLabel(device.status)}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-12 gap-1">
+                    {device.timeline.map((slot) => (
+                      <div
+                        key={`${device.deviceId}-${slot.label}`}
+                        title={`${slot.label}: ${slot.count} ping${slot.count === 1 ? "" : "s"}`}
+                        className={`h-5 rounded-full border ${slot.hasPing ? "border-emerald-300 bg-emerald-500" : device.status === "offline" ? "border-red-200 bg-red-300" : "border-amber-200 bg-amber-300"}`}
+                      />
+                    ))}
+                  </div>
+
+                  <div className="mt-2 flex justify-between text-[11px] uppercase tracking-[0.16em] text-stone-500">
+                    <span>{device.timeline[0]?.label || "-"}</span>
+                    <span>{device.timeline.at(-1)?.label || "now"}</span>
+                  </div>
+                </div>
+              )) : (
+                <div className="rounded-2xl border border-dashed border-stone-300 bg-stone-50 p-6 text-sm text-stone-500">
+                  Heartbeat history will appear here once this project has incoming telemetry.
+                </div>
+              )}
+            </div>
           </article>
         </section>
 
@@ -283,23 +595,26 @@ export default async function Home({ searchParams }: PageProps) {
         <section className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {devices.map((d) => {
             const last = d.events[0];
+            const health = deviceHealth.find((device) => device.deviceId === d.deviceId);
             const online = isOnline(d.lastSeenAt);
 
             return (
               <article key={d.id} className="rounded-[24px] border border-stone-300/80 bg-white/90 p-5 shadow-sm">
                 <div className="mb-2 flex items-center justify-between">
                   <h2 className="font-mono text-sm font-semibold">{d.projectKey}/{d.deviceId}</h2>
-                  <span className={`rounded-full px-2.5 py-1 text-xs ${online ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>
-                    {online ? "online" : "stale"}
+                  <span className={`rounded-full px-2.5 py-1 text-xs ${health ? statusPillClasses(health.status) : online ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>
+                    {health ? statusLabel(health.status) : online ? "online" : "stale"}
                   </span>
                 </div>
                 <dl className="space-y-1 text-sm">
                   <div className="flex justify-between"><dt className="text-neutral-500">Last seen</dt><dd>{fmtTime(d.lastSeenAt)}</dd></div>
+                  <div className="flex justify-between"><dt className="text-neutral-500">Age</dt><dd>{fmtAge(d.lastSeenAt)}</dd></div>
                   <div className="flex justify-between"><dt className="text-neutral-500">Mode</dt><dd>{d.lastMode || "-"}</dd></div>
                   <div className="flex justify-between"><dt className="text-neutral-500">App</dt><dd>{d.appVersion || "-"}</dd></div>
                   <div className="flex justify-between"><dt className="text-neutral-500">Last event</dt><dd>{last?.event || "-"}</dd></div>
                   <div className="flex justify-between"><dt className="text-neutral-500">Mem free</dt><dd>{last?.memFree ?? "-"}</dd></div>
                   <div className="flex justify-between"><dt className="text-neutral-500">NTP</dt><dd>{last?.ntpOk === null || last?.ntpOk === undefined ? "-" : String(last.ntpOk)}</dd></div>
+                  <div className="flex justify-between"><dt className="text-neutral-500">Longest gap</dt><dd>{fmtDuration(health?.maxGapSeconds)}</dd></div>
                 </dl>
               </article>
             );
@@ -316,6 +631,7 @@ export default async function Home({ searchParams }: PageProps) {
                   <th className="p-2">Project</th>
                   <th className="p-2">Device</th>
                   <th className="p-2">Event</th>
+                  <th className="p-2">Gap</th>
                   <th className="p-2">Mode</th>
                   <th className="p-2">MemFree</th>
                   <th className="p-2">Sync</th>
@@ -328,6 +644,7 @@ export default async function Home({ searchParams }: PageProps) {
                     <td className="p-2 font-mono">{e.projectKey}</td>
                     <td className="p-2 font-mono">{e.deviceId}</td>
                     <td className="p-2">{e.event}</td>
+                    <td className="p-2">{fmtDuration(eventGapSeconds.get(e.id))}</td>
                     <td className="p-2">{e.mode || "-"}</td>
                     <td className="p-2">{e.memFree ?? "-"}</td>
                     <td className="p-2">{e.sync || "-"}</td>
