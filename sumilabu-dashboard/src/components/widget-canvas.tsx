@@ -4,9 +4,10 @@ import { useEffect } from "react";
 import type { ReactNode } from "react";
 
 const GRID_COLUMNS = 12;
-const MIN_COLS = 4;
-const MIN_ROWS = 2;
-const MAX_ROWS = 10;
+const MIN_COLS = 3;
+const MIN_ROWS = 1;
+const MAX_ROWS = 8;
+const ROW_HEIGHT_PX = 84;
 
 type WidgetCanvasProps = {
   children: ReactNode;
@@ -86,7 +87,7 @@ export function WidgetCanvas({ children, storageKey }: WidgetCanvasProps) {
     function defaultSize(widget: HTMLElement) {
       return {
         cols: clamp(parseNumberAttribute(widget.dataset.widgetCols, GRID_COLUMNS), MIN_COLS, GRID_COLUMNS),
-        rows: clamp(parseNumberAttribute(widget.dataset.widgetRows, 3), MIN_ROWS, MAX_ROWS),
+        rows: clamp(parseNumberAttribute(widget.dataset.widgetRows, 2), MIN_ROWS, MAX_ROWS),
       };
     }
 
@@ -95,7 +96,7 @@ export function WidgetCanvas({ children, storageKey }: WidgetCanvasProps) {
       const snappedRows = clamp(rows, MIN_ROWS, MAX_ROWS);
       widget.style.gridColumn = `span ${snappedCols} / span ${snappedCols}`;
       widget.style.gridRow = `span ${snappedRows} / span ${snappedRows}`;
-      widget.style.minHeight = `${snappedRows * 120}px`;
+      widget.style.minHeight = `${snappedRows * ROW_HEIGHT_PX}px`;
       widget.dataset.widgetColsCurrent = String(snappedCols);
       widget.dataset.widgetRowsCurrent = String(snappedRows);
     }
@@ -158,7 +159,7 @@ export function WidgetCanvas({ children, storageKey }: WidgetCanvasProps) {
 
       const title = widget.dataset.widgetTitle || id;
       const handle = document.createElement("div");
-      handle.className = "mb-3 flex cursor-move items-center justify-between rounded-xl border border-stone-300/80 bg-stone-50/90 px-3 py-2";
+      handle.className = "mb-2 flex cursor-move items-center justify-between rounded-lg border border-stone-300/80 bg-stone-50/90 px-2.5 py-1.5";
       handle.draggable = true;
       handle.innerHTML = `<span class=\"text-xs font-semibold uppercase tracking-[0.16em] text-stone-600\">${title}</span>`;
 
@@ -209,7 +210,8 @@ export function WidgetCanvas({ children, storageKey }: WidgetCanvasProps) {
       widget.appendChild(handle);
       widget.appendChild(body);
 
-      const restoreCollapsed = Boolean(state.collapsed?.[id]);
+      const hasSavedCollapsed = typeof state.collapsed?.[id] === "boolean";
+      const restoreCollapsed = hasSavedCollapsed ? Boolean(state.collapsed?.[id]) : widget.dataset.widgetCollapsedDefault === "true";
       if (restoreCollapsed) {
         body.style.display = "none";
         collapseButton.textContent = "Expand";
@@ -302,7 +304,7 @@ export function WidgetCanvas({ children, storageKey }: WidgetCanvasProps) {
   }, [storageKey]);
 
   return (
-    <div data-widget-zone className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+    <div data-widget-zone className="grid grid-cols-1 gap-3 lg:grid-cols-12">
       {children}
     </div>
   );

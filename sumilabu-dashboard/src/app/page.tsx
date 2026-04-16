@@ -372,8 +372,8 @@ export default async function Home({ searchParams }: PageProps) {
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#f5f0e8_0%,#ece6dc_52%,#e1d8cb_100%)] text-stone-900">
       <main className="mx-auto max-w-7xl p-6 md:p-8">
-        <header className="mb-4 overflow-hidden rounded-[28px] border border-stone-300/80 bg-[radial-gradient(circle_at_top_left,#fff7ed_0%,#f5efe5_42%,#ebe1d3_100%)] p-4 md:p-5 shadow-[0_12px_40px_rgba(68,54,40,0.10)]">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <header className="mb-3 overflow-hidden rounded-[24px] border border-stone-300/80 bg-[radial-gradient(circle_at_top_left,#fff7ed_0%,#f5efe5_42%,#ebe1d3_100%)] p-3 md:p-4 shadow-[0_10px_30px_rgba(68,54,40,0.10)]">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div className="flex items-start gap-4 max-w-3xl">
               <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full border border-stone-300/80 bg-white/70 shadow-[0_8px_24px_rgba(68,54,40,0.12)] sm:h-20 sm:w-20">
                 <Image
@@ -387,14 +387,14 @@ export default async function Home({ searchParams }: PageProps) {
               </div>
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-[0.3em] text-stone-500">SumiLabu Fleet</p>
-                <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Telemetry for live SumiLabu products</h1>
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-stone-600 md:text-base">
+                <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Telemetry for live SumiLabu products</h1>
+                <p className="mt-2 max-w-xl text-sm leading-5 text-stone-600 md:text-[15px]">
                   The InkyFrame is the first supported SumiLabu app. This dashboard tracks heartbeat, mode changes, memory data, and recent ingest activity for each project partition.
                 </p>
               </div>
             </div>
 
-            <div className="grid min-w-[280px] gap-2 rounded-2xl border border-stone-300/80 bg-white/75 p-3 backdrop-blur">
+            <div className="grid min-w-[270px] gap-1.5 rounded-2xl border border-stone-300/80 bg-white/75 p-2.5 backdrop-blur">
               <div className="rounded-xl border border-stone-300/70 bg-white/85 px-3 py-2">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-stone-500">Local time ({localTimezoneLabel})</p>
                 <p className="font-mono text-3xl font-semibold leading-none text-stone-900 md:text-4xl">{localTimeNow}</p>
@@ -415,7 +415,7 @@ export default async function Home({ searchParams }: PageProps) {
           </div>
 
           {availableProjects.length > 1 ? (
-            <nav className="mt-4 flex flex-wrap gap-2">
+            <nav className="mt-3 flex flex-wrap gap-2">
               {availableProjects.map((projectKey) => {
                 const active = projectKey === selectedProject;
                 return (
@@ -432,32 +432,32 @@ export default async function Home({ searchParams }: PageProps) {
           ) : null}
         </header>
 
-        <WidgetCanvas storageKey="sumilabu.dashboard.widgets.v2">
-        <section data-widget-id="overview" data-widget-title="Overview" data-widget-cols="12" data-widget-rows="3" className="grid gap-3 md:grid-cols-2 xl:grid-cols-4 rounded-[24px] border border-stone-300/80 bg-white/72 p-3 shadow-sm lg:col-span-12">
-          <article className="rounded-[24px] border border-stone-300/80 bg-white/85 p-5 shadow-sm">
+        <WidgetCanvas storageKey="sumilabu.dashboard.widgets.v3">
+        <section data-widget-id="overview" data-widget-title="Overview" data-widget-cols="12" data-widget-rows="2" className="grid gap-3 md:grid-cols-2 xl:grid-cols-4 rounded-[20px] border border-stone-300/70 bg-white/62 p-2 shadow-sm lg:col-span-12">
+          <article className="rounded-[20px] border border-stone-300/80 bg-white/88 p-4 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-stone-500">Devices</p>
-            <p className="mt-3 text-3xl font-semibold">{devices.length}</p>
-            <p className="mt-2 text-sm text-stone-600">Tracked under this project key.</p>
+            <p className="mt-2 text-3xl font-semibold">{devices.length}</p>
+            <p className="mt-1 text-sm text-stone-600">Tracked under this project key.</p>
           </article>
-          <article className="rounded-[24px] border border-stone-300/80 bg-white/85 p-5 shadow-sm">
+          <article className="rounded-[20px] border border-stone-300/80 bg-white/88 p-4 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-stone-500">Online Now</p>
-            <p className="mt-3 text-3xl font-semibold text-emerald-700">{onlineDevices}</p>
-            <p className="mt-2 text-sm text-stone-600">Seen within the last {STALE_AFTER_SECONDS}s.</p>
+            <p className="mt-2 text-3xl font-semibold text-emerald-700">{onlineDevices}</p>
+            <p className="mt-1 text-sm text-stone-600">Seen within the last {STALE_AFTER_SECONDS}s.</p>
           </article>
-          <article className="rounded-[24px] border border-stone-300/80 bg-white/85 p-5 shadow-sm">
+          <article className="rounded-[20px] border border-stone-300/80 bg-white/88 p-4 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-stone-500">Recent Events</p>
-            <p className="mt-3 text-3xl font-semibold">{recentEvents.length}</p>
-            <p className="mt-2 text-sm text-stone-600">Most recent telemetry rows loaded in the dashboard.</p>
+            <p className="mt-2 text-3xl font-semibold">{recentEvents.length}</p>
+            <p className="mt-1 text-sm text-stone-600">Most recent telemetry rows loaded in the dashboard.</p>
           </article>
-          <article className="rounded-[24px] border border-stone-300/80 bg-white/85 p-5 shadow-sm">
+          <article className="rounded-[20px] border border-stone-300/80 bg-white/88 p-4 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-stone-500">Top Event</p>
-            <p className="mt-3 text-2xl font-semibold">{breakdown[0]?.label || "-"}</p>
-            <p className="mt-2 text-sm text-stone-600">{breakdown[0]?.value || 0} events in the current sample window.</p>
+            <p className="mt-2 text-2xl font-semibold">{breakdown[0]?.label || "-"}</p>
+            <p className="mt-1 text-sm text-stone-600">{breakdown[0]?.value || 0} events in the current sample window.</p>
           </article>
         </section>
 
-        <section data-widget-id="health-radar" data-widget-title="Health & Radar" data-widget-cols="12" data-widget-rows="5" className="grid gap-4 xl:grid-cols-[0.95fr_1.55fr] rounded-[24px] border border-stone-300/80 bg-white/72 p-3 shadow-sm lg:col-span-12">
-          <article className="rounded-[28px] border border-stone-300/80 bg-white/90 p-5 shadow-sm">
+        <section data-widget-id="health-radar" data-widget-title="Health & Radar" data-widget-cols="12" data-widget-rows="4" className="grid gap-3 xl:grid-cols-[0.95fr_1.55fr] rounded-[20px] border border-stone-300/70 bg-white/62 p-2 shadow-sm lg:col-span-12">
+          <article className="rounded-[22px] border border-stone-300/80 bg-white/90 p-4 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold">Gap Watch</h2>
@@ -491,7 +491,7 @@ export default async function Home({ searchParams }: PageProps) {
               </div>
             </div>
 
-            <div className="mt-5 space-y-3">
+            <div className="mt-4 space-y-2.5">
               {deviceHealth.length > 0 ? deviceHealth.map((device) => (
                 <div key={device.deviceId} className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -517,7 +517,7 @@ export default async function Home({ searchParams }: PageProps) {
             </div>
           </article>
 
-          <article className="rounded-[28px] border border-stone-300/80 bg-white/90 p-5 shadow-sm">
+          <article className="rounded-[22px] border border-stone-300/80 bg-white/90 p-4 shadow-sm">
             <div className="mb-4 flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
               <div>
                 <h2 className="text-lg font-semibold">Heartbeat Radar</h2>
@@ -526,7 +526,7 @@ export default async function Home({ searchParams }: PageProps) {
               <p className="text-xs uppercase tracking-[0.18em] text-stone-500">Oldest to newest</p>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {deviceHealth.length > 0 ? deviceHealth.map((device) => (
                 <div key={device.deviceId} className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
@@ -563,8 +563,8 @@ export default async function Home({ searchParams }: PageProps) {
           </article>
         </section>
 
-        <section data-widget-id="memory-ingest" data-widget-title="Memory & Ingest" data-widget-cols="12" data-widget-rows="4" className="grid gap-4 xl:grid-cols-[1.7fr_1fr] rounded-[24px] border border-stone-300/80 bg-white/72 p-3 shadow-sm lg:col-span-12">
-          <article className="rounded-[28px] border border-stone-300/80 bg-white/90 p-5 shadow-sm">
+        <section data-widget-id="memory-ingest" data-widget-title="Memory & Ingest" data-widget-cols="12" data-widget-rows="3" className="grid gap-3 xl:grid-cols-[1.7fr_1fr] rounded-[20px] border border-stone-300/70 bg-white/62 p-2 shadow-sm lg:col-span-12">
+          <article className="rounded-[22px] border border-stone-300/80 bg-white/90 p-4 shadow-sm">
             <div className="mb-4 flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
               <div>
                 <h2 className="text-lg font-semibold">Recent free-memory trend</h2>
@@ -596,7 +596,7 @@ export default async function Home({ searchParams }: PageProps) {
             )}
           </article>
 
-          <article className="rounded-[28px] border border-stone-300/80 bg-white/90 p-5 shadow-sm">
+          <article className="rounded-[22px] border border-stone-300/80 bg-white/90 p-4 shadow-sm">
             <h2 className="text-lg font-semibold">Ingest shape</h2>
             <p className="mt-1 text-sm text-stone-600">What the API is receiving for <span className="font-mono">{selectedProject}</span>.</p>
             <div className="mt-4 space-y-3">
@@ -617,14 +617,14 @@ export default async function Home({ searchParams }: PageProps) {
           </article>
         </section>
 
-        <section data-widget-id="device-cards" data-widget-title="Device Cards" data-widget-cols="12" data-widget-rows="4" className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 rounded-[24px] border border-stone-300/80 bg-white/72 p-3 shadow-sm lg:col-span-12">
+        <section data-widget-id="device-cards" data-widget-title="Device Cards" data-widget-cols="12" data-widget-rows="3" className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 rounded-[20px] border border-stone-300/70 bg-white/62 p-2 shadow-sm lg:col-span-12">
           {devices.map((d) => {
             const last = d.events[0];
             const health = deviceHealth.find((device) => device.deviceId === d.deviceId);
             const online = isOnline(d.lastSeenAt);
 
             return (
-              <article key={d.id} className="rounded-[24px] border border-stone-300/80 bg-white/90 p-5 shadow-sm">
+              <article key={d.id} className="rounded-[20px] border border-stone-300/80 bg-white/90 p-4 shadow-sm">
                 <div className="mb-2 flex items-center justify-between">
                   <h2 className="font-mono text-sm font-semibold">{d.projectKey}/{d.deviceId}</h2>
                   <span className={`rounded-full px-2.5 py-1 text-xs ${health ? statusPillClasses(health.status) : online ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>
@@ -646,7 +646,7 @@ export default async function Home({ searchParams }: PageProps) {
           })}
         </section>
 
-        <section data-widget-id="recent-events" data-widget-title="Recent Events" data-widget-cols="12" data-widget-rows="5" className="rounded-[24px] border border-stone-300/80 bg-white/72 p-3 shadow-sm lg:col-span-12">
+        <section data-widget-id="recent-events" data-widget-title="Recent Events" data-widget-cols="12" data-widget-rows="3" data-widget-collapsed-default="true" className="rounded-[20px] border border-stone-300/70 bg-white/62 p-2 shadow-sm lg:col-span-12">
           <RecentEventsTable events={recentEventsTableRows} timezoneOffsetHours={DASHBOARD_UTC_OFFSET_HOURS} />
         </section>
         </WidgetCanvas>

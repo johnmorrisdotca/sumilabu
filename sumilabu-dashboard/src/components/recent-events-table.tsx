@@ -200,15 +200,15 @@ export function RecentEventsTable({ events, timezoneOffsetHours }: RecentEventsT
   }
 
   return (
-    <section className="rounded-[28px] border border-stone-300/80 bg-white/90 p-5 shadow-sm">
-      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+    <section className="rounded-[20px] border border-stone-300/80 bg-white/90 p-3 shadow-sm">
+      <div className="mb-3 flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h2 className="text-lg font-semibold">Recent Events</h2>
-          <p className="text-sm text-stone-600">
+          <p className="text-xs text-stone-600 sm:text-sm">
             Showing {sortedEvents.length === 0 ? 0 : startIndex + 1}-{endIndex} of {sortedEvents.length} loaded rows.
           </p>
         </div>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <label className="flex items-center gap-2 text-sm text-stone-600">
             <span>Page size</span>
             <select
@@ -326,7 +326,7 @@ export function RecentEventsTable({ events, timezoneOffsetHours }: RecentEventsT
         </table>
       </div>
 
-      <div className="mt-4 flex flex-col gap-2 text-sm text-stone-600 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-3 flex flex-col gap-1.5 text-sm text-stone-600 sm:flex-row sm:items-center sm:justify-between">
         <div>
           Page {safePage} of {pageCount}
         </div>
