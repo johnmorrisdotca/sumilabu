@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { formatDateTimeAtOffset } from "@/lib/timezone";
+
 type RecentEventRow = {
   id: string;
   receivedAt: string;
@@ -19,6 +21,7 @@ type SortDirection = "asc" | "desc";
 
 type RecentEventsTableProps = {
   events: RecentEventRow[];
+  timezoneOffsetHours: number;
 };
 
 const PAGE_SIZE_OPTIONS = [10, 20, 25, 35, 50, 100] as const;
@@ -97,7 +100,7 @@ function sortIndicator(active: boolean, direction: SortDirection): string {
   return direction === "asc" ? "^" : "v";
 }
 
-export function RecentEventsTable({ events }: RecentEventsTableProps) {
+export function RecentEventsTable({ events, timezoneOffsetHours }: RecentEventsTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>(() => {
     if (typeof window === "undefined") {
       return DEFAULT_SORT_KEY;
@@ -303,7 +306,7 @@ export function RecentEventsTable({ events }: RecentEventsTableProps) {
           <tbody>
             {visibleEvents.length > 0 ? visibleEvents.map((eventRow) => (
               <tr key={eventRow.id} className="border-b border-neutral-100">
-                <td className="p-2">{eventRow.receivedAt.replace("T", " ").slice(0, 19)}</td>
+                <td className="p-2">{formatDateTimeAtOffset(eventRow.receivedAt, timezoneOffsetHours)}</td>
                 <td className="p-2 font-mono">{eventRow.projectKey}</td>
                 <td className="p-2 font-mono">{eventRow.deviceId}</td>
                 <td className="p-2">{eventRow.event}</td>

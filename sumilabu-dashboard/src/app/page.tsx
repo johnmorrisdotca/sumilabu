@@ -2,11 +2,13 @@ import Image from "next/image";
 
 import { RecentEventsTable } from "@/components/recent-events-table";
 import { prisma } from "@/lib/prisma";
+import { formatDateTimeAtOffset, formatHourMinuteAtOffset } from "@/lib/timezone";
 
 export const dynamic = "force-dynamic";
 
 const STALE_AFTER_SECONDS = Number(process.env.STALE_AFTER_SECONDS || "900");
 const EXPECTED_HEARTBEAT_SECONDS = Number(process.env.EXPECTED_HEARTBEAT_SECONDS || "300");
+const DASHBOARD_UTC_OFFSET_HOURS = Number(process.env.DASHBOARD_UTC_OFFSET_HOURS || "-8");
 const HEARTBEAT_TIMELINE_SLOTS = 12;
 const CHART_WIDTH = 720;
 const CHART_HEIGHT = 240;
@@ -67,7 +69,7 @@ function fmtTime(ts?: Date | null): string {
   if (!ts) {
     return "never";
   }
-  return ts.toISOString().replace("T", " ").slice(0, 19);
+  return formatDateTimeAtOffset(ts, DASHBOARD_UTC_OFFSET_HOURS);
 }
 
 function fmtDuration(totalSeconds?: number | null): string {
@@ -137,7 +139,7 @@ function buildMemChartPoints(events: RecentEvent[]): ChartPoint[] {
     return {
       x: CHART_PADDING_X + usableWidth * progress,
       y: CHART_HEIGHT - CHART_PADDING_Y - ((memValue - minMem) / memRange) * usableHeight,
-      label: event.receivedAt.toISOString().slice(11, 16),
+      label: formatHourMinuteAtOffset(event.receivedAt, DASHBOARD_UTC_OFFSET_HOURS),
       memFree: memValue,
       event: event.event,
     };
@@ -634,7 +636,7 @@ export default async function Home({ searchParams }: PageProps) {
           })}
         </section>
 
-        <RecentEventsTable events={recentEventsTableRows} />
+        <RecentEventsTable events={recentEventsTableRows} timezoneOffsetHours={DASHBOARD_UTC_OFFSET_HOURS} />
       </main>
     </div>
   );
