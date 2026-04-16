@@ -475,7 +475,7 @@ def diag_alert_text(utc_epoch, sync_text, ntp_ok, wifi_text, last_error):
 
 
 def read_mode_button(current_mode):
-    """Return selected mode from A-D if a button is pressed."""
+    """Return selected mode from A-C if a button is pressed."""
     try:
         if inky_frame.button_a.read():
             return MODE_A
@@ -483,8 +483,6 @@ def read_mode_button(current_mode):
             return MODE_B
         if inky_frame.button_c.read():
             return MODE_C
-        if inky_frame.button_d.read():
-            return MODE_D
     except Exception:
         pass
     return current_mode
@@ -494,6 +492,14 @@ def force_refresh_pressed():
     """E button forces immediate refresh."""
     try:
         return inky_frame.button_e.read()
+    except Exception:
+        return False
+
+
+def api_button_pressed():
+    """D button sends a dedicated API event without redrawing the screen."""
+    try:
+        return inky_frame.button_d.read()
     except Exception:
         return False
 
@@ -1272,6 +1278,7 @@ def run_clock_loop():
     next_refresh_ms = mono_add(mono_ms(), next_refresh_delay_s(time.time()) * 1000)
     next_stats_ms = mono_add(mono_ms(), STATS_INTERVAL_SECONDS * 1000)
     prev_e_pressed = False
+    prev_d_pressed = False
     while True:
         mode_new = read_mode_button(mode)
         if mode_new != mode:
@@ -1293,14 +1300,44 @@ def run_clock_loop():
 
         now_epoch = time.time()
         now_ms = mono_ms()
+        d_pressed = api_button_pressed()
+        manual_api_ping = d_pressed and not prev_d_pressed
+        prev_d_pressed = d_pressed
         e_pressed = force_refresh_pressed()
         manual_refresh = e_pressed and not prev_e_pressed
         prev_e_pressed = e_pressed
+
+        if manual_api_ping:
+            wlan = None
+            try:
+                utc_epoch = time.time()
+                wlan, wifi_text = connect_wifi()
+                if wlan and should_attempt_ntp(utc_epoch, last_ntp_sync_epoch):
+                    ntp_ok, sync_text = sync_time_ntp()
+                    if ntp_ok:
+                        last_ntp_sync_epoch = time.time()
+                elif clock_looks_valid(utc_epoch):
+                    ntp_ok = True
+                    sync_text = "RTC ok"
+                if wlan:
+                    post_device_stats("button_d", mode, ntp_ok, bitmap_assets_ok, sync_text, wifi_text)
+                last_error = ""
+            except Exception as exc:
+                last_error = type(exc).__name__
+            finally:
+                disconnect_wifi(wlan)
+                if wifi_text.startswith("WiFi: ") and wlan is not None:
+                    wifi_text = "WiFi: off (last ok)"
+                gc.collect()
+            time.sleep(0.3)
+            continue
+
         if mono_diff(now_ms, next_refresh_ms) >= 0 or manual_refresh:
             wlan = None
             try:
                 utc_epoch = time.time()
-                if should_attempt_ntp(utc_epoch, last_ntp_sync_epoch):
+                force_network = manual_refresh or should_attempt_ntp(utc_epoch, last_ntp_sync_epoch)
+                if force_network:
                     wlan, wifi_text = connect_wifi()
                     if wlan:
                         ntp_ok, sync_text = sync_time_ntp()
