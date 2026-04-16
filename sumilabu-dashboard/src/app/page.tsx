@@ -370,7 +370,7 @@ export default async function Home({ searchParams }: PageProps) {
         <header className="mb-6 overflow-hidden rounded-[28px] border border-stone-300/80 bg-[radial-gradient(circle_at_top_left,#fff7ed_0%,#f5efe5_42%,#ebe1d3_100%)] p-6 shadow-[0_12px_40px_rgba(68,54,40,0.10)]">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="flex items-start gap-4 max-w-3xl">
-              <div className="relative hidden h-20 w-20 shrink-0 overflow-hidden rounded-full border border-stone-300/80 bg-white/70 shadow-[0_8px_24px_rgba(68,54,40,0.12)] sm:block">
+              <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full border border-stone-300/80 bg-white/70 shadow-[0_8px_24px_rgba(68,54,40,0.12)] sm:h-20 sm:w-20">
                 <Image
                   src="/sumilabu.png"
                   alt="SumiLabu fox logo"
