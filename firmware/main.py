@@ -105,7 +105,10 @@ STARTUP_NTP_ATTEMPTS = 3
 NTP_RETRIES = 3
 MIN_VALID_YEAR = 2024
 WIFI_CONNECT_TIMEOUT_S = 35
-WATCHDOG_TIMEOUT_MS = getattr(secrets, "WATCHDOG_TIMEOUT_MS", 60000) if secrets else 60000
+WATCHDOG_MAX_TIMEOUT_MS = getattr(secrets, "WATCHDOG_MAX_TIMEOUT_MS", 8388) if secrets else 8388
+WATCHDOG_REQUESTED_TIMEOUT_MS = getattr(secrets, "WATCHDOG_TIMEOUT_MS", WATCHDOG_MAX_TIMEOUT_MS) if secrets else WATCHDOG_MAX_TIMEOUT_MS
+WATCHDOG_TIMEOUT_MS = max(1000, min(WATCHDOG_REQUESTED_TIMEOUT_MS, WATCHDOG_MAX_TIMEOUT_MS))
+WATCHDOG_CLAMPED = WATCHDOG_TIMEOUT_MS != WATCHDOG_REQUESTED_TIMEOUT_MS
 APP_VERSION = "2026-04-16"
 NTP_RESYNC_SECONDS = getattr(secrets, "NTP_RESYNC_SECONDS", 0) if secrets else 0
 
@@ -167,6 +170,12 @@ def init_watchdog():
     try:
         return machine.WDT(timeout=WATCHDOG_TIMEOUT_MS)
     except Exception:
+        # RP2040 watchdog init can fail on some builds if timeout constraints are strict.
+        for fallback_ms in (8000, 5000, 3000):
+            try:
+                return machine.WDT(timeout=fallback_ms)
+            except Exception:
+                pass
         return None
 
 
@@ -223,6 +232,27 @@ def wifi_connected():
         return False
 
 
+def power_snapshot():
+    battery_v = None
+    usb_powered = None
+
+    try:
+        if hasattr(inky_frame, "battery_voltage"):
+            battery_v = round(float(inky_frame.battery_voltage()), 3)
+    except Exception:
+        battery_v = None
+
+    try:
+        if hasattr(inky_frame, "usb_power"):
+            usb_powered = bool(inky_frame.usb_power())
+        elif hasattr(inky_frame, "is_usb_powered"):
+            usb_powered = bool(inky_frame.is_usb_powered())
+    except Exception:
+        usb_powered = None
+
+    return battery_v, usb_powered
+
+
 def post_device_stats(event_name, mode, ntp_ok, bitmap_assets_ok, sync_text, wifi_text):
     request_mod = get_urequests()
     if not STATS_API_URL or not request_mod:
@@ -231,6 +261,8 @@ def post_device_stats(event_name, mode, ntp_ok, bitmap_assets_ok, sync_text, wif
     # Never block trying to post if STA is offline.
     if not wifi_connected():
         return False
+
+    battery_v, usb_powered = power_snapshot()
 
     payload = {
         "event": event_name,
@@ -246,7 +278,15 @@ def post_device_stats(event_name, mode, ntp_ok, bitmap_assets_ok, sync_text, wif
         "unix_ts": int(time.time()),
         "wifi": wifi_text,
         "sync": sync_text,
+        "wdt_enabled": bool(WATCHDOG),
+        "wdt_timeout_ms": WATCHDOG_TIMEOUT_MS,
+        "wdt_clamped": bool(WATCHDOG_CLAMPED),
     }
+
+    if battery_v is not None:
+        payload["battery_v"] = battery_v
+    if usb_powered is not None:
+        payload["usb_powered"] = usb_powered
 
     headers = {"Content-Type": "application/json"}
     if STATS_API_TOKEN:
