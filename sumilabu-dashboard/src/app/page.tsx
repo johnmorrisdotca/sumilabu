@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import { RecentEventsTable } from "@/components/recent-events-table";
+import { WidgetCanvas } from "@/components/widget-canvas";
 import { prisma } from "@/lib/prisma";
 import { formatDateTimeAtOffset, formatHourMinuteAtOffset } from "@/lib/timezone";
 
@@ -371,8 +372,8 @@ export default async function Home({ searchParams }: PageProps) {
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#f5f0e8_0%,#ece6dc_52%,#e1d8cb_100%)] text-stone-900">
       <main className="mx-auto max-w-7xl p-6 md:p-8">
-        <header className="mb-6 overflow-hidden rounded-[28px] border border-stone-300/80 bg-[radial-gradient(circle_at_top_left,#fff7ed_0%,#f5efe5_42%,#ebe1d3_100%)] p-6 shadow-[0_12px_40px_rgba(68,54,40,0.10)]">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <header className="mb-4 overflow-hidden rounded-[28px] border border-stone-300/80 bg-[radial-gradient(circle_at_top_left,#fff7ed_0%,#f5efe5_42%,#ebe1d3_100%)] p-4 md:p-5 shadow-[0_12px_40px_rgba(68,54,40,0.10)]">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="flex items-start gap-4 max-w-3xl">
               <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full border border-stone-300/80 bg-white/70 shadow-[0_8px_24px_rgba(68,54,40,0.12)] sm:h-20 sm:w-20">
                 <Image
@@ -393,7 +394,7 @@ export default async function Home({ searchParams }: PageProps) {
               </div>
             </div>
 
-            <div className="grid min-w-[280px] gap-3 rounded-2xl border border-stone-300/80 bg-white/75 p-4 backdrop-blur">
+            <div className="grid min-w-[280px] gap-2 rounded-2xl border border-stone-300/80 bg-white/75 p-3 backdrop-blur">
               <div className="rounded-xl border border-stone-300/70 bg-white/85 px-3 py-2">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-stone-500">Local time ({localTimezoneLabel})</p>
                 <p className="font-mono text-3xl font-semibold leading-none text-stone-900 md:text-4xl">{localTimeNow}</p>
@@ -413,23 +414,26 @@ export default async function Home({ searchParams }: PageProps) {
             </div>
           </div>
 
-          <nav className="mt-6 flex flex-wrap gap-2">
-            {availableProjects.map((projectKey) => {
-              const active = projectKey === selectedProject;
-              return (
-                <a
-                  key={projectKey}
-                  href={`/?project=${encodeURIComponent(projectKey)}`}
-                  className={`rounded-full border px-4 py-2 text-sm transition ${active ? "border-stone-900 bg-stone-900 text-stone-50" : "border-stone-300 bg-white/80 text-stone-700 hover:border-stone-500 hover:bg-white"}`}
-                >
-                  {projectKey}
-                </a>
-              );
-            })}
-          </nav>
+          {availableProjects.length > 1 ? (
+            <nav className="mt-4 flex flex-wrap gap-2">
+              {availableProjects.map((projectKey) => {
+                const active = projectKey === selectedProject;
+                return (
+                  <a
+                    key={projectKey}
+                    href={`/?project=${encodeURIComponent(projectKey)}`}
+                    className={`rounded-full border px-4 py-2 text-sm transition ${active ? "border-stone-900 bg-stone-900 text-stone-50" : "border-stone-300 bg-white/80 text-stone-700 hover:border-stone-500 hover:bg-white"}`}
+                  >
+                    {projectKey}
+                  </a>
+                );
+              })}
+            </nav>
+          ) : null}
         </header>
 
-        <section className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <WidgetCanvas storageKey="sumilabu.dashboard.widgets.v1">
+        <section data-widget-id="overview" data-widget-title="Overview" className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 rounded-[28px] border border-stone-300/80 bg-white/70 p-4 shadow-sm">
           <article className="rounded-[24px] border border-stone-300/80 bg-white/85 p-5 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-stone-500">Devices</p>
             <p className="mt-3 text-3xl font-semibold">{devices.length}</p>
@@ -452,7 +456,7 @@ export default async function Home({ searchParams }: PageProps) {
           </article>
         </section>
 
-        <section className="mb-6 grid gap-6 xl:grid-cols-[0.95fr_1.55fr]">
+        <section data-widget-id="health-radar" data-widget-title="Health & Radar" className="grid gap-6 xl:grid-cols-[0.95fr_1.55fr] rounded-[28px] border border-stone-300/80 bg-white/70 p-4 shadow-sm">
           <article className="rounded-[28px] border border-stone-300/80 bg-white/90 p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
               <div>
@@ -559,7 +563,7 @@ export default async function Home({ searchParams }: PageProps) {
           </article>
         </section>
 
-        <section className="mb-6 grid gap-6 xl:grid-cols-[1.7fr_1fr]">
+        <section data-widget-id="memory-ingest" data-widget-title="Memory & Ingest" className="grid gap-6 xl:grid-cols-[1.7fr_1fr] rounded-[28px] border border-stone-300/80 bg-white/70 p-4 shadow-sm">
           <article className="rounded-[28px] border border-stone-300/80 bg-white/90 p-5 shadow-sm">
             <div className="mb-4 flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
               <div>
@@ -613,7 +617,7 @@ export default async function Home({ searchParams }: PageProps) {
           </article>
         </section>
 
-        <section className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <section data-widget-id="device-cards" data-widget-title="Device Cards" className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 rounded-[28px] border border-stone-300/80 bg-white/70 p-4 shadow-sm">
           {devices.map((d) => {
             const last = d.events[0];
             const health = deviceHealth.find((device) => device.deviceId === d.deviceId);
@@ -642,7 +646,10 @@ export default async function Home({ searchParams }: PageProps) {
           })}
         </section>
 
-        <RecentEventsTable events={recentEventsTableRows} timezoneOffsetHours={DASHBOARD_UTC_OFFSET_HOURS} />
+        <section data-widget-id="recent-events" data-widget-title="Recent Events" className="rounded-[28px] border border-stone-300/80 bg-white/70 p-4 shadow-sm">
+          <RecentEventsTable events={recentEventsTableRows} timezoneOffsetHours={DASHBOARD_UTC_OFFSET_HOURS} />
+        </section>
+        </WidgetCanvas>
       </main>
     </div>
   );
