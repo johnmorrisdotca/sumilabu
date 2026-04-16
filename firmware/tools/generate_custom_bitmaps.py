@@ -1,12 +1,29 @@
 from pathlib import Path
+import importlib.util
 import os
 
 from PIL import Image, ImageDraw, ImageFont
 
-try:
-    import secrets as local_secrets  # type: ignore[import-not-found]
-except Exception:
-    local_secrets = None
+FIRMWARE_DIR = Path(__file__).resolve().parent.parent
+SECRETS_PATH = FIRMWARE_DIR / "secrets.py"
+
+
+def load_local_secrets():
+    if not SECRETS_PATH.exists():
+        return None
+
+    try:
+        spec = importlib.util.spec_from_file_location("sumilabu_firmware_secrets", SECRETS_PATH)
+        if spec is None or spec.loader is None:
+            return None
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+    except Exception:
+        return None
+
+
+local_secrets = load_local_secrets()
 
 ARIAL_BOLD = "/System/Library/Fonts/Supplemental/Arial Bold.ttf"
 ARIAL_UNICODE = "/Library/Fonts/Arial Unicode.ttf"
@@ -93,7 +110,7 @@ def main():
     emit_dict("FONT_TIME", font_time, out)
     emit_dict("FONT_DATE", font_date, out)
 
-    Path("custom_bitmaps.py").write_text("\n".join(out), encoding="utf-8")
+    (FIRMWARE_DIR / "custom_bitmaps.py").write_text("\n".join(out), encoding="utf-8")
     print("WROTE custom_bitmaps.py")
 
 
