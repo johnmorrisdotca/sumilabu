@@ -105,6 +105,7 @@ STARTUP_NTP_ATTEMPTS = 3
 NTP_RETRIES = 3
 MIN_VALID_YEAR = 2024
 WIFI_CONNECT_TIMEOUT_S = 35
+WATCHDOG_TIMEOUT_MS = getattr(secrets, "WATCHDOG_TIMEOUT_MS", 8000) if secrets else 8000
 APP_VERSION = "2026-04-15"
 NTP_RESYNC_SECONDS = getattr(secrets, "NTP_RESYNC_SECONDS", 0) if secrets else 0
 
@@ -160,6 +161,18 @@ def default_device_id():
 DEVICE_ID = default_device_id()
 
 
+def init_watchdog():
+    if not machine or not hasattr(machine, "WDT"):
+        return None
+    try:
+        return machine.WDT(timeout=WATCHDOG_TIMEOUT_MS)
+    except Exception:
+        return None
+
+
+WATCHDOG = init_watchdog()
+
+
 def mono_ms():
     try:
         return time.ticks_ms()
@@ -179,6 +192,23 @@ def mono_diff(newer_ms, older_ms):
         return time.ticks_diff(newer_ms, older_ms)
     except Exception:
         return newer_ms - older_ms
+
+
+def feed_watchdog():
+    if WATCHDOG and hasattr(WATCHDOG, "feed"):
+        try:
+            WATCHDOG.feed()
+        except Exception:
+            pass
+
+
+def safe_sleep(seconds):
+    remaining_ms = max(0, int(seconds * 1000))
+    while remaining_ms > 0:
+        feed_watchdog()
+        step_ms = min(200, remaining_ms)
+        time.sleep(step_ms / 1000)
+        remaining_ms -= step_ms
 
 
 def telemetry_enabled():
@@ -225,6 +255,7 @@ def post_device_stats(event_name, mode, ntp_ok, bitmap_assets_ok, sync_text, wif
     resp = None
     old_timeout = None
     try:
+        feed_watchdog()
         if socket and hasattr(socket, "getdefaulttimeout"):
             try:
                 old_timeout = socket.getdefaulttimeout()
@@ -232,10 +263,11 @@ def post_device_stats(event_name, mode, ntp_ok, bitmap_assets_ok, sync_text, wif
                 old_timeout = None
         if socket and hasattr(socket, "setdefaulttimeout"):
             try:
-                socket.setdefaulttimeout(STATS_HTTP_TIMEOUT_S)
+                socket.setdefaulttimeout(min(STATS_HTTP_TIMEOUT_S, max(1, (WATCHDOG_TIMEOUT_MS // 1000) - 1)))
             except Exception:
                 pass
         resp = request_mod.post(STATS_API_URL, data=json.dumps(payload), headers=headers)
+        feed_watchdog()
         return True
     except Exception:
         return False
@@ -283,12 +315,13 @@ def connect_wifi(timeout_s=WIFI_CONNECT_TIMEOUT_S):
     start_ms = mono_ms()
     timeout_ms = int(timeout_s * 1000)
     while not wlan.isconnected() and mono_diff(mono_ms(), start_ms) < timeout_ms:
+        feed_watchdog()
         try:
             if wlan.status() < 0:
                 break
         except Exception:
             pass
-        time.sleep(0.2)
+        safe_sleep(0.2)
 
     if wlan.isconnected():
         return wlan, "WiFi: {}".format(ssid)
@@ -376,15 +409,17 @@ def sync_time_ntp():
         ntptime.host = host
         for _ in range(NTP_RETRIES):
             try:
+                feed_watchdog()
                 # Some firmware builds expose inky_frame.set_time(), others do not.
                 if hasattr(inky_frame, "set_time"):
                     inky_frame.set_time()
                 else:
                     ntptime.settime()
+                feed_watchdog()
                 return True, "NTP ok"
             except Exception as exc:
                 last_err = type(exc).__name__
-                time.sleep(1)
+                safe_sleep(1)
 
     return False, "NTP fail {}".format(last_err)
 
@@ -1219,7 +1254,7 @@ def auto_recover_reset(reason_text):
     except Exception:
         pass
 
-    time.sleep(1)
+    safe_sleep(1)
     if machine and hasattr(machine, "reset"):
         machine.reset()
 
@@ -1240,6 +1275,7 @@ def run_clock_loop():
         for attempt in range(attempts):
             wlan = None
             try:
+                feed_watchdog()
                 wlan, wifi_text = connect_wifi()
                 if wlan:
                     ntp_ok, sync_text = sync_time_ntp()
@@ -1260,7 +1296,7 @@ def run_clock_loop():
                     wifi_text = "WiFi: off (last ok)"
 
             if attempt < (attempts - 1):
-                time.sleep(2)
+                safe_sleep(2)
     else:
         ntp_ok = True
         sync_text = "RTC ok"
@@ -1280,6 +1316,7 @@ def run_clock_loop():
     prev_e_pressed = False
     prev_d_pressed = False
     while True:
+        feed_watchdog()
         mode_new = read_mode_button(mode)
         if mode_new != mode:
             mode = mode_new
@@ -1295,7 +1332,7 @@ def run_clock_loop():
             except Exception as exc:
                 sync_text = "Draw err {}".format(type(exc).__name__)
                 last_error = type(exc).__name__
-            time.sleep(0.2)
+            safe_sleep(0.2)
             continue
 
         now_epoch = time.time()
@@ -1329,7 +1366,7 @@ def run_clock_loop():
                 if wifi_text.startswith("WiFi: ") and wlan is not None:
                     wifi_text = "WiFi: off (last ok)"
                 gc.collect()
-            time.sleep(0.3)
+            safe_sleep(0.3)
             continue
 
         if mono_diff(now_ms, next_refresh_ms) >= 0 or manual_refresh:
@@ -1368,7 +1405,7 @@ def run_clock_loop():
 
             next_refresh_ms = mono_add(mono_ms(), next_refresh_delay_s(time.time()) * 1000)
             if manual_refresh:
-                time.sleep(0.3)
+                safe_sleep(0.3)
 
         if telemetry_enabled() and mono_diff(mono_ms(), next_stats_ms) >= 0:
             wlan = None
@@ -1385,7 +1422,7 @@ def run_clock_loop():
         if mono_diff(mono_ms(), last_successful_draw_ms) > (STALE_RESTART_SECONDS * 1000):
             auto_recover_reset("No refresh for {}m".format(STALE_RESTART_SECONDS // 60))
 
-        time.sleep(0.2)
+        safe_sleep(0.2)
 
 
 def main():
@@ -1403,7 +1440,7 @@ def main():
             except Exception:
                 pass
             gc.collect()
-            time.sleep(2)
+            safe_sleep(2)
 
 
 main()
