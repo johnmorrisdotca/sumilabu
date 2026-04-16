@@ -118,6 +118,7 @@ STATS_DEVICE_ID = getattr(secrets, "STATS_DEVICE_ID", None) if secrets else None
 STATS_PROJECT_KEY = getattr(secrets, "STATS_PROJECT_KEY", "inkyframe") if secrets else "inkyframe"
 STATS_INTERVAL_SECONDS = getattr(secrets, "STATS_INTERVAL_SECONDS", REFRESH_SECONDS) if secrets else REFRESH_SECONDS
 STATS_HTTP_TIMEOUT_S = getattr(secrets, "STATS_HTTP_TIMEOUT_S", 8) if secrets else 8
+RENDER_WDT_FEED_ROWS = 8
 
 MODE_A = "A"
 MODE_B = "B"
@@ -303,7 +304,9 @@ def post_device_stats(event_name, mode, ntp_ok, bitmap_assets_ok, sync_text, wif
                 old_timeout = None
         if socket and hasattr(socket, "setdefaulttimeout"):
             try:
-                socket.setdefaulttimeout(min(STATS_HTTP_TIMEOUT_S, max(1, (WATCHDOG_TIMEOUT_MS // 1000) - 1)))
+                # Keep HTTP timeout comfortably below WDT timeout to avoid starving feeds.
+                timeout_cap = max(1, (WATCHDOG_TIMEOUT_MS // 1000) - 3)
+                socket.setdefaulttimeout(min(STATS_HTTP_TIMEOUT_S, timeout_cap))
             except Exception:
                 pass
         resp = request_mod.post(STATS_API_URL, data=json.dumps(payload), headers=headers)
@@ -791,6 +794,8 @@ def draw_bitmap_label(key, x, y):
     glyph_h = data.get("h", 0)
     glyph_w = data.get("w", 0)
     for yy in range(glyph_h):
+        if (yy % RENDER_WDT_FEED_ROWS) == 0:
+            feed_watchdog()
         for xx in range(glyph_w):
             if glyph_pixel_on(data, xx, yy):
                 graphics.pixel(x + xx, y + yy)
@@ -804,6 +809,8 @@ def draw_named_bitmap(dict_map, key, x, y):
     glyph_h = data.get("h", 0)
     glyph_w = data.get("w", 0)
     for yy in range(glyph_h):
+        if (yy % RENDER_WDT_FEED_ROWS) == 0:
+            feed_watchdog()
         for xx in range(glyph_w):
             if glyph_pixel_on(data, xx, yy):
                 graphics.pixel(x + xx, y + yy)
@@ -901,10 +908,13 @@ def draw_bitmap_text(text, font_map, x, y, max_width, spacing=2):
         glyph = font_map.get(ch)
         if not glyph:
             continue
+        feed_watchdog()
         glyph_h = glyph.get("h", 0)
         glyph_w = glyph.get("w", 0)
         glyph_y = y + max(0, line_h - glyph_h)
         for yy in range(glyph_h):
+            if (yy % RENDER_WDT_FEED_ROWS) == 0:
+                feed_watchdog()
             for xx in range(glyph_w):
                 if glyph_pixel_on(glyph, xx, yy):
                     graphics.pixel(cx + xx, glyph_y + yy)
@@ -954,6 +964,7 @@ def draw_bitmap_text_scaled(
         glyph = font_map.get(ch)
         if not glyph:
             continue
+        feed_watchdog()
 
         src_h = glyph.get("h", 0)
         src_w = glyph.get("w", 0)
@@ -973,6 +984,8 @@ def draw_bitmap_text_scaled(
             glyph_y += char_y_offsets[ch]
 
         for yy in range(dst_h):
+            if (yy % RENDER_WDT_FEED_ROWS) == 0:
+                feed_watchdog()
             src_y = min(src_h - 1, int(yy / scale))
             for xx in range(dst_w):
                 src_x = min(src_w - 1, int(xx / scale))
