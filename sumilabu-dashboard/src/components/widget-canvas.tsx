@@ -6,8 +6,8 @@ import type { ReactNode } from "react";
 const GRID_COLUMNS = 12;
 const MIN_COLS = 3;
 const MIN_ROWS = 1;
-const MAX_ROWS = 8;
-const ROW_HEIGHT_PX = 84;
+const MAX_ROWS = 6;
+const ROW_HEIGHT_PX = 56;
 
 type WidgetCanvasProps = {
   children: ReactNode;
@@ -30,6 +30,15 @@ function parseNumberAttribute(value: string | undefined, fallback: number): numb
   }
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function escapeHtml(input: string): string {
+  return input
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }
 
 function readState(storageKey: string): WidgetState {
@@ -144,6 +153,8 @@ export function WidgetCanvas({ children, storageKey }: WidgetCanvasProps) {
 
       widget.dataset.widgetEnhanced = "true";
       widget.classList.add("relative", "min-w-0", "overflow-hidden");
+      widget.style.display = "flex";
+      widget.style.flexDirection = "column";
 
       const savedSize = state.sizes?.[widgetId];
       const initialSize = {
@@ -155,13 +166,14 @@ export function WidgetCanvas({ children, storageKey }: WidgetCanvasProps) {
       const currentChildren = Array.from(widget.childNodes);
       const body = document.createElement("div");
       body.dataset.widgetBody = "true";
-      body.className = "min-h-0";
+      const bodyLayoutClass = widget.dataset.widgetBodyClass;
+      body.className = bodyLayoutClass ? `min-h-0 ${bodyLayoutClass}` : "min-h-0";
 
       const title = widget.dataset.widgetTitle || id;
       const handle = document.createElement("div");
       handle.className = "mb-2 flex cursor-move items-center justify-between rounded-lg border border-stone-300/80 bg-stone-50/90 px-2.5 py-1.5";
       handle.draggable = true;
-      handle.innerHTML = `<span class=\"text-xs font-semibold uppercase tracking-[0.16em] text-stone-600\">${title}</span>`;
+      handle.innerHTML = `<span class=\"text-xs font-semibold uppercase tracking-[0.16em] text-stone-600\">${escapeHtml(title)}</span>`;
 
       const controls = document.createElement("div");
       controls.className = "flex items-center gap-2";

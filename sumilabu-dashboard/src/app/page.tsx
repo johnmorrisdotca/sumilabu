@@ -432,8 +432,8 @@ export default async function Home({ searchParams }: PageProps) {
           ) : null}
         </header>
 
-        <WidgetCanvas storageKey="sumilabu.dashboard.widgets.v3">
-        <section data-widget-id="overview" data-widget-title="Overview" data-widget-cols="12" data-widget-rows="2" className="grid gap-3 md:grid-cols-2 xl:grid-cols-4 rounded-[20px] border border-stone-300/70 bg-white/62 p-2 shadow-sm lg:col-span-12">
+        <WidgetCanvas storageKey="sumilabu.dashboard.widgets.v4">
+        <section data-widget-id="overview" data-widget-title="Overview" data-widget-cols="12" data-widget-rows="2" data-widget-body-class="grid gap-3 md:grid-cols-2 xl:grid-cols-4" className="rounded-[20px] border border-stone-300/70 bg-white/62 p-2 shadow-sm lg:col-span-12">
           <article className="rounded-[20px] border border-stone-300/80 bg-white/88 p-4 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-stone-500">Devices</p>
             <p className="mt-2 text-3xl font-semibold">{devices.length}</p>
@@ -456,7 +456,7 @@ export default async function Home({ searchParams }: PageProps) {
           </article>
         </section>
 
-        <section data-widget-id="health-radar" data-widget-title="Health & Radar" data-widget-cols="12" data-widget-rows="4" className="grid gap-3 xl:grid-cols-[0.95fr_1.55fr] rounded-[20px] border border-stone-300/70 bg-white/62 p-2 shadow-sm lg:col-span-12">
+        <section data-widget-id="health-radar" data-widget-title="Health & Radar" data-widget-cols="12" data-widget-rows="4" data-widget-body-class="grid gap-3 xl:grid-cols-[0.95fr_1.55fr]" className="rounded-[20px] border border-stone-300/70 bg-white/62 p-2 shadow-sm lg:col-span-12">
           <article className="rounded-[22px] border border-stone-300/80 bg-white/90 p-4 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
               <div>
@@ -563,7 +563,7 @@ export default async function Home({ searchParams }: PageProps) {
           </article>
         </section>
 
-        <section data-widget-id="memory-ingest" data-widget-title="Memory & Ingest" data-widget-cols="12" data-widget-rows="3" className="grid gap-3 xl:grid-cols-[1.7fr_1fr] rounded-[20px] border border-stone-300/70 bg-white/62 p-2 shadow-sm lg:col-span-12">
+        <section data-widget-id="memory-ingest" data-widget-title="Memory & Ingest" data-widget-cols="12" data-widget-rows="3" data-widget-body-class="grid gap-3 xl:grid-cols-[1.7fr_1fr]" className="rounded-[20px] border border-stone-300/70 bg-white/62 p-2 shadow-sm lg:col-span-12">
           <article className="rounded-[22px] border border-stone-300/80 bg-white/90 p-4 shadow-sm">
             <div className="mb-4 flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
               <div>
@@ -617,7 +617,7 @@ export default async function Home({ searchParams }: PageProps) {
           </article>
         </section>
 
-        <section data-widget-id="device-cards" data-widget-title="Device Cards" data-widget-cols="12" data-widget-rows="3" className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 rounded-[20px] border border-stone-300/70 bg-white/62 p-2 shadow-sm lg:col-span-12">
+        <section data-widget-id="device-cards" data-widget-title="Device Cards" data-widget-cols="12" data-widget-rows="3" data-widget-body-class="grid gap-3 md:grid-cols-2 xl:grid-cols-3" className="rounded-[20px] border border-stone-300/70 bg-white/62 p-2 shadow-sm lg:col-span-12">
           {devices.map((d) => {
             const last = d.events[0];
             const health = deviceHealth.find((device) => device.deviceId === d.deviceId);
