@@ -1142,10 +1142,7 @@ def run_clock_loop():
     last_successful_draw_ms = mono_ms()
     diag_text = diag_alert_text(utc_epoch, sync_text, ntp_ok, wifi_text, last_error)
 
-    startup_status = "{} | {}".format(sync_text, wifi_text)
-    if not bitmap_assets_ok:
-        startup_status = "{} | bitmap fallback".format(startup_status)
-    draw_by_mode(mode, utc_epoch, pst, jst, ntp_ok, startup_status, diag_text)
+    draw_by_mode(mode, utc_epoch, pst, jst, ntp_ok, wifi_text, diag_text)
     gc.collect()
 
     # Poll buttons quickly, refresh data every 5 minutes (or E button).
@@ -1161,7 +1158,7 @@ def run_clock_loop():
                 pst = timezone_struct(utc_epoch, PST_OFFSET_HOURS)
                 jst = timezone_struct(utc_epoch, JST_OFFSET_HOURS)
                 diag_text = diag_alert_text(utc_epoch, sync_text, ntp_ok, wifi_text, last_error)
-                draw_by_mode(mode, utc_epoch, pst, jst, ntp_ok, "{} | {}".format(sync_text, wifi_text), diag_text)
+                draw_by_mode(mode, utc_epoch, pst, jst, ntp_ok, wifi_text, diag_text)
                 last_successful_draw_ms = mono_ms()
                 post_device_stats("mode_change", mode, ntp_ok, bitmap_assets_ok, sync_text, wifi_text)
                 gc.collect()
@@ -1195,7 +1192,7 @@ def run_clock_loop():
                 pst = timezone_struct(utc_epoch, PST_OFFSET_HOURS)
                 jst = timezone_struct(utc_epoch, JST_OFFSET_HOURS)
                 diag_text = diag_alert_text(utc_epoch, sync_text, ntp_ok, wifi_text, last_error)
-                draw_by_mode(mode, utc_epoch, pst, jst, ntp_ok, "{} | {}".format(sync_text, wifi_text), diag_text)
+                draw_by_mode(mode, utc_epoch, pst, jst, ntp_ok, wifi_text, diag_text)
                 last_successful_draw_ms = mono_ms()
                 last_error = ""
                 if wlan:
