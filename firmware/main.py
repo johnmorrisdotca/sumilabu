@@ -26,6 +26,14 @@ from picographics import DISPLAY_INKY_FRAME_7 as DISPLAY  # type: ignore[import-
 from picographics import PicoGraphics  # type: ignore[import-not-found]
 
 try:
+    import usocket as socket  # type: ignore[import-not-found]
+except Exception:
+    try:
+        import socket  # type: ignore[import-not-found]
+    except Exception:
+        socket = None
+
+try:
     import machine  # type: ignore[import-not-found]
 except Exception:
     machine = None
@@ -87,6 +95,7 @@ STATS_API_TOKEN = getattr(secrets, "STATS_API_TOKEN", None) if secrets else None
 STATS_DEVICE_ID = getattr(secrets, "STATS_DEVICE_ID", None) if secrets else None
 STATS_PROJECT_KEY = getattr(secrets, "STATS_PROJECT_KEY", "inkyframe") if secrets else "inkyframe"
 STATS_INTERVAL_SECONDS = getattr(secrets, "STATS_INTERVAL_SECONDS", REFRESH_SECONDS) if secrets else REFRESH_SECONDS
+STATS_HTTP_TIMEOUT_S = getattr(secrets, "STATS_HTTP_TIMEOUT_S", 8) if secrets else 8
 
 MODE_A = "A"
 MODE_B = "B"
@@ -137,8 +146,20 @@ def telemetry_enabled():
     return bool(STATS_API_URL and urequests)
 
 
+def wifi_connected():
+    try:
+        wlan = network.WLAN(network.STA_IF)
+        return bool(wlan and wlan.active() and wlan.isconnected())
+    except Exception:
+        return False
+
+
 def post_device_stats(event_name, mode, ntp_ok, bitmap_assets_ok, sync_text, wifi_text):
     if not telemetry_enabled():
+        return False
+
+    # Never block trying to post if STA is offline.
+    if not wifi_connected():
         return False
 
     payload = {
@@ -162,7 +183,18 @@ def post_device_stats(event_name, mode, ntp_ok, bitmap_assets_ok, sync_text, wif
         headers["Authorization"] = "Bearer {}".format(STATS_API_TOKEN)
 
     resp = None
+    old_timeout = None
     try:
+        if socket and hasattr(socket, "getdefaulttimeout"):
+            try:
+                old_timeout = socket.getdefaulttimeout()
+            except Exception:
+                old_timeout = None
+        if socket and hasattr(socket, "setdefaulttimeout"):
+            try:
+                socket.setdefaulttimeout(STATS_HTTP_TIMEOUT_S)
+            except Exception:
+                pass
         resp = urequests.post(STATS_API_URL, data=json.dumps(payload), headers=headers)
         return True
     except Exception:
@@ -171,6 +203,11 @@ def post_device_stats(event_name, mode, ntp_ok, bitmap_assets_ok, sync_text, wif
         if resp is not None:
             try:
                 resp.close()
+            except Exception:
+                pass
+        if socket and hasattr(socket, "setdefaulttimeout"):
+            try:
+                socket.setdefaulttimeout(old_timeout)
             except Exception:
                 pass
 
@@ -987,6 +1024,7 @@ def run_clock_loop():
     wlan, wifi_text = connect_wifi()
     if wlan:
         ntp_ok, sync_text = sync_time_ntp()
+        post_device_stats("boot", mode, ntp_ok, bitmap_assets_ok, sync_text, wifi_text)
     disconnect_wifi(wlan)
     if wifi_text.startswith("WiFi: ") and wlan is not None:
         wifi_text = "WiFi: off (last ok)"
@@ -999,7 +1037,6 @@ def run_clock_loop():
     if not bitmap_assets_ok:
         startup_status = "{} | bitmap fallback".format(startup_status)
     draw_by_mode(mode, utc_epoch, pst, jst, ntp_ok, startup_status)
-    post_device_stats("boot", mode, ntp_ok, bitmap_assets_ok, sync_text, wifi_text)
     gc.collect()
 
     # Poll buttons quickly, refresh data every 5 minutes (or E button).
@@ -1033,16 +1070,17 @@ def run_clock_loop():
                 wlan, wifi_text = connect_wifi()
                 if wlan:
                     ntp_ok, sync_text = sync_time_ntp()
-                disconnect_wifi(wlan)
-                if wifi_text.startswith("WiFi: ") and wlan is not None:
-                    wifi_text = "WiFi: off (last ok)"
 
                 utc_epoch = time.time()
                 pst = timezone_struct(utc_epoch, PST_OFFSET_HOURS)
                 jst = timezone_struct(utc_epoch, JST_OFFSET_HOURS)
                 draw_by_mode(mode, utc_epoch, pst, jst, ntp_ok, "{} | {}".format(sync_text, wifi_text))
                 last_successful_draw = time.time()
-                post_device_stats("refresh", mode, ntp_ok, bitmap_assets_ok, sync_text, wifi_text)
+                if wlan:
+                    post_device_stats("refresh", mode, ntp_ok, bitmap_assets_ok, sync_text, wifi_text)
+                disconnect_wifi(wlan)
+                if wifi_text.startswith("WiFi: ") and wlan is not None:
+                    wifi_text = "WiFi: off (last ok)"
                 gc.collect()
             except Exception as exc:
                 sync_text = "Loop err {}".format(type(exc).__name__)
@@ -1052,7 +1090,10 @@ def run_clock_loop():
                 time.sleep(0.3)
 
         if telemetry_enabled() and time.time() >= next_stats:
-            post_device_stats("heartbeat", mode, ntp_ok, bitmap_assets_ok, sync_text, wifi_text)
+            wlan, hb_wifi_text = connect_wifi()
+            if wlan:
+                post_device_stats("heartbeat", mode, ntp_ok, bitmap_assets_ok, sync_text, hb_wifi_text)
+            disconnect_wifi(wlan)
             next_stats = time.time() + STATS_INTERVAL_SECONDS
 
         if (time.time() - last_successful_draw) > STALE_RESTART_SECONDS:
