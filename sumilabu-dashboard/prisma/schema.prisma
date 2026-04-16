@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Device {
+  id         String        @id @default(cuid())
+  projectKey String        @default("default")
+  deviceId   String
+  displayName String?
+  appVersion String?
+  lastMode   String?
+  lastSeenAt DateTime?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  events     DeviceEvent[]
+
+  @@unique([projectKey, deviceId])
+  @@index([projectKey, lastSeenAt(sort: Desc)])
+  @@index([lastSeenAt(sort: Desc)])
+}
+
+model DeviceEvent {
+  id             String   @id @default(cuid())
+  projectKey     String   @default("default")
+  deviceId       String
+  deviceRefId    String
+  event          String
+  mode           String?
+  ntpOk          Boolean?
+  bitmapAssetsOk Boolean?
+  memFree        Int?
+  memAlloc       Int?
+  uptimeS        Int?
+  unixTs         Int?
+  wifi           String?
+  sync           String?
+  appVersion     String?
+  raw            Json?
+  receivedAt     DateTime @default(now())
+
+  device Device @relation(fields: [deviceRefId], references: [id], onDelete: Cascade)
+
+  @@index([projectKey, receivedAt(sort: Desc)])
+  @@index([deviceId, receivedAt(sort: Desc)])
+  @@index([receivedAt(sort: Desc)])
+}

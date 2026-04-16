@@ -1,6 +1,12 @@
 from pathlib import Path
+import os
 
 from PIL import Image, ImageDraw, ImageFont
+
+try:
+    import secrets as local_secrets  # type: ignore[import-not-found]
+except Exception:
+    local_secrets = None
 
 ARIAL_BOLD = "/System/Library/Fonts/Supplemental/Arial Bold.ttf"
 ARIAL_UNICODE = "/Library/Fonts/Arial Unicode.ttf"
@@ -44,14 +50,36 @@ def emit_dict(name, data, out_lines):
     out_lines.append("")
 
 
+def cfg(name, default):
+    val = os.getenv(name)
+    if val is not None and val != "":
+        return val
+    if local_secrets and hasattr(local_secrets, name):
+        return getattr(local_secrets, name)
+    return default
+
+
 def main():
-    ui_big_chars = "".join(sorted(set("VancouverTokyo")))
+    local_city_name = str(cfg("LOCAL_CITY_NAME", "VANCOUVER")).upper()
+    remote_city_name = str(cfg("REMOTE_CITY_NAME", "TOKYO")).upper()
+    local_city_name_jp = str(cfg("LOCAL_CITY_NAME_JP", "バンクーバー"))
+    remote_city_name_jp = str(cfg("REMOTE_CITY_NAME_JP", "東京"))
+
+    ui_big_chars = "".join(
+        sorted(
+            set(
+                local_city_name
+                + remote_city_name
+                + "MONDAYTUESDAYWEDNESDAYTHURSDAYFRIDAYSATURDAYSUNDAYOVERLAPHELPER"
+            )
+        )
+    )
     # Keep hierarchy: headers medium, time very large, date compact.
-    font_ui_big = build_font(ui_big_chars, ARIAL_BOLD, size=32, stroke=1)
+    font_ui_big = build_font(ui_big_chars, ARIAL_BOLD, size=34, stroke=1)
 
     # Shared JP glyph map is much lighter than storing full phrase bitmaps.
-    jp_chars = "".join(sorted(set("バンクーバー東京月火水木金土日曜日")))
-    font_jp = build_font(jp_chars, ARIAL_UNICODE, size=30, stroke=0)
+    jp_chars = "".join(sorted(set(local_city_name_jp + remote_city_name_jp + "月火水木金土日曜日")))
+    font_jp = build_font(jp_chars, ARIAL_UNICODE, size=32, stroke=0)
 
     font_time = build_font("0123456789:", ARIAL_BOLD, size=90, stroke=1)
     font_date = build_font("0123456789/-年月日", ARIAL_UNICODE, size=22, stroke=0)

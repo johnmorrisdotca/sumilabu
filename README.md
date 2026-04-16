@@ -1,10 +1,11 @@
-# InkyFrame 7.3 Time MVP
+# SumiLabu Monorepo
 
-A MicroPython world clock and meeting board for Pimoroni InkyFrame (RP2040/Pico W). Shows dual time zones (Vancouver & Tokyo), local/JP dates, and meetings with custom bitmap fonts (including kanji). Features WiFi NTP sync, button modes, and a memory-safe, customizable e-paper display.
+This repository contains:
 
-This MVP replaces the screen content with two fixed-offset clocks:
-- Vancouver (Pacific Time, UTC offset set in code; does not auto-adjust for DST)
-- Japan (JST, UTC+9)
+- `firmware/`: MicroPython firmware for InkyFrame 7.3 (device clock app)
+- `sumilabu-dashboard/`: Next.js + Neon telemetry API/dashboard (Vercel)
+
+The firmware app renders dual clocks using configurable local/remote city settings from `secrets.py`.
 
 ## 1) Device prerequisites
 
@@ -26,25 +27,23 @@ python3 -m mpremote --help
 
 ## 3) Configure Wi-Fi credentials
 
-Create `secrets.py` from the template:
+Create `firmware/secrets.py` from the template:
 
 ```bash
-cp secrets.py.example secrets.py
+cp firmware/secrets.py.example firmware/secrets.py
 ```
 
-Then edit `secrets.py` with your Wi-Fi SSID and password.
+Then edit `firmware/secrets.py` with your Wi-Fi SSID/password and locality settings.
 
-## 4) Push files over USB (fast path)
+## 4) Push files over USB (safe path)
 
-From this project folder:
+From repository root:
 
 ```bash
-mpremote fs cp main.py :main.py
-mpremote fs cp secrets.py :secrets.py
-mpremote reset
+./deploy_safe.sh
 ```
 
-This will reboot the Pico W and run `main.py`, updating the display.
+This calls `firmware/deploy_safe.sh`, rebuilds bitmap assets, deploys files, runs probes, and resets the device.
 
 ## 5) Verify update
 
@@ -58,6 +57,37 @@ The e-ink screen should show:
 - No battery required for development over USB.
 - microSD is not required for this MVP.
 - If Wi-Fi/NTP fails, the app still renders using current RTC time.
+
+## Optional: SumiLabu Device Telemetry API (multi-device dashboard)
+
+You can enable periodic stats POSTs so multiple devices/projects report into one backend/UI.
+
+Set in `firmware/secrets.py`:
+
+- `STATS_API_URL`: API endpoint (empty disables telemetry)
+- `STATS_API_TOKEN`: optional bearer token
+- `STATS_DEVICE_ID`: unique ID per device (for grouping in your GUI)
+- `STATS_INTERVAL_SECONDS`: heartbeat interval (default `300`)
+
+Events sent:
+
+- `boot`
+- `mode_change`
+- `refresh`
+- `heartbeat`
+
+JSON fields include:
+
+- `device_id`, `app_version`, `event`, `mode`
+- `ntp_ok`, `bitmap_assets_ok`
+- `mem_free`, `mem_alloc`, `uptime_s`, `unix_ts`
+- `wifi`, `sync`
+
+Recommended backend shape for your GUI:
+
+- Table key: `(device_id, unix_ts)`
+- Latest-by-device card: sort by `unix_ts desc`
+- Alert if no heartbeat from a device for > 2x interval
 
 ## Next step ideas
 
