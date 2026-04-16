@@ -101,6 +101,7 @@ JST_OFFSET_HOURS = REMOTE_UTC_OFFSET
 REFRESH_SECONDS = 5 * 60
 STALE_RESTART_SECONDS = 20 * 60
 INVALID_CLOCK_RETRY_SECONDS = 30
+STARTUP_NTP_ATTEMPTS = 3
 NTP_RETRIES = 3
 MIN_VALID_YEAR = 2024
 WIFI_CONNECT_TIMEOUT_S = 35
@@ -1162,25 +1163,35 @@ def run_clock_loop():
     mode = MODE_A
 
     utc_epoch = time.time()
-    wlan = None
-    try:
-        if should_attempt_ntp(utc_epoch, last_ntp_sync_epoch):
-            wlan, wifi_text = connect_wifi()
-            if wlan:
-                ntp_ok, sync_text = sync_time_ntp()
-                if ntp_ok:
-                    last_ntp_sync_epoch = time.time()
-                post_device_stats("boot", mode, ntp_ok, bitmap_assets_ok, sync_text, wifi_text)
-        else:
-            ntp_ok = True
-            sync_text = "RTC ok"
-    except Exception as exc:
-        sync_text = "Boot err {}".format(type(exc).__name__)
-        last_error = type(exc).__name__
-    finally:
-        disconnect_wifi(wlan)
-        if wifi_text.startswith("WiFi: ") and wlan is not None:
-            wifi_text = "WiFi: off (last ok)"
+    if should_attempt_ntp(utc_epoch, last_ntp_sync_epoch):
+        attempts = STARTUP_NTP_ATTEMPTS if not clock_looks_valid(utc_epoch) else 1
+        for attempt in range(attempts):
+            wlan = None
+            try:
+                wlan, wifi_text = connect_wifi()
+                if wlan:
+                    ntp_ok, sync_text = sync_time_ntp()
+                    if ntp_ok:
+                        last_ntp_sync_epoch = time.time()
+                        post_device_stats("boot", mode, ntp_ok, bitmap_assets_ok, sync_text, wifi_text)
+                        last_error = ""
+                        break
+                    last_error = sync_text
+                else:
+                    last_error = wifi_text
+            except Exception as exc:
+                sync_text = "Boot err {}".format(type(exc).__name__)
+                last_error = type(exc).__name__
+            finally:
+                disconnect_wifi(wlan)
+                if wifi_text.startswith("WiFi: ") and wlan is not None:
+                    wifi_text = "WiFi: off (last ok)"
+
+            if attempt < (attempts - 1):
+                time.sleep(2)
+    else:
+        ntp_ok = True
+        sync_text = "RTC ok"
     utc_epoch = time.time()
 
     pst = timezone_struct(utc_epoch, PST_OFFSET_HOURS)
