@@ -1357,7 +1357,7 @@ def run_clock_loop():
                     ntp_ok = True
                     sync_text = "RTC ok"
                 if wlan:
-                    post_device_stats("button_d", mode, ntp_ok, bitmap_assets_ok, sync_text, wifi_text)
+                    post_device_stats("button_d", MODE_D, ntp_ok, bitmap_assets_ok, sync_text, wifi_text)
                 last_error = ""
             except Exception as exc:
                 last_error = type(exc).__name__
@@ -1393,7 +1393,8 @@ def run_clock_loop():
                 last_successful_draw_ms = mono_ms()
                 last_error = ""
                 if wlan:
-                    post_device_stats("refresh", mode, ntp_ok, bitmap_assets_ok, sync_text, wifi_text)
+                    event_mode = MODE_E if manual_refresh else mode
+                    post_device_stats("refresh", event_mode, ntp_ok, bitmap_assets_ok, sync_text, wifi_text)
             except Exception as exc:
                 sync_text = "Loop err {}".format(type(exc).__name__)
                 last_error = type(exc).__name__
