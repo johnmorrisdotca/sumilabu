@@ -86,11 +86,19 @@ Dashboard project filtering:
 
 3. Deploy.
 
+Recommended production hostnames:
+
+- Dashboard UI: `https://app.sumilabu.com`
+- Telemetry ingest: `https://api.sumilabu.com/api/device-stats`
+
+If you want one Vercel project to serve both UI and ingest, point both hostnames at this same app.
+
 ## Device config
 
 On each device (`secrets.py` in firmware repo):
 
 - `STATS_API_URL = "https://<your-vercel-domain>/api/device-stats"`
 - `STATS_API_TOKEN = "<same token as INGEST_API_TOKEN>"`
+- `STATS_PROJECT_KEY = "inkyframe"`
 - `STATS_DEVICE_ID = "unique-device-name"`
 - `STATS_INTERVAL_SECONDS = 300`
