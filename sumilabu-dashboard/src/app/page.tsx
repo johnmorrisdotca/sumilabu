@@ -359,7 +359,7 @@ export default async function Home({ searchParams }: PageProps) {
             <div className="flex items-start gap-4 max-w-3xl">
               <div className="relative hidden h-20 w-20 shrink-0 overflow-hidden rounded-full border border-stone-300/80 bg-white/70 shadow-[0_8px_24px_rgba(68,54,40,0.12)] sm:block">
                 <Image
-                  src="/sumilabu-foxmark.svg"
+                  src="/sumilabu.png"
                   alt="SumiLabu fox logo"
                   fill
                   sizes="80px"

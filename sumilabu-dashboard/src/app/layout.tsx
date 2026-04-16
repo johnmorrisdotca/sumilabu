@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   title: "SumiLabu Fleet Dashboard",
   description: "Telemetry dashboard for SumiLabu device projects.",
   icons: {
-    icon: "/sumilabu-foxmark.svg",
+    icon: "/sumilabu.png",
   },
 };
 
