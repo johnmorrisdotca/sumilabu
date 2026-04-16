@@ -76,9 +76,23 @@ def resolve_display_constant():
     requested = getattr(secrets, "INKY_DISPLAY", "auto") if secrets else "auto"
 
     if requested and requested != "auto":
-        display_constant = getattr(picographics, requested, None)
-        if display_constant is not None:
-            return display_constant, requested
+        # Accept common 5.7 naming variants across firmware builds.
+        aliases = [requested]
+        if requested == "DISPLAY_INKY_FRAME_5_7":
+            aliases.append("DISPLAY_INKY_FRAME_5")
+        elif requested == "DISPLAY_INKY_FRAME_5":
+            aliases.append("DISPLAY_INKY_FRAME_5_7")
+        elif requested == "DISPLAY_INKY_FRAME_7_3":
+            aliases.append("DISPLAY_INKY_FRAME_7")
+        elif requested == "DISPLAY_INKY_FRAME_7":
+            aliases.append("DISPLAY_INKY_FRAME_7_3")
+
+        for alias in aliases:
+            display_constant = getattr(picographics, alias, None)
+            if display_constant is not None:
+                return display_constant, alias
+
+        raise RuntimeError("Requested INKY_DISPLAY not found: {}".format(requested))
 
     candidates = (
         "DISPLAY_INKY_FRAME_7",
