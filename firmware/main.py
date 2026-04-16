@@ -665,13 +665,6 @@ def draw_syncing_screen(wifi_text, diag_text):
         draw_text_bold("00:00", LEFT_X, 95, COL_W, 6)
         draw_text_bold("00:00", RIGHT_X, 95, COL_W, 6)
 
-    draw_text_bold("Syncing time...", 20, 286, WIDTH - 40, 2, bold=False)
-    helper_text = "Waiting for WiFi/NTP"
-    if diag_text:
-        helper_text = diag_text
-    elif wifi_text:
-        helper_text = wifi_text
-    draw_text_bold(helper_text, 20, 314, WIDTH - 40, 2, bold=False)
     draw_footer("Syncing time...", wifi_text, diag_text)
     graphics.update()
 
