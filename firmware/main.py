@@ -143,6 +143,27 @@ def default_device_id():
 DEVICE_ID = default_device_id()
 
 
+def mono_ms():
+    try:
+        return time.ticks_ms()
+    except Exception:
+        return int(time.time() * 1000)
+
+
+def mono_add(base_ms, delta_ms):
+    try:
+        return time.ticks_add(base_ms, delta_ms)
+    except Exception:
+        return base_ms + delta_ms
+
+
+def mono_diff(newer_ms, older_ms):
+    try:
+        return time.ticks_diff(newer_ms, older_ms)
+    except Exception:
+        return newer_ms - older_ms
+
+
 def telemetry_enabled():
     return bool(STATS_API_URL and urequests)
 
@@ -241,8 +262,14 @@ def connect_wifi(timeout_s=WIFI_CONNECT_TIMEOUT_S):
         return wlan, "WiFi: {}".format(ssid)
 
     wlan.connect(ssid, password)
-    start = time.time()
-    while not wlan.isconnected() and (time.time() - start) < timeout_s:
+    start_ms = mono_ms()
+    timeout_ms = int(timeout_s * 1000)
+    while not wlan.isconnected() and mono_diff(mono_ms(), start_ms) < timeout_ms:
+        try:
+            if wlan.status() < 0:
+                break
+        except Exception:
+            pass
         time.sleep(0.2)
 
     if wlan.isconnected():
@@ -251,6 +278,14 @@ def connect_wifi(timeout_s=WIFI_CONNECT_TIMEOUT_S):
     status = "?"
     try:
         status = str(wlan.status())
+    except Exception:
+        pass
+    try:
+        wlan.disconnect()
+    except Exception:
+        pass
+    try:
+        wlan.active(False)
     except Exception:
         pass
     return None, "WiFi fail s={}".format(status)
@@ -363,6 +398,42 @@ def next_refresh_delay_s(current_epoch):
     if not clock_looks_valid(current_epoch):
         return INVALID_CLOCK_RETRY_SECONDS
     return REFRESH_SECONDS
+
+
+def compact_wifi_state(wifi_text):
+    if not wifi_text:
+        return "wifi=?"
+    if "missing creds" in wifi_text:
+        return "wifi=nocfg"
+    if wifi_text.startswith("WiFi fail"):
+        return "wifi=fail"
+    if "off" in wifi_text:
+        return "wifi=off"
+    return "wifi=ok"
+
+
+def compact_ntp_state(sync_text, ntp_ok):
+    if ntp_ok or (sync_text and sync_text.startswith("NTP ok")):
+        return "ntp=ok"
+    if sync_text and sync_text.startswith("NTP fail"):
+        return "ntp=fail"
+    if sync_text and sync_text.startswith("NTP: pending"):
+        return "ntp=pending"
+    return "ntp=?"
+
+
+def build_diag_line(utc_epoch, last_draw_ms, sync_text, ntp_ok, wifi_text, last_error):
+    age_s = max(0, mono_diff(mono_ms(), last_draw_ms) // 1000)
+    rtc_state = "rtc=ok" if clock_looks_valid(utc_epoch) else "rtc=bad"
+    diag = "diag {}s {} {} {}".format(
+        age_s,
+        rtc_state,
+        compact_ntp_state(sync_text, ntp_ok),
+        compact_wifi_state(wifi_text),
+    )
+    if last_error:
+        diag = "{} err={}".format(diag, last_error)
+    return diag
 
 
 def read_mode_button(current_mode):
@@ -484,6 +555,14 @@ def set_footer_font():
         graphics.set_font("bitmap8")
     except Exception:
         pass
+
+
+def draw_footer(status, wifi_text, diag_text):
+    set_footer_font()
+    draw_text_bold(status, 20, HEIGHT - 54, WIDTH - 40, 2, bold=False)
+    draw_text_bold("E=Refresh", 20, HEIGHT - 34, WIDTH // 2, 2, bold=False)
+    draw_text_bold(wifi_text, FOOTER_RIGHT_X, HEIGHT - 34, FOOTER_RIGHT_W, 2, bold=False)
+    graphics.text(diag_text, 20, HEIGHT - 16, WIDTH - 40, 1)
 
 
 def draw_text_bold(text, x, y, w, scale, bold=True):
@@ -744,7 +823,7 @@ def clear_inverted():
     graphics.set_pen(WHITE)
 
 
-def draw_mode_a(pst, jst, sync_ok, wifi_text):
+def draw_mode_a(pst, jst, sync_ok, wifi_text, diag_text):
     clear_inverted()
     set_best_font()
 
@@ -774,10 +853,7 @@ def draw_mode_a(pst, jst, sync_ok, wifi_text):
         draw_text_bold(weekday_keys[jst[6] % 7], RIGHT_X, 290, COL_W, 2, bold=False)
 
         status = "A Dual clocks | NTP synced" if sync_ok else "A Dual clocks | Clock not synced"
-        set_footer_font()
-        draw_text_bold(status, 20, HEIGHT - 54, WIDTH - 40, 2, bold=False)
-        draw_text_bold("E=Refresh", 20, HEIGHT - 34, WIDTH // 2, 2, bold=False)
-        draw_text_bold(wifi_text, FOOTER_RIGHT_X, HEIGHT - 34, FOOTER_RIGHT_W, 2, bold=False)
+        draw_footer(status, wifi_text, diag_text)
         graphics.update()
         return
 
@@ -859,15 +935,12 @@ def draw_mode_a(pst, jst, sync_ok, wifi_text):
     draw_jp_weekday(jst_weekday_key, RIGHT_X, WEEKDAY_Y_BOTTOM, COL_W)
 
     status = "A Dual clocks | NTP synced" if sync_ok else "A Dual clocks | Clock not synced"
-    set_footer_font()
-    draw_text_bold(status, 20, HEIGHT - 54, WIDTH - 40, 2, bold=False)
-    draw_text_bold("E=Refresh", 20, HEIGHT - 34, WIDTH // 2, 2, bold=False)
-    draw_text_bold(wifi_text, FOOTER_RIGHT_X, HEIGHT - 34, FOOTER_RIGHT_W, 2, bold=False)
+    draw_footer(status, wifi_text, diag_text)
 
     graphics.update()
 
 
-def draw_mode_b(now_utc_epoch, pst, sync_ok, wifi_text):
+def draw_mode_b(now_utc_epoch, pst, sync_ok, wifi_text, diag_text):
     meetings = next_meetings(now_utc_epoch, count=5)
 
     clear_inverted()
@@ -897,14 +970,11 @@ def draw_mode_b(now_utc_epoch, pst, sync_ok, wifi_text):
         y += 28
 
     status = "NTP synced" if sync_ok else "Clock not synced"
-    set_footer_font()
-    draw_text_bold(status, 20, HEIGHT - 54, WIDTH - 40, 2, bold=False)
-    draw_text_bold("E=Refresh", 20, HEIGHT - 34, WIDTH // 2, 2, bold=False)
-    draw_text_bold(wifi_text, FOOTER_RIGHT_X, HEIGHT - 34, FOOTER_RIGHT_W, 2, bold=False)
+    draw_footer(status, wifi_text, diag_text)
     graphics.update()
 
 
-def draw_mode_c(now_utc_epoch, jst, sync_ok, wifi_text):
+def draw_mode_c(now_utc_epoch, jst, sync_ok, wifi_text, diag_text):
     meetings = next_meetings(now_utc_epoch, count=5)
 
     clear_inverted()
@@ -934,14 +1004,11 @@ def draw_mode_c(now_utc_epoch, jst, sync_ok, wifi_text):
         y += 28
 
     status = "NTP synced" if sync_ok else "Clock not synced"
-    set_footer_font()
-    draw_text_bold(status, 20, HEIGHT - 54, WIDTH - 40, 2, bold=False)
-    draw_text_bold("E=Refresh", 20, HEIGHT - 34, WIDTH // 2, 2, bold=False)
-    draw_text_bold(wifi_text, FOOTER_RIGHT_X, HEIGHT - 34, FOOTER_RIGHT_W, 2, bold=False)
+    draw_footer(status, wifi_text, diag_text)
     graphics.update()
 
 
-def draw_mode_d(now_utc_epoch, sync_ok, wifi_text):
+def draw_mode_d(now_utc_epoch, sync_ok, wifi_text, diag_text):
     clear_inverted()
     set_best_font()
 
@@ -953,14 +1020,11 @@ def draw_mode_d(now_utc_epoch, sync_ok, wifi_text):
         y += 30
 
     status = "NTP synced" if sync_ok else "Clock not synced"
-    set_footer_font()
-    draw_text_bold(status, 20, HEIGHT - 54, WIDTH - 40, 2, bold=False)
-    draw_text_bold("E=Refresh", 20, HEIGHT - 34, WIDTH // 2, 2, bold=False)
-    draw_text_bold(wifi_text, FOOTER_RIGHT_X, HEIGHT - 34, FOOTER_RIGHT_W, 2, bold=False)
+    draw_footer(status, wifi_text, diag_text)
     graphics.update()
 
 
-def draw_mode_e(pst, jst, sync_ok, wifi_text):
+def draw_mode_e(pst, jst, sync_ok, wifi_text, diag_text):
     clear_inverted()
     set_best_font()
 
@@ -981,27 +1045,24 @@ def draw_mode_e(pst, jst, sync_ok, wifi_text):
     draw_text_bold("{:04d}/{:02d}/{:02d}".format(jst[0], jst[1], jst[2]), RIGHT_X, 270, COL_W, 2)
 
     status = "NTP synced" if sync_ok else "Clock not synced"
-    set_footer_font()
-    draw_text_bold(status, 20, HEIGHT - 54, WIDTH - 40, 2, bold=False)
-    draw_text_bold("E=Refresh", 20, HEIGHT - 34, WIDTH // 2, 2, bold=False)
-    draw_text_bold(wifi_text, FOOTER_RIGHT_X, HEIGHT - 34, FOOTER_RIGHT_W, 2, bold=False)
+    draw_footer(status, wifi_text, diag_text)
     graphics.update()
 
 
-def draw_by_mode(mode_key, now_utc_epoch, pst, jst, sync_ok, wifi_text):
+def draw_by_mode(mode_key, now_utc_epoch, pst, jst, sync_ok, wifi_text, diag_text):
     if mode_key == MODE_A:
-        draw_mode_a(pst, jst, sync_ok, wifi_text)
+        draw_mode_a(pst, jst, sync_ok, wifi_text, diag_text)
         return
     if mode_key == MODE_B:
-        draw_mode_b(now_utc_epoch, pst, sync_ok, wifi_text)
+        draw_mode_b(now_utc_epoch, pst, sync_ok, wifi_text, diag_text)
         return
     if mode_key == MODE_C:
-        draw_mode_c(now_utc_epoch, jst, sync_ok, wifi_text)
+        draw_mode_c(now_utc_epoch, jst, sync_ok, wifi_text, diag_text)
         return
     if mode_key == MODE_D:
-        draw_mode_d(now_utc_epoch, sync_ok, wifi_text)
+        draw_mode_d(now_utc_epoch, sync_ok, wifi_text, diag_text)
         return
-    draw_mode_e(pst, jst, sync_ok, wifi_text)
+    draw_mode_e(pst, jst, sync_ok, wifi_text, diag_text)
 
 
 def auto_recover_reset(reason_text):
@@ -1026,31 +1087,39 @@ def run_clock_loop():
     ntp_ok = False
     sync_text = "NTP: pending"
     wifi_text = "WiFi: off"
+    last_error = ""
     mode = MODE_A
 
     utc_epoch = time.time()
-    wlan, wifi_text = connect_wifi()
-    if wlan:
-        ntp_ok, sync_text = sync_time_ntp()
-        post_device_stats("boot", mode, ntp_ok, bitmap_assets_ok, sync_text, wifi_text)
-    disconnect_wifi(wlan)
-    if wifi_text.startswith("WiFi: ") and wlan is not None:
-        wifi_text = "WiFi: off (last ok)"
+    wlan = None
+    try:
+        wlan, wifi_text = connect_wifi()
+        if wlan:
+            ntp_ok, sync_text = sync_time_ntp()
+            post_device_stats("boot", mode, ntp_ok, bitmap_assets_ok, sync_text, wifi_text)
+    except Exception as exc:
+        sync_text = "Boot err {}".format(type(exc).__name__)
+        last_error = type(exc).__name__
+    finally:
+        disconnect_wifi(wlan)
+        if wifi_text.startswith("WiFi: ") and wlan is not None:
+            wifi_text = "WiFi: off (last ok)"
     utc_epoch = time.time()
 
     pst = timezone_struct(utc_epoch, PST_OFFSET_HOURS)
     jst = timezone_struct(utc_epoch, JST_OFFSET_HOURS)
+    last_successful_draw_ms = mono_ms()
+    diag_text = build_diag_line(utc_epoch, last_successful_draw_ms, sync_text, ntp_ok, wifi_text, last_error)
 
     startup_status = "{} | {}".format(sync_text, wifi_text)
     if not bitmap_assets_ok:
         startup_status = "{} | bitmap fallback".format(startup_status)
-    draw_by_mode(mode, utc_epoch, pst, jst, ntp_ok, startup_status)
+    draw_by_mode(mode, utc_epoch, pst, jst, ntp_ok, startup_status, diag_text)
     gc.collect()
 
     # Poll buttons quickly, refresh data every 5 minutes (or E button).
-    next_refresh = time.time() + next_refresh_delay_s(time.time())
-    next_stats = time.time() + STATS_INTERVAL_SECONDS
-    last_successful_draw = time.time()
+    next_refresh_ms = mono_add(mono_ms(), next_refresh_delay_s(time.time()) * 1000)
+    next_stats_ms = mono_add(mono_ms(), STATS_INTERVAL_SECONDS * 1000)
     prev_e_pressed = False
     while True:
         mode_new = read_mode_button(mode)
@@ -1060,20 +1129,24 @@ def run_clock_loop():
                 utc_epoch = time.time()
                 pst = timezone_struct(utc_epoch, PST_OFFSET_HOURS)
                 jst = timezone_struct(utc_epoch, JST_OFFSET_HOURS)
-                draw_by_mode(mode, utc_epoch, pst, jst, ntp_ok, "{} | {}".format(sync_text, wifi_text))
-                last_successful_draw = time.time()
+                diag_text = build_diag_line(utc_epoch, last_successful_draw_ms, sync_text, ntp_ok, wifi_text, last_error)
+                draw_by_mode(mode, utc_epoch, pst, jst, ntp_ok, "{} | {}".format(sync_text, wifi_text), diag_text)
+                last_successful_draw_ms = mono_ms()
                 post_device_stats("mode_change", mode, ntp_ok, bitmap_assets_ok, sync_text, wifi_text)
                 gc.collect()
             except Exception as exc:
                 sync_text = "Draw err {}".format(type(exc).__name__)
+                last_error = type(exc).__name__
             time.sleep(0.2)
             continue
 
         now_epoch = time.time()
+        now_ms = mono_ms()
         e_pressed = force_refresh_pressed()
         manual_refresh = e_pressed and not prev_e_pressed
         prev_e_pressed = e_pressed
-        if now_epoch >= next_refresh or manual_refresh:
+        if mono_diff(now_ms, next_refresh_ms) >= 0 or manual_refresh:
+            wlan = None
             try:
                 wlan, wifi_text = connect_wifi()
                 if wlan:
@@ -1082,29 +1155,38 @@ def run_clock_loop():
                 utc_epoch = time.time()
                 pst = timezone_struct(utc_epoch, PST_OFFSET_HOURS)
                 jst = timezone_struct(utc_epoch, JST_OFFSET_HOURS)
-                draw_by_mode(mode, utc_epoch, pst, jst, ntp_ok, "{} | {}".format(sync_text, wifi_text))
-                last_successful_draw = time.time()
+                diag_text = build_diag_line(utc_epoch, last_successful_draw_ms, sync_text, ntp_ok, wifi_text, last_error)
+                draw_by_mode(mode, utc_epoch, pst, jst, ntp_ok, "{} | {}".format(sync_text, wifi_text), diag_text)
+                last_successful_draw_ms = mono_ms()
+                last_error = ""
                 if wlan:
                     post_device_stats("refresh", mode, ntp_ok, bitmap_assets_ok, sync_text, wifi_text)
+            except Exception as exc:
+                sync_text = "Loop err {}".format(type(exc).__name__)
+                last_error = type(exc).__name__
+            finally:
                 disconnect_wifi(wlan)
                 if wifi_text.startswith("WiFi: ") and wlan is not None:
                     wifi_text = "WiFi: off (last ok)"
                 gc.collect()
-            except Exception as exc:
-                sync_text = "Loop err {}".format(type(exc).__name__)
 
-            next_refresh = now_epoch + next_refresh_delay_s(time.time())
+            next_refresh_ms = mono_add(mono_ms(), next_refresh_delay_s(time.time()) * 1000)
             if manual_refresh:
                 time.sleep(0.3)
 
-        if telemetry_enabled() and time.time() >= next_stats:
-            wlan, hb_wifi_text = connect_wifi()
-            if wlan:
-                post_device_stats("heartbeat", mode, ntp_ok, bitmap_assets_ok, sync_text, hb_wifi_text)
-            disconnect_wifi(wlan)
-            next_stats = time.time() + STATS_INTERVAL_SECONDS
+        if telemetry_enabled() and mono_diff(mono_ms(), next_stats_ms) >= 0:
+            wlan = None
+            try:
+                wlan, hb_wifi_text = connect_wifi()
+                if wlan:
+                    post_device_stats("heartbeat", mode, ntp_ok, bitmap_assets_ok, sync_text, hb_wifi_text)
+            except Exception as exc:
+                last_error = type(exc).__name__
+            finally:
+                disconnect_wifi(wlan)
+            next_stats_ms = mono_add(mono_ms(), STATS_INTERVAL_SECONDS * 1000)
 
-        if (time.time() - last_successful_draw) > STALE_RESTART_SECONDS:
+        if mono_diff(mono_ms(), last_successful_draw_ms) > (STALE_RESTART_SECONDS * 1000):
             auto_recover_reset("No refresh for {}m".format(STALE_RESTART_SECONDS // 60))
 
         time.sleep(0.2)
