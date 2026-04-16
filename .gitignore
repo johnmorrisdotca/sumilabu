@@ -1,3 +1,15 @@
 .venv-tools/
 __pycache__/
 *.pyc
+.DS_Store
+
+# Local secrets (use secrets.py.example as template)
+secrets.py
+firmware/secrets.py
+
+# Generic env files
+.env
+.env.*
+
+# Keep example templates commit-able
+!**/.env.example
