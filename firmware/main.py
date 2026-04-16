@@ -1,16 +1,4 @@
-# --- Display Constants ---
-TITLE_BOTTOM = 66
-JP_LABEL_Y_OFFSET = 6
-TIME_Y_BOTTOM = 245
-TIME_SCALE_FACTOR = 1.58
-DATE_Y_BOTTOM = 296
-WEEKDAY_Y_BOTTOM = 336
-COL_W_SPACING = 1
-TIME_SPACING = 2
-DATE_SPACING = 2
-TIME_COLON_Y_OFFSET = -24
-FOOTER_PAD_X = 20
-"""InkyFrame 7.3: A-E button modes for configurable local/remote clocks.
+"""InkyFrame clock firmware for multiple device profiles.
 
 Drop this file onto the Pico W running Pimoroni MicroPython firmware.
 """
@@ -46,7 +34,7 @@ gc.collect()
 import ntptime  # type: ignore[import-not-found]
 import network  # type: ignore[import-not-found]
 import inky_frame  # type: ignore[import-not-found]
-from picographics import DISPLAY_INKY_FRAME_7 as DISPLAY  # type: ignore[import-not-found]
+import picographics  # type: ignore[import-not-found]
 from picographics import PicoGraphics  # type: ignore[import-not-found]
 
 try:
@@ -83,6 +71,45 @@ def get_urequests():
             urequests = False
     return urequests or None
 
+
+def resolve_display_constant():
+    requested = getattr(secrets, "INKY_DISPLAY", "auto") if secrets else "auto"
+
+    if requested and requested != "auto":
+        display_constant = getattr(picographics, requested, None)
+        if display_constant is not None:
+            return display_constant, requested
+
+    candidates = (
+        "DISPLAY_INKY_FRAME_7",
+        "DISPLAY_INKY_FRAME_7_3",
+        "DISPLAY_INKY_FRAME_5_7",
+        "DISPLAY_INKY_FRAME_5",
+        "DISPLAY_INKY_FRAME",
+    )
+    for name in candidates:
+        display_constant = getattr(picographics, name, None)
+        if display_constant is not None:
+            return display_constant, name
+
+    raise RuntimeError("No supported InkyFrame display constant found in picographics")
+
+
+DISPLAY, DISPLAY_MODEL = resolve_display_constant()
+
+# --- Display Constants (dual-clock layout baseline) ---
+TITLE_BOTTOM = 66
+JP_LABEL_Y_OFFSET = 6
+TIME_Y_BOTTOM = 245
+TIME_SCALE_FACTOR = 1.58
+DATE_Y_BOTTOM = 296
+WEEKDAY_Y_BOTTOM = 336
+COL_W_SPACING = 1
+TIME_SPACING = 2
+DATE_SPACING = 2
+TIME_COLON_Y_OFFSET = -24
+FOOTER_PAD_X = 20
+
 # Generic locality config (defaults preserve existing Vancouver/Tokyo behavior).
 LOCAL_CITY_NAME = getattr(secrets, "LOCAL_CITY_NAME", "VANCOUVER").upper() if secrets else "VANCOUVER"
 REMOTE_CITY_NAME = getattr(secrets, "REMOTE_CITY_NAME", "TOKYO").upper() if secrets else "TOKYO"
@@ -95,6 +122,8 @@ REMOTE_UTC_OFFSET = getattr(secrets, "REMOTE_UTC_OFFSET", 9) if secrets else 9
 
 LOCAL_TZ_LABEL = getattr(secrets, "LOCAL_TZ_LABEL", "LOCAL") if secrets else "LOCAL"
 REMOTE_TZ_LABEL = getattr(secrets, "REMOTE_TZ_LABEL", "JST") if secrets else "JST"
+DEVICE_PROFILE = (getattr(secrets, "DEVICE_PROFILE", "dual") if secrets else "dual").lower()
+JAPAN_ONLY_PROFILE = DEVICE_PROFILE in ("japan", "japan-only", "jp")
 
 PST_OFFSET_HOURS = LOCAL_UTC_OFFSET
 JST_OFFSET_HOURS = REMOTE_UTC_OFFSET
@@ -109,7 +138,7 @@ WATCHDOG_MAX_TIMEOUT_MS = getattr(secrets, "WATCHDOG_MAX_TIMEOUT_MS", 8388) if s
 WATCHDOG_REQUESTED_TIMEOUT_MS = getattr(secrets, "WATCHDOG_TIMEOUT_MS", WATCHDOG_MAX_TIMEOUT_MS) if secrets else WATCHDOG_MAX_TIMEOUT_MS
 WATCHDOG_TIMEOUT_MS = max(1000, min(WATCHDOG_REQUESTED_TIMEOUT_MS, WATCHDOG_MAX_TIMEOUT_MS))
 WATCHDOG_CLAMPED = WATCHDOG_TIMEOUT_MS != WATCHDOG_REQUESTED_TIMEOUT_MS
-APP_VERSION = "2026-04-16"
+APP_VERSION = "2026-04-16-2"
 NTP_RESYNC_SECONDS = getattr(secrets, "NTP_RESYNC_SECONDS", 0) if secrets else 0
 
 STATS_API_URL = getattr(secrets, "STATS_API_URL", None) if secrets else None
@@ -119,6 +148,11 @@ STATS_PROJECT_KEY = getattr(secrets, "STATS_PROJECT_KEY", "inkyframe") if secret
 STATS_INTERVAL_SECONDS = getattr(secrets, "STATS_INTERVAL_SECONDS", REFRESH_SECONDS) if secrets else REFRESH_SECONDS
 STATS_HTTP_TIMEOUT_S = getattr(secrets, "STATS_HTTP_TIMEOUT_S", 8) if secrets else 8
 RENDER_WDT_FEED_ROWS = 8
+
+ACTIVE_CITY_NAME = getattr(secrets, "ACTIVE_CITY_NAME", REMOTE_CITY_NAME) if secrets else REMOTE_CITY_NAME
+ACTIVE_CITY_NAME_JP = getattr(secrets, "ACTIVE_CITY_NAME_JP", REMOTE_CITY_NAME_JP) if secrets else REMOTE_CITY_NAME_JP
+ACTIVE_UTC_OFFSET = getattr(secrets, "ACTIVE_UTC_OFFSET", REMOTE_UTC_OFFSET) if secrets else REMOTE_UTC_OFFSET
+ACTIVE_TZ_LABEL = getattr(secrets, "ACTIVE_TZ_LABEL", REMOTE_TZ_LABEL) if secrets else REMOTE_TZ_LABEL
 
 MODE_A = "A"
 MODE_B = "B"
@@ -154,12 +188,14 @@ REQUIRED_UI_BIG_CHARS = tuple("".join(sorted(set(LOCAL_CITY_NAME + REMOTE_CITY_N
 def default_device_id():
     if STATS_DEVICE_ID:
         return STATS_DEVICE_ID
+    prefix = "inky-jp" if JAPAN_ONLY_PROFILE else "inky-dual"
     if machine and hasattr(machine, "unique_id") and ubinascii:
         try:
-            return ubinascii.hexlify(machine.unique_id()).decode("ascii")
+            chip_id = ubinascii.hexlify(machine.unique_id()).decode("ascii")
+            return "{}-{}-{}".format(prefix, DISPLAY_MODEL.lower().replace("display_", "").replace("_", ""), chip_id[-6:])
         except Exception:
             pass
-    return "inky-unknown"
+    return "{}-unknown".format(prefix)
 
 
 DEVICE_ID = default_device_id()
@@ -269,6 +305,8 @@ def post_device_stats(event_name, mode, ntp_ok, bitmap_assets_ok, sync_text, wif
         "event": event_name,
         "project_key": STATS_PROJECT_KEY,
         "device_id": DEVICE_ID,
+        "device_profile": DEVICE_PROFILE,
+        "display_model": DISPLAY_MODEL,
         "app_version": APP_VERSION,
         "mode": mode,
         "ntp_ok": bool(ntp_ok),
@@ -554,6 +592,8 @@ def diag_alert_text(utc_epoch, sync_text, ntp_ok, wifi_text, last_error):
 
 def read_mode_button(current_mode):
     """Return selected mode from A-C if a button is pressed."""
+    if JAPAN_ONLY_PROFILE:
+        return MODE_C
     try:
         if inky_frame.button_a.read():
             return MODE_A
@@ -1277,8 +1317,61 @@ def draw_mode_e(pst, jst, sync_ok, wifi_text, diag_text):
     graphics.update()
 
 
+def draw_mode_japan_only(jst, sync_ok, wifi_text, diag_text):
+    clear_inverted()
+    set_best_font()
+
+    title_bottom = max(52, int(HEIGHT * 0.17))
+    label_bottom = title_bottom + max(20, int(HEIGHT * 0.07))
+    time_bottom = max(label_bottom + 64, int(HEIGHT * 0.58))
+    date_bottom = max(time_bottom + 40, int(HEIGHT * 0.74))
+    weekday_bottom = max(date_bottom + 34, int(HEIGHT * 0.84))
+
+    if custom_assets_ready():
+        draw_bitmap_text_bottom(ACTIVE_CITY_NAME, FONT_UI_BIG, 20, title_bottom, WIDTH - 40, spacing=COL_W_SPACING)
+        draw_bitmap_text_bottom(
+            ACTIVE_CITY_NAME_JP,
+            FONT_JP,
+            20,
+            label_bottom,
+            WIDTH - 40,
+            spacing=COL_W_SPACING,
+            char_y_offsets={"ー": -12} if "ー" in ACTIVE_CITY_NAME_JP else None,
+        )
+
+        time_scale = 1.34 if WIDTH >= 760 else 1.18
+        draw_bitmap_text_bottom(
+            fmt_time(jst),
+            FONT_TIME,
+            20,
+            time_bottom,
+            WIDTH - 40,
+            spacing=TIME_SPACING,
+            height_scale=time_scale,
+            center_chars={":"},
+            center_reference_chars=set("0123456789"),
+            char_y_offsets={":": TIME_COLON_Y_OFFSET},
+        )
+        draw_bitmap_text_bottom(fmt_date_jp(jst), FONT_DATE, 20, date_bottom, WIDTH - 40, spacing=DATE_SPACING)
+
+        weekday_keys = ("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY")
+        draw_jp_weekday(weekday_keys[jst[6] % 7], 20, weekday_bottom, WIDTH - 40)
+    else:
+        draw_text_bold(ACTIVE_CITY_NAME, 20, 24, WIDTH - 40, 2)
+        draw_text_bold(fmt_time(jst), 20, max(78, int(HEIGHT * 0.26)), WIDTH - 40, 7)
+        draw_text_bold(fmt_date_jp(jst), 20, max(188, int(HEIGHT * 0.54)), WIDTH - 40, 2, bold=False)
+        draw_text_bold(ACTIVE_TZ_LABEL, 20, max(228, int(HEIGHT * 0.64)), WIDTH - 40, 2, bold=False)
+
+    status = "JP focus | NTP synced" if sync_ok else "JP focus | Clock not synced"
+    draw_footer(status, wifi_text, diag_text)
+    graphics.update()
+
+
 def draw_by_mode(mode_key, now_utc_epoch, pst, jst, sync_ok, wifi_text, diag_text):
     feed_watchdog()
+    if JAPAN_ONLY_PROFILE:
+        draw_mode_japan_only(jst, sync_ok, wifi_text, diag_text)
+        return
     if not clock_looks_valid(now_utc_epoch):
         draw_syncing_screen(wifi_text, diag_text)
         return
@@ -1322,7 +1415,7 @@ def run_clock_loop():
     wifi_text = "WiFi: off"
     last_error = ""
     last_ntp_sync_epoch = 0
-    mode = MODE_A
+    mode = MODE_C if JAPAN_ONLY_PROFILE else MODE_A
 
     utc_epoch = time.time()
     if should_attempt_ntp(utc_epoch, last_ntp_sync_epoch):
@@ -1358,7 +1451,8 @@ def run_clock_loop():
     utc_epoch = time.time()
 
     pst = timezone_struct(utc_epoch, PST_OFFSET_HOURS)
-    jst = timezone_struct(utc_epoch, JST_OFFSET_HOURS)
+    jst_offset = ACTIVE_UTC_OFFSET if JAPAN_ONLY_PROFILE else JST_OFFSET_HOURS
+    jst = timezone_struct(utc_epoch, jst_offset)
     last_successful_draw_ms = mono_ms()
     diag_text = diag_alert_text(utc_epoch, sync_text, ntp_ok, wifi_text, last_error)
 
@@ -1378,7 +1472,8 @@ def run_clock_loop():
             try:
                 utc_epoch = time.time()
                 pst = timezone_struct(utc_epoch, PST_OFFSET_HOURS)
-                jst = timezone_struct(utc_epoch, JST_OFFSET_HOURS)
+                jst_offset = ACTIVE_UTC_OFFSET if JAPAN_ONLY_PROFILE else JST_OFFSET_HOURS
+                jst = timezone_struct(utc_epoch, jst_offset)
                 diag_text = diag_alert_text(utc_epoch, sync_text, ntp_ok, wifi_text, last_error)
                 draw_by_mode(mode, utc_epoch, pst, jst, ntp_ok, wifi_text, diag_text)
                 last_successful_draw_ms = mono_ms()
@@ -1442,7 +1537,8 @@ def run_clock_loop():
 
                 utc_epoch = time.time()
                 pst = timezone_struct(utc_epoch, PST_OFFSET_HOURS)
-                jst = timezone_struct(utc_epoch, JST_OFFSET_HOURS)
+                jst_offset = ACTIVE_UTC_OFFSET if JAPAN_ONLY_PROFILE else JST_OFFSET_HOURS
+                jst = timezone_struct(utc_epoch, jst_offset)
                 diag_text = diag_alert_text(utc_epoch, sync_text, ntp_ok, wifi_text, last_error)
                 draw_by_mode(mode, utc_epoch, pst, jst, ntp_ok, wifi_text, diag_text)
                 last_successful_draw_ms = mono_ms()

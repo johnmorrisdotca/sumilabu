@@ -2,14 +2,17 @@
 
 This repository contains:
 
-- `firmware/`: MicroPython firmware for InkyFrame 7.3 (device clock app)
+- `firmware/`: MicroPython firmware for InkyFrame 7.3 / 5.7 (device clock app)
 - `sumilabu-dashboard/`: Next.js + Neon telemetry API/dashboard (Vercel)
 
-The firmware app renders dual clocks using configurable local/remote city settings from `secrets.py`.
+The firmware app supports per-device profiles using `secrets.py`:
+
+- `DEVICE_PROFILE="dual"` for local/remote dual clocks (7.3 default)
+- `DEVICE_PROFILE="japan"` for a Japan-only full-screen layout (great for 5.7)
 
 ## 1) Device prerequisites
 
-1. Flash Pimoroni MicroPython firmware for InkyFrame 7.3 (Pico W).
+1. Flash Pimoroni MicroPython firmware for your InkyFrame model (7.3 or 5.7, Pico W).
 2. Connect the board to your Mac over USB.
 3. Ensure the board appears to `mpremote` as a USB serial device.
 
@@ -33,7 +36,18 @@ Create `firmware/secrets.py` from the template:
 cp firmware/secrets.py.example firmware/secrets.py
 ```
 
-Then edit `firmware/secrets.py` with your Wi-Fi SSID/password and locality settings.
+Then edit `firmware/secrets.py` with your Wi-Fi SSID/password and profile settings.
+
+Recommended for two devices:
+
+- Device 1 (InkyFrame 7.3):
+	- `DEVICE_PROFILE = "dual"`
+	- `STATS_DEVICE_ID = "inkyframe-office"`
+- Device 2 (InkyFrame 5.7):
+	- `DEVICE_PROFILE = "japan"`
+	- `STATS_DEVICE_ID = "inkyframe-japan-57"`
+	- `STATS_PROJECT_KEY = "inkyframe-japan"` (optional but recommended)
+	- `ACTIVE_CITY_NAME = "TOKYO"`, `ACTIVE_UTC_OFFSET = 9`
 
 ## 4) Push files over USB (safe path)
 
@@ -47,10 +61,10 @@ This calls `firmware/deploy_safe.sh`, rebuilds bitmap assets, deploys files, run
 
 ## 5) Verify update
 
-The e-ink screen should show:
-- Title: "InkyFrame 7.3 - Time MVP"
-- Vancouver (Pacific Time)
-- Japan (JST)
+The e-ink screen should show your configured profile:
+
+- `dual`: local + remote clock columns
+- `japan`: single, full-screen Japan time/date view
 
 ## Notes
 
@@ -67,6 +81,8 @@ Set in `firmware/secrets.py`:
 - `STATS_API_URL`: API endpoint (empty disables telemetry)
 - `STATS_API_TOKEN`: optional bearer token
 - `STATS_DEVICE_ID`: unique ID per device (for grouping in your GUI)
+- `DEVICE_PROFILE`: profile marker (`dual` or `japan`) included in payload
+- `display_model`: auto-detected display constant included in payload
 - `STATS_INTERVAL_SECONDS`: heartbeat interval (default `300`)
 
 Events sent:
