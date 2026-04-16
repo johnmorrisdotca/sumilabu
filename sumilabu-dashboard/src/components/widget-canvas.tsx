@@ -3,6 +3,11 @@
 import { useEffect } from "react";
 import type { ReactNode } from "react";
 
+const GRID_COLUMNS = 12;
+const MIN_COLS = 4;
+const MIN_ROWS = 2;
+const MAX_ROWS = 10;
+
 type WidgetCanvasProps = {
   children: ReactNode;
   storageKey: string;
@@ -11,8 +16,20 @@ type WidgetCanvasProps = {
 type WidgetState = {
   order?: string[];
   collapsed?: Record<string, boolean>;
-  sizes?: Record<string, { width: number; height: number }>;
+  sizes?: Record<string, { cols: number; rows: number }>;
 };
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
+function parseNumberAttribute(value: string | undefined, fallback: number): number {
+  if (!value) {
+    return fallback;
+  }
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
 
 function readState(storageKey: string): WidgetState {
   if (typeof window === "undefined") {
@@ -40,11 +57,11 @@ function writeState(storageKey: string, state: WidgetState): void {
 
 export function WidgetCanvas({ children, storageKey }: WidgetCanvasProps) {
   useEffect(() => {
-    const zone = document.querySelector("[data-widget-zone]");
-    if (!zone) {
+    const foundZone = document.querySelector<HTMLElement>("[data-widget-zone]");
+    if (!foundZone) {
       return;
     }
-    const widgetZone = zone as HTMLElement;
+    const widgetZone: HTMLElement = foundZone;
 
     const state = readState(storageKey);
     const widgets = Array.from(widgetZone.querySelectorAll<HTMLElement>(":scope > [data-widget-id]"));
@@ -66,6 +83,30 @@ export function WidgetCanvas({ children, storageKey }: WidgetCanvasProps) {
 
     const dragState: { draggingId: string | null } = { draggingId: null };
 
+    function defaultSize(widget: HTMLElement) {
+      return {
+        cols: clamp(parseNumberAttribute(widget.dataset.widgetCols, GRID_COLUMNS), MIN_COLS, GRID_COLUMNS),
+        rows: clamp(parseNumberAttribute(widget.dataset.widgetRows, 3), MIN_ROWS, MAX_ROWS),
+      };
+    }
+
+    function applyWidgetSize(widget: HTMLElement, cols: number, rows: number) {
+      const snappedCols = clamp(cols, MIN_COLS, GRID_COLUMNS);
+      const snappedRows = clamp(rows, MIN_ROWS, MAX_ROWS);
+      widget.style.gridColumn = `span ${snappedCols} / span ${snappedCols}`;
+      widget.style.gridRow = `span ${snappedRows} / span ${snappedRows}`;
+      widget.style.minHeight = `${snappedRows * 120}px`;
+      widget.dataset.widgetColsCurrent = String(snappedCols);
+      widget.dataset.widgetRowsCurrent = String(snappedRows);
+    }
+
+    function currentSize(widget: HTMLElement) {
+      return {
+        cols: parseNumberAttribute(widget.dataset.widgetColsCurrent, defaultSize(widget).cols),
+        rows: parseNumberAttribute(widget.dataset.widgetRowsCurrent, defaultSize(widget).rows),
+      };
+    }
+
     function saveOrder() {
       const order = Array.from(widgetZone.querySelectorAll<HTMLElement>(":scope > [data-widget-id]"))
         .map((widget) => widget.dataset.widgetId)
@@ -74,19 +115,13 @@ export function WidgetCanvas({ children, storageKey }: WidgetCanvasProps) {
       writeState(storageKey, state);
     }
 
-    function saveSize(widget: HTMLElement) {
-      const id = widget.dataset.widgetId;
-      if (!id) {
-        return;
-      }
-
+    function saveSize(id: string, cols: number, rows: number) {
       if (!state.sizes) {
         state.sizes = {};
       }
-
       state.sizes[id] = {
-        width: Math.round(widget.offsetWidth),
-        height: Math.round(widget.offsetHeight),
+        cols: clamp(cols, MIN_COLS, GRID_COLUMNS),
+        rows: clamp(rows, MIN_ROWS, MAX_ROWS),
       };
       writeState(storageKey, state);
     }
@@ -99,23 +134,27 @@ export function WidgetCanvas({ children, storageKey }: WidgetCanvasProps) {
       writeState(storageKey, state);
     }
 
-    const observers: ResizeObserver[] = [];
-
     for (const widget of Array.from(widgetZone.querySelectorAll<HTMLElement>(":scope > [data-widget-id]"))) {
       const id = widget.dataset.widgetId;
       if (!id || widget.dataset.widgetEnhanced === "true") {
         continue;
       }
+      const widgetId = id;
 
       widget.dataset.widgetEnhanced = "true";
-      widget.classList.add("relative", "overflow-auto");
-      widget.style.resize = "both";
-      widget.style.minHeight = "160px";
+      widget.classList.add("relative", "min-w-0", "overflow-hidden");
+
+      const savedSize = state.sizes?.[widgetId];
+      const initialSize = {
+        cols: savedSize?.cols ?? defaultSize(widget).cols,
+        rows: savedSize?.rows ?? defaultSize(widget).rows,
+      };
+      applyWidgetSize(widget, initialSize.cols, initialSize.rows);
 
       const currentChildren = Array.from(widget.childNodes);
       const body = document.createElement("div");
       body.dataset.widgetBody = "true";
-      body.className = "space-y-0";
+      body.className = "min-h-0";
 
       const title = widget.dataset.widgetTitle || id;
       const handle = document.createElement("div");
@@ -126,11 +165,40 @@ export function WidgetCanvas({ children, storageKey }: WidgetCanvasProps) {
       const controls = document.createElement("div");
       controls.className = "flex items-center gap-2";
 
+      const widthDownButton = document.createElement("button");
+      widthDownButton.type = "button";
+      widthDownButton.className = "rounded-full border border-stone-300 px-2 py-1 text-[11px] text-stone-700 transition hover:border-stone-500 hover:bg-white";
+      widthDownButton.textContent = "W-";
+
+      const widthUpButton = document.createElement("button");
+      widthUpButton.type = "button";
+      widthUpButton.className = "rounded-full border border-stone-300 px-2 py-1 text-[11px] text-stone-700 transition hover:border-stone-500 hover:bg-white";
+      widthUpButton.textContent = "W+";
+
+      const heightDownButton = document.createElement("button");
+      heightDownButton.type = "button";
+      heightDownButton.className = "rounded-full border border-stone-300 px-2 py-1 text-[11px] text-stone-700 transition hover:border-stone-500 hover:bg-white";
+      heightDownButton.textContent = "H-";
+
+      const heightUpButton = document.createElement("button");
+      heightUpButton.type = "button";
+      heightUpButton.className = "rounded-full border border-stone-300 px-2 py-1 text-[11px] text-stone-700 transition hover:border-stone-500 hover:bg-white";
+      heightUpButton.textContent = "H+";
+
+      const sizeLabel = document.createElement("span");
+      sizeLabel.className = "rounded-full border border-stone-300 bg-white px-2 py-1 font-mono text-[11px] text-stone-700";
+      sizeLabel.textContent = `${initialSize.cols}x${initialSize.rows}`;
+
       const collapseButton = document.createElement("button");
       collapseButton.type = "button";
       collapseButton.className = "rounded-full border border-stone-300 px-2 py-1 text-[11px] text-stone-700 transition hover:border-stone-500 hover:bg-white";
       collapseButton.textContent = "Collapse";
 
+      controls.appendChild(widthDownButton);
+      controls.appendChild(widthUpButton);
+      controls.appendChild(heightDownButton);
+      controls.appendChild(heightUpButton);
+      controls.appendChild(sizeLabel);
       controls.appendChild(collapseButton);
       handle.appendChild(controls);
 
@@ -145,13 +213,54 @@ export function WidgetCanvas({ children, storageKey }: WidgetCanvasProps) {
       if (restoreCollapsed) {
         body.style.display = "none";
         collapseButton.textContent = "Expand";
+        widget.style.minHeight = "auto";
+        widget.style.gridRow = "span 1 / span 1";
       }
+
+      function updateSizeLabel() {
+        const size = currentSize(widget);
+        sizeLabel.textContent = `${size.cols}x${size.rows}`;
+      }
+
+      function resizeWidget(nextCols: number, nextRows: number) {
+        applyWidgetSize(widget, nextCols, nextRows);
+        saveSize(widgetId, nextCols, nextRows);
+        updateSizeLabel();
+      }
+
+      widthDownButton.addEventListener("click", () => {
+        const size = currentSize(widget);
+        resizeWidget(size.cols - 1, size.rows);
+      });
+
+      widthUpButton.addEventListener("click", () => {
+        const size = currentSize(widget);
+        resizeWidget(size.cols + 1, size.rows);
+      });
+
+      heightDownButton.addEventListener("click", () => {
+        const size = currentSize(widget);
+        resizeWidget(size.cols, size.rows - 1);
+      });
+
+      heightUpButton.addEventListener("click", () => {
+        const size = currentSize(widget);
+        resizeWidget(size.cols, size.rows + 1);
+      });
 
       collapseButton.addEventListener("click", () => {
         const collapsed = body.style.display !== "none";
         body.style.display = collapsed ? "none" : "";
         collapseButton.textContent = collapsed ? "Expand" : "Collapse";
-        saveCollapsed(id, collapsed);
+        if (collapsed) {
+          widget.style.minHeight = "auto";
+          widget.style.gridRow = "span 1 / span 1";
+        } else {
+          const size = state.sizes?.[widgetId] || defaultSize(widget);
+          applyWidgetSize(widget, size.cols, size.rows);
+          updateSizeLabel();
+        }
+        saveCollapsed(widgetId, collapsed);
       });
 
       handle.addEventListener("dragstart", () => {
@@ -189,27 +298,11 @@ export function WidgetCanvas({ children, storageKey }: WidgetCanvasProps) {
         }
         saveOrder();
       });
-
-      const savedSize = state.sizes?.[id];
-      if (savedSize?.width && savedSize?.height) {
-        widget.style.width = `${savedSize.width}px`;
-        widget.style.height = `${savedSize.height}px`;
-      }
-
-      const observer = new ResizeObserver(() => saveSize(widget));
-      observer.observe(widget);
-      observers.push(observer);
     }
-
-    return () => {
-      for (const observer of observers) {
-        observer.disconnect();
-      }
-    };
   }, [storageKey]);
 
   return (
-    <div data-widget-zone className="grid gap-6">
+    <div data-widget-zone className="grid grid-cols-1 gap-4 lg:grid-cols-12">
       {children}
     </div>
   );
