@@ -271,6 +271,8 @@ type PageProps = {
 
 export default async function Home({ searchParams }: PageProps) {
   const params = (await searchParams) || {};
+  const localTimeNow = formatHourMinuteAtOffset(new Date(), DASHBOARD_UTC_OFFSET_HOURS);
+  const localTimezoneLabel = `UTC${DASHBOARD_UTC_OFFSET_HOURS >= 0 ? "+" : ""}${DASHBOARD_UTC_OFFSET_HOURS}`;
 
   const [deviceProjects, eventProjects] = await Promise.all([
     prisma.device.findMany({
@@ -392,6 +394,10 @@ export default async function Home({ searchParams }: PageProps) {
             </div>
 
             <div className="grid min-w-[280px] gap-3 rounded-2xl border border-stone-300/80 bg-white/75 p-4 backdrop-blur">
+              <div className="rounded-xl border border-stone-300/70 bg-white/85 px-3 py-2">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-stone-500">Local time ({localTimezoneLabel})</p>
+                <p className="font-mono text-3xl font-semibold leading-none text-stone-900 md:text-4xl">{localTimeNow}</p>
+              </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-stone-500">Current project</span>
                 <span className="font-mono text-xs text-stone-700">{selectedProject}</span>
