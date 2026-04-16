@@ -105,8 +105,8 @@ STARTUP_NTP_ATTEMPTS = 3
 NTP_RETRIES = 3
 MIN_VALID_YEAR = 2024
 WIFI_CONNECT_TIMEOUT_S = 35
-WATCHDOG_TIMEOUT_MS = getattr(secrets, "WATCHDOG_TIMEOUT_MS", 8000) if secrets else 8000
-APP_VERSION = "2026-04-15"
+WATCHDOG_TIMEOUT_MS = getattr(secrets, "WATCHDOG_TIMEOUT_MS", 60000) if secrets else 60000
+APP_VERSION = "2026-04-16"
 NTP_RESYNC_SECONDS = getattr(secrets, "NTP_RESYNC_SECONDS", 0) if secrets else 0
 
 STATS_API_URL = getattr(secrets, "STATS_API_URL", None) if secrets else None
@@ -1225,6 +1225,7 @@ def draw_mode_e(pst, jst, sync_ok, wifi_text, diag_text):
 
 
 def draw_by_mode(mode_key, now_utc_epoch, pst, jst, sync_ok, wifi_text, diag_text):
+    feed_watchdog()
     if not clock_looks_valid(now_utc_epoch):
         draw_syncing_screen(wifi_text, diag_text)
         return
@@ -1250,6 +1251,7 @@ def auto_recover_reset(reason_text):
         set_footer_font()
         draw_text_bold("Auto-recover restart", 20, 20, WIDTH - 40, 2, bold=False)
         draw_text_bold(reason_text, 20, 50, WIDTH - 40, 2, bold=False)
+        feed_watchdog()
         graphics.update()
     except Exception:
         pass
