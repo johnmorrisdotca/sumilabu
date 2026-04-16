@@ -436,6 +436,18 @@ def build_diag_line(utc_epoch, last_draw_ms, sync_text, ntp_ok, wifi_text, last_
     return diag
 
 
+def diag_alert_text(utc_epoch, sync_text, ntp_ok, wifi_text, last_error):
+    if last_error:
+        return "ERR {}".format(last_error)
+    if not clock_looks_valid(utc_epoch):
+        return "RTC BAD"
+    if sync_text and sync_text.startswith("NTP fail"):
+        return "NTP FAIL"
+    if wifi_text and wifi_text.startswith("WiFi fail"):
+        return wifi_text
+    return ""
+
+
 def read_mode_button(current_mode):
     """Return selected mode from A-D if a button is pressed."""
     try:
@@ -560,9 +572,12 @@ def set_footer_font():
 def draw_footer(status, wifi_text, diag_text):
     set_footer_font()
     draw_text_bold(status, 20, HEIGHT - 54, WIDTH - 40, 2, bold=False)
-    draw_text_bold("E=Refresh", 20, HEIGHT - 34, WIDTH // 2, 2, bold=False)
-    draw_text_bold(wifi_text, FOOTER_RIGHT_X, HEIGHT - 34, FOOTER_RIGHT_W, 2, bold=False)
-    graphics.text(diag_text, 20, HEIGHT - 16, WIDTH - 40, 1)
+    left_text = "E=Refresh"
+    right_text = wifi_text
+    if diag_text:
+        right_text = diag_text
+    draw_text_bold(left_text, 20, HEIGHT - 34, WIDTH // 2, 2, bold=False)
+    draw_text_bold(right_text, FOOTER_RIGHT_X, HEIGHT - 34, FOOTER_RIGHT_W, 2, bold=False)
 
 
 def draw_text_bold(text, x, y, w, scale, bold=True):
@@ -1109,7 +1124,7 @@ def run_clock_loop():
     pst = timezone_struct(utc_epoch, PST_OFFSET_HOURS)
     jst = timezone_struct(utc_epoch, JST_OFFSET_HOURS)
     last_successful_draw_ms = mono_ms()
-    diag_text = build_diag_line(utc_epoch, last_successful_draw_ms, sync_text, ntp_ok, wifi_text, last_error)
+    diag_text = diag_alert_text(utc_epoch, sync_text, ntp_ok, wifi_text, last_error)
 
     startup_status = "{} | {}".format(sync_text, wifi_text)
     if not bitmap_assets_ok:
@@ -1129,7 +1144,7 @@ def run_clock_loop():
                 utc_epoch = time.time()
                 pst = timezone_struct(utc_epoch, PST_OFFSET_HOURS)
                 jst = timezone_struct(utc_epoch, JST_OFFSET_HOURS)
-                diag_text = build_diag_line(utc_epoch, last_successful_draw_ms, sync_text, ntp_ok, wifi_text, last_error)
+                diag_text = diag_alert_text(utc_epoch, sync_text, ntp_ok, wifi_text, last_error)
                 draw_by_mode(mode, utc_epoch, pst, jst, ntp_ok, "{} | {}".format(sync_text, wifi_text), diag_text)
                 last_successful_draw_ms = mono_ms()
                 post_device_stats("mode_change", mode, ntp_ok, bitmap_assets_ok, sync_text, wifi_text)
@@ -1155,7 +1170,7 @@ def run_clock_loop():
                 utc_epoch = time.time()
                 pst = timezone_struct(utc_epoch, PST_OFFSET_HOURS)
                 jst = timezone_struct(utc_epoch, JST_OFFSET_HOURS)
-                diag_text = build_diag_line(utc_epoch, last_successful_draw_ms, sync_text, ntp_ok, wifi_text, last_error)
+                diag_text = diag_alert_text(utc_epoch, sync_text, ntp_ok, wifi_text, last_error)
                 draw_by_mode(mode, utc_epoch, pst, jst, ntp_ok, "{} | {}".format(sync_text, wifi_text), diag_text)
                 last_successful_draw_ms = mono_ms()
                 last_error = ""
