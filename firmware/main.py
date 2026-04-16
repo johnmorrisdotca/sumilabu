@@ -606,6 +606,76 @@ def draw_footer(status, wifi_text, diag_text):
     draw_text_bold(right_text, FOOTER_RIGHT_X, HEIGHT - 34, FOOTER_RIGHT_W, 2, bold=False)
 
 
+def draw_syncing_screen(wifi_text, diag_text):
+    clear_inverted()
+    set_best_font()
+
+    graphics.rectangle((WIDTH // 2) - 2, 0, 4, HEIGHT)
+
+    if custom_assets_ready():
+        draw_bitmap_text_bottom(LOCAL_CITY_NAME, FONT_UI_BIG, LEFT_X, TITLE_BOTTOM, COL_W, spacing=COL_W_SPACING)
+        draw_bitmap_text_bottom(REMOTE_CITY_NAME, FONT_UI_BIG, RIGHT_X, TITLE_BOTTOM, COL_W, spacing=COL_W_SPACING)
+
+        jp_y = TITLE_BOTTOM + JP_LABEL_Y_OFFSET
+        draw_bitmap_text_bottom(
+            LOCAL_CITY_NAME_JP,
+            FONT_JP,
+            LEFT_X,
+            jp_y + bitmap_text_height(LOCAL_CITY_NAME_JP, FONT_JP),
+            COL_W,
+            spacing=COL_W_SPACING,
+            char_y_offsets={"ー": -12} if "ー" in LOCAL_CITY_NAME_JP else None,
+        )
+        draw_bitmap_text_bottom(
+            REMOTE_CITY_NAME_JP,
+            FONT_JP,
+            RIGHT_X,
+            jp_y + bitmap_text_height(REMOTE_CITY_NAME_JP, FONT_JP),
+            COL_W,
+            spacing=COL_W_SPACING,
+        )
+
+        draw_bitmap_text_bottom(
+            "00:00",
+            FONT_TIME,
+            LEFT_X,
+            TIME_Y_BOTTOM,
+            COL_W,
+            spacing=TIME_SPACING,
+            height_scale=TIME_SCALE_FACTOR,
+            center_chars={":"},
+            center_reference_chars=set("0123456789"),
+            char_y_offsets={":": TIME_COLON_Y_OFFSET},
+        )
+        draw_bitmap_text_bottom(
+            "00:00",
+            FONT_TIME,
+            RIGHT_X,
+            TIME_Y_BOTTOM,
+            COL_W,
+            spacing=TIME_SPACING,
+            height_scale=TIME_SCALE_FACTOR,
+            center_chars={":"},
+            center_reference_chars=set("0123456789"),
+            char_y_offsets={":": TIME_COLON_Y_OFFSET},
+        )
+    else:
+        draw_text_bold(LOCAL_CITY_NAME, LEFT_X, 30, COL_W, 2)
+        draw_text_bold(REMOTE_CITY_NAME, RIGHT_X, 30, COL_W, 2)
+        draw_text_bold("00:00", LEFT_X, 95, COL_W, 6)
+        draw_text_bold("00:00", RIGHT_X, 95, COL_W, 6)
+
+    draw_text_bold("Syncing time...", 20, 286, WIDTH - 40, 2, bold=False)
+    helper_text = "Waiting for WiFi/NTP"
+    if diag_text:
+        helper_text = diag_text
+    elif wifi_text:
+        helper_text = wifi_text
+    draw_text_bold(helper_text, 20, 314, WIDTH - 40, 2, bold=False)
+    draw_footer("Syncing time...", wifi_text, diag_text)
+    graphics.update()
+
+
 def draw_text_bold(text, x, y, w, scale, bold=True):
     """Pseudo-bold text by drawing with tiny offsets (set_thickness unsupported)."""
     graphics.text(text, x, y, w, scale)
@@ -1121,6 +1191,9 @@ def draw_mode_e(pst, jst, sync_ok, wifi_text, diag_text):
 
 
 def draw_by_mode(mode_key, now_utc_epoch, pst, jst, sync_ok, wifi_text, diag_text):
+    if not clock_looks_valid(now_utc_epoch):
+        draw_syncing_screen(wifi_text, diag_text)
+        return
     if mode_key == MODE_A:
         draw_mode_a(pst, jst, sync_ok, wifi_text, diag_text)
         return
