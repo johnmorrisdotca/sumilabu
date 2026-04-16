@@ -1,5 +1,6 @@
 import Image from "next/image";
 
+import { RecentEventsTable } from "@/components/recent-events-table";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -311,7 +312,7 @@ export default async function Home({ searchParams }: PageProps) {
   ]);
 
   const recentEvents: RecentEvent[] = projectEvents.slice(0, 60);
-  const nowMs = Date.now();
+  const nowMs = new Date().getTime();
   const eventsByDevice = new Map<string, RecentEvent[]>();
 
   for (const event of projectEvents) {
@@ -333,6 +334,18 @@ export default async function Home({ searchParams }: PageProps) {
       eventGapSeconds.set(current.id, gapSeconds);
     }
   }
+
+  const recentEventsTableRows = projectEvents.map((event) => ({
+    id: event.id,
+    receivedAt: event.receivedAt.toISOString(),
+    projectKey: event.projectKey,
+    deviceId: event.deviceId,
+    event: event.event,
+    gapSeconds: eventGapSeconds.get(event.id) ?? null,
+    mode: event.mode,
+    memFree: event.memFree,
+    sync: event.sync,
+  }));
 
   const onlineDevices = devices.filter((device) => isOnline(device.lastSeenAt)).length;
   const deviceHealth = devices.map((device) => buildDeviceHealth(device, eventsByDevice.get(device.deviceId) || [], nowMs));
@@ -621,39 +634,7 @@ export default async function Home({ searchParams }: PageProps) {
           })}
         </section>
 
-        <section className="rounded-[28px] border border-stone-300/80 bg-white/90 p-5 shadow-sm">
-          <h2 className="mb-3 text-lg font-semibold">Recent Events</h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="border-b border-neutral-200 text-left text-neutral-500">
-                  <th className="p-2">Time</th>
-                  <th className="p-2">Project</th>
-                  <th className="p-2">Device</th>
-                  <th className="p-2">Event</th>
-                  <th className="p-2">Gap</th>
-                  <th className="p-2">Mode</th>
-                  <th className="p-2">MemFree</th>
-                  <th className="p-2">Sync</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentEvents.map((e) => (
-                  <tr key={e.id} className="border-b border-neutral-100">
-                    <td className="p-2">{e.receivedAt.toISOString().replace("T", " ").slice(0, 19)}</td>
-                    <td className="p-2 font-mono">{e.projectKey}</td>
-                    <td className="p-2 font-mono">{e.deviceId}</td>
-                    <td className="p-2">{e.event}</td>
-                    <td className="p-2">{fmtDuration(eventGapSeconds.get(e.id))}</td>
-                    <td className="p-2">{e.mode || "-"}</td>
-                    <td className="p-2">{e.memFree ?? "-"}</td>
-                    <td className="p-2">{e.sync || "-"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+        <RecentEventsTable events={recentEventsTableRows} />
       </main>
     </div>
   );
