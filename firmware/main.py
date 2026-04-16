@@ -85,6 +85,7 @@ PST_OFFSET_HOURS = LOCAL_UTC_OFFSET
 JST_OFFSET_HOURS = REMOTE_UTC_OFFSET
 REFRESH_SECONDS = 5 * 60
 STALE_RESTART_SECONDS = 20 * 60
+INVALID_CLOCK_RETRY_SECONDS = 30
 NTP_RETRIES = 3
 MIN_VALID_YEAR = 2024
 WIFI_CONNECT_TIMEOUT_S = 35
@@ -355,6 +356,13 @@ def fmt_date_jp(t):
 def clock_looks_valid(utc_epoch):
     """Treat default firmware RTC years as invalid until NTP sync succeeds."""
     return time.gmtime(utc_epoch)[0] >= MIN_VALID_YEAR
+
+
+def next_refresh_delay_s(current_epoch):
+    """Retry quickly while RTC is invalid, otherwise use normal cadence."""
+    if not clock_looks_valid(current_epoch):
+        return INVALID_CLOCK_RETRY_SECONDS
+    return REFRESH_SECONDS
 
 
 def read_mode_button(current_mode):
@@ -1040,7 +1048,7 @@ def run_clock_loop():
     gc.collect()
 
     # Poll buttons quickly, refresh data every 5 minutes (or E button).
-    next_refresh = time.time() + REFRESH_SECONDS
+    next_refresh = time.time() + next_refresh_delay_s(time.time())
     next_stats = time.time() + STATS_INTERVAL_SECONDS
     last_successful_draw = time.time()
     prev_e_pressed = False
@@ -1085,7 +1093,7 @@ def run_clock_loop():
             except Exception as exc:
                 sync_text = "Loop err {}".format(type(exc).__name__)
 
-            next_refresh = now_epoch + REFRESH_SECONDS
+            next_refresh = now_epoch + next_refresh_delay_s(time.time())
             if manual_refresh:
                 time.sleep(0.3)
 
