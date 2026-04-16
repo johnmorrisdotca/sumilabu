@@ -19,6 +19,30 @@ import time
 import gc
 import json
 
+try:
+    import secrets
+except ImportError:
+    secrets = None
+
+gc.collect()
+
+try:
+    from custom_bitmaps import (
+        FONT_UI_BIG,
+        FONT_DATE,
+        FONT_TIME,
+        FONT_JP,
+    )
+    CUSTOM_BITMAPS_IMPORT_ERROR = None
+except Exception as exc:
+    FONT_UI_BIG = None
+    FONT_DATE = None
+    FONT_TIME = None
+    FONT_JP = None
+    CUSTOM_BITMAPS_IMPORT_ERROR = "{}: {}".format(type(exc).__name__, exc)
+
+gc.collect()
+
 import ntptime  # type: ignore[import-not-found]
 import network  # type: ignore[import-not-found]
 import inky_frame  # type: ignore[import-not-found]
@@ -43,30 +67,21 @@ try:
 except Exception:
     ubinascii = None
 
-try:
-    import urequests  # type: ignore[import-not-found]
-except Exception:
-    urequests = None
+urequests = None
 
-try:
-    from custom_bitmaps import (
-        FONT_UI_BIG,
-        FONT_DATE,
-        FONT_TIME,
-        FONT_JP,
-    )
-    CUSTOM_BITMAPS_IMPORT_ERROR = None
-except Exception as exc:
-    FONT_UI_BIG = None
-    FONT_DATE = None
-    FONT_TIME = None
-    FONT_JP = None
-    CUSTOM_BITMAPS_IMPORT_ERROR = "{}: {}".format(type(exc).__name__, exc)
 
-try:
-    import secrets
-except ImportError:
-    secrets = None
+def get_urequests():
+    global urequests
+    if urequests is False:
+        return None
+    if urequests is None:
+        gc.collect()
+        try:
+            import urequests as imported_urequests  # type: ignore[import-not-found]
+            urequests = imported_urequests
+        except Exception:
+            urequests = False
+    return urequests or None
 
 # Generic locality config (defaults preserve existing Vancouver/Tokyo behavior).
 LOCAL_CITY_NAME = getattr(secrets, "LOCAL_CITY_NAME", "VANCOUVER").upper() if secrets else "VANCOUVER"
@@ -166,7 +181,7 @@ def mono_diff(newer_ms, older_ms):
 
 
 def telemetry_enabled():
-    return bool(STATS_API_URL and urequests)
+    return bool(STATS_API_URL)
 
 
 def wifi_connected():
@@ -178,7 +193,8 @@ def wifi_connected():
 
 
 def post_device_stats(event_name, mode, ntp_ok, bitmap_assets_ok, sync_text, wifi_text):
-    if not telemetry_enabled():
+    request_mod = get_urequests()
+    if not STATS_API_URL or not request_mod:
         return False
 
     # Never block trying to post if STA is offline.
@@ -218,7 +234,7 @@ def post_device_stats(event_name, mode, ntp_ok, bitmap_assets_ok, sync_text, wif
                 socket.setdefaulttimeout(STATS_HTTP_TIMEOUT_S)
             except Exception:
                 pass
-        resp = urequests.post(STATS_API_URL, data=json.dumps(payload), headers=headers)
+        resp = request_mod.post(STATS_API_URL, data=json.dumps(payload), headers=headers)
         return True
     except Exception:
         return False
@@ -599,16 +615,39 @@ def draw_text_bold(text, x, y, w, scale, bold=True):
         graphics.text(text, x + 2, y, w, scale)
 
 
+def glyph_pixel_on(glyph, x, y):
+    data = glyph.get("data")
+    if data is not None:
+        width = glyph.get("w", 0)
+        height = glyph.get("h", 0)
+        if x < 0 or y < 0 or x >= width or y >= height:
+            return False
+        row_bytes = (width + 7) // 8
+        idx = (y * row_bytes) + (x // 8)
+        if idx >= len(data):
+            return False
+        return bool(data[idx] & (0x80 >> (x % 8)))
+
+    rows = glyph.get("rows", [])
+    if y < 0 or y >= len(rows):
+        return False
+    row = rows[y]
+    if x < 0 or x >= len(row):
+        return False
+    return row[x] == "#"
+
+
 def draw_bitmap_label(key, x, y):
     """Draw pre-rendered 1-bit label bitmap, returns True on success."""
     if not FONT_JP or key not in FONT_JP:
         return False
 
     data = FONT_JP[key]
-    rows = data.get("rows", [])
-    for yy, row in enumerate(rows):
-        for xx, pix in enumerate(row):
-            if pix == "#":
+    glyph_h = data.get("h", 0)
+    glyph_w = data.get("w", 0)
+    for yy in range(glyph_h):
+        for xx in range(glyph_w):
+            if glyph_pixel_on(data, xx, yy):
                 graphics.pixel(x + xx, y + yy)
     return True
 
@@ -617,9 +656,11 @@ def draw_named_bitmap(dict_map, key, x, y):
     if not dict_map or key not in dict_map:
         return False
     data = dict_map[key]
-    for yy, row in enumerate(data.get("rows", [])):
-        for xx, pix in enumerate(row):
-            if pix == "#":
+    glyph_h = data.get("h", 0)
+    glyph_w = data.get("w", 0)
+    for yy in range(glyph_h):
+        for xx in range(glyph_w):
+            if glyph_pixel_on(data, xx, yy):
                 graphics.pixel(x + xx, y + yy)
     return True
 
@@ -679,11 +720,17 @@ def measure_bitmap_text_scaled(text, font_map, spacing=2, scale=1.0):
 
 
 def glyph_ink_bounds(glyph):
-    rows = glyph.get("rows", [])
     top = None
     bottom = None
-    for yy, row in enumerate(rows):
-        if "#" in row:
+    glyph_h = glyph.get("h", 0)
+    glyph_w = glyph.get("w", 0)
+    for yy in range(glyph_h):
+        row_has_ink = False
+        for xx in range(glyph_w):
+            if glyph_pixel_on(glyph, xx, yy):
+                row_has_ink = True
+                break
+        if row_has_ink:
             if top is None:
                 top = yy
             bottom = yy
@@ -710,10 +757,11 @@ def draw_bitmap_text(text, font_map, x, y, max_width, spacing=2):
         if not glyph:
             continue
         glyph_h = glyph.get("h", 0)
+        glyph_w = glyph.get("w", 0)
         glyph_y = y + max(0, line_h - glyph_h)
-        for yy, row in enumerate(glyph.get("rows", [])):
-            for xx, pix in enumerate(row):
-                if pix == "#":
+        for yy in range(glyph_h):
+            for xx in range(glyph_w):
+                if glyph_pixel_on(glyph, xx, yy):
                     graphics.pixel(cx + xx, glyph_y + yy)
         cx += glyph["w"] + spacing
     return True
@@ -762,10 +810,9 @@ def draw_bitmap_text_scaled(
         if not glyph:
             continue
 
-        rows = glyph.get("rows", [])
         src_h = glyph.get("h", 0)
         src_w = glyph.get("w", 0)
-        if not rows or src_h <= 0 or src_w <= 0:
+        if src_h <= 0 or src_w <= 0:
             continue
 
         dst_w = max(1, int(round(src_w * scale)))
@@ -782,10 +829,9 @@ def draw_bitmap_text_scaled(
 
         for yy in range(dst_h):
             src_y = min(src_h - 1, int(yy / scale))
-            row = rows[src_y]
             for xx in range(dst_w):
                 src_x = min(src_w - 1, int(xx / scale))
-                if row[src_x] == "#":
+                if glyph_pixel_on(glyph, src_x, src_y):
                     graphics.pixel(cx + xx, glyph_y + yy)
 
         cx += dst_w + spacing

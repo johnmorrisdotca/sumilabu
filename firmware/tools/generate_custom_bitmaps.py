@@ -41,11 +41,15 @@ def render_bitmap(text, font_path, size, stroke=0, pad=2):
     out.paste(crop, (pad, pad))
 
     px = out.load()
-    rows = []
+    row_bytes = (out.width + 7) // 8
+    data = bytearray(out.height * row_bytes)
     for y in range(out.height):
-        rows.append("".join("#" if px[x, y] else "." for x in range(out.width)))
+        for x in range(out.width):
+            if px[x, y]:
+                idx = y * row_bytes + (x // 8)
+                data[idx] |= 0x80 >> (x % 8)
 
-    return {"w": out.width, "h": out.height, "rows": rows}
+    return {"w": out.width, "h": out.height, "data": bytes(data)}
 
 
 def build_font(chars, font_path, size, stroke):
@@ -58,10 +62,7 @@ def emit_dict(name, data, out_lines):
         out_lines.append(f"    {key!r}: {{")
         out_lines.append(f"        'w': {item['w']},")
         out_lines.append(f"        'h': {item['h']},")
-        out_lines.append("        'rows': [")
-        for r in item["rows"]:
-            out_lines.append(f"            {r!r},")
-        out_lines.append("        ],")
+        out_lines.append(f"        'data': {item['data']!r},")
         out_lines.append("    },")
     out_lines.append("}")
     out_lines.append("")
