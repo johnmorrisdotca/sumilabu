@@ -152,6 +152,7 @@ WATCHDOG_MAX_TIMEOUT_MS = getattr(secrets, "WATCHDOG_MAX_TIMEOUT_MS", 8388) if s
 WATCHDOG_REQUESTED_TIMEOUT_MS = getattr(secrets, "WATCHDOG_TIMEOUT_MS", WATCHDOG_MAX_TIMEOUT_MS) if secrets else WATCHDOG_MAX_TIMEOUT_MS
 WATCHDOG_TIMEOUT_MS = max(1000, min(WATCHDOG_REQUESTED_TIMEOUT_MS, WATCHDOG_MAX_TIMEOUT_MS))
 WATCHDOG_CLAMPED = WATCHDOG_TIMEOUT_MS != WATCHDOG_REQUESTED_TIMEOUT_MS
+ENABLE_WATCHDOG = bool(getattr(secrets, "ENABLE_WATCHDOG", False)) if secrets else False
 APP_VERSION = "2026-04-16-2"
 NTP_RESYNC_SECONDS = getattr(secrets, "NTP_RESYNC_SECONDS", 0) if secrets else 0
 
@@ -162,6 +163,7 @@ STATS_PROJECT_KEY = getattr(secrets, "STATS_PROJECT_KEY", "inkyframe") if secret
 STATS_INTERVAL_SECONDS = getattr(secrets, "STATS_INTERVAL_SECONDS", REFRESH_SECONDS) if secrets else REFRESH_SECONDS
 STATS_HTTP_TIMEOUT_S = getattr(secrets, "STATS_HTTP_TIMEOUT_S", 8) if secrets else 8
 RENDER_WDT_FEED_ROWS = 8
+ENABLE_AUTO_RECOVER_RESET = bool(getattr(secrets, "ENABLE_AUTO_RECOVER_RESET", False)) if secrets else False
 
 ACTIVE_CITY_NAME = getattr(secrets, "ACTIVE_CITY_NAME", REMOTE_CITY_NAME) if secrets else REMOTE_CITY_NAME
 ACTIVE_CITY_NAME_JP = getattr(secrets, "ACTIVE_CITY_NAME_JP", REMOTE_CITY_NAME_JP) if secrets else REMOTE_CITY_NAME_JP
@@ -216,6 +218,8 @@ DEVICE_ID = default_device_id()
 
 
 def init_watchdog():
+    if not ENABLE_WATCHDOG:
+        return None
     if not machine or not hasattr(machine, "WDT"):
         return None
     try:
@@ -1585,7 +1589,7 @@ def run_clock_loop():
                 disconnect_wifi(wlan)
             next_stats_ms = mono_add(mono_ms(), STATS_INTERVAL_SECONDS * 1000)
 
-        if mono_diff(mono_ms(), last_successful_draw_ms) > (STALE_RESTART_SECONDS * 1000):
+        if ENABLE_AUTO_RECOVER_RESET and mono_diff(mono_ms(), last_successful_draw_ms) > (STALE_RESTART_SECONDS * 1000):
             auto_recover_reset("No refresh for {}m".format(STALE_RESTART_SECONDS // 60))
 
         safe_sleep(0.2)

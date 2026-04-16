@@ -58,7 +58,10 @@ def build_profile_values(source: dict[str, Any], profile: str) -> dict[str, Any]
         "STATS_API_URL": get_value(source, "STATS_API_URL", ""),
         "STATS_API_TOKEN": get_value(source, "STATS_API_TOKEN", ""),
         "STATS_INTERVAL_SECONDS": get_value(source, "STATS_INTERVAL_SECONDS", 300),
+        "STATS_HTTP_TIMEOUT_S": get_value(source, "STATS_HTTP_TIMEOUT_S", 8),
         "WATCHDOG_TIMEOUT_MS": get_value(source, "WATCHDOG_TIMEOUT_MS", 8388),
+        "ENABLE_WATCHDOG": False,
+        "ENABLE_AUTO_RECOVER_RESET": False,
         "NTP_RESYNC_SECONDS": get_value(source, "NTP_RESYNC_SECONDS", 0),
     }
 
@@ -124,6 +127,9 @@ def render_secrets(values: dict[str, Any], profile: str) -> str:
         "STATS_PROJECT_KEY",
         "STATS_DEVICE_ID",
         "STATS_INTERVAL_SECONDS",
+        "STATS_HTTP_TIMEOUT_S",
+        "ENABLE_WATCHDOG",
+        "ENABLE_AUTO_RECOVER_RESET",
         "WATCHDOG_TIMEOUT_MS",
         "NTP_RESYNC_SECONDS",
     ]
