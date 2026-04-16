@@ -1372,8 +1372,6 @@ def run_clock_loop():
         if mono_diff(now_ms, next_refresh_ms) >= 0 or manual_refresh:
             wlan = None
             try:
-                if manual_refresh:
-                    mode = MODE_E
                 utc_epoch = time.time()
                 force_network = manual_refresh or should_attempt_ntp(utc_epoch, last_ntp_sync_epoch)
                 if force_network:
