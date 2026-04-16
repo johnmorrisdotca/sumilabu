@@ -169,6 +169,7 @@ ACTIVE_CITY_NAME = getattr(secrets, "ACTIVE_CITY_NAME", REMOTE_CITY_NAME) if sec
 ACTIVE_CITY_NAME_JP = getattr(secrets, "ACTIVE_CITY_NAME_JP", REMOTE_CITY_NAME_JP) if secrets else REMOTE_CITY_NAME_JP
 ACTIVE_UTC_OFFSET = getattr(secrets, "ACTIVE_UTC_OFFSET", REMOTE_UTC_OFFSET) if secrets else REMOTE_UTC_OFFSET
 ACTIVE_TZ_LABEL = getattr(secrets, "ACTIVE_TZ_LABEL", REMOTE_TZ_LABEL) if secrets else REMOTE_TZ_LABEL
+DISPLAY_UPDATE_SPEED = getattr(secrets, "DISPLAY_UPDATE_SPEED", 0) if secrets else 0
 
 MODE_A = "A"
 MODE_B = "B"
@@ -184,6 +185,11 @@ SAMPLE_MEETINGS_UTC = [
 ]
 
 graphics = PicoGraphics(display=DISPLAY)
+try:
+    # Favor full-quality e-ink updates for readability and reduced ghosting.
+    graphics.set_update_speed(DISPLAY_UPDATE_SPEED)
+except Exception:
+    pass
 
 WIDTH, HEIGHT = graphics.get_bounds()
 WHITE = graphics.create_pen(255, 255, 255)

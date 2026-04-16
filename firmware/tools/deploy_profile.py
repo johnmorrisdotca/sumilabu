@@ -68,6 +68,7 @@ def build_profile_values(source: dict[str, Any], profile: str) -> dict[str, Any]
     if profile == "office":
         common.update(
             {
+                "INKY_DISPLAY": "DISPLAY_INKY_FRAME_7",
                 "DEVICE_PROFILE": "dual",
                 "STATS_DEVICE_ID": "inkyframe-office",
                 "STATS_PROJECT_KEY": "inkyframe",
