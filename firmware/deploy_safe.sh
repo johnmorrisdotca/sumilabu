@@ -31,9 +31,15 @@ if [[ -z "${PORT}" ]]; then
   exit 1
 fi
 
+if [[ ! -f "secrets.py" ]]; then
+  echo "MISSING_SECRETS (create firmware/secrets.py first)"
+  exit 2
+fi
+
 echo "USING=${PORT}"
 "${MPREMOTE[@]}" connect "${PORT}" fs cp custom_bitmaps.py :custom_bitmaps.py
 "${MPREMOTE[@]}" connect "${PORT}" fs cp main.py :main.py
+"${MPREMOTE[@]}" connect "${PORT}" fs cp secrets.py :secrets.py
 
 ASSET_OUT="$("${MPREMOTE[@]}" connect "${PORT}" run probe_assets.py 2>&1 || true)"
 MEM_OUT="$("${MPREMOTE[@]}" connect "${PORT}" run probe_mem.py 2>&1 || true)"

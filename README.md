@@ -59,6 +59,30 @@ From repository root:
 
 This calls `firmware/deploy_safe.sh`, rebuilds bitmap assets, deploys files, runs probes, and resets the device.
 
+### One-command profile deploy (recommended)
+
+Once your base `firmware/secrets.py` has working Wi-Fi and API credentials, you can deploy either physical device without hand-editing files:
+
+```bash
+./deploy_office.sh
+```
+
+```bash
+./deploy_japan57.sh
+```
+
+What these do:
+
+- Generate a temporary profile-specific `firmware/secrets.py`
+- Deploy `main.py`, `custom_bitmaps.py`, and `secrets.py`
+- Run probe gates and reset the board
+- Restore your local `firmware/secrets.py` automatically
+
+Profile defaults:
+
+- `deploy_office.sh` -> `DEVICE_PROFILE="dual"`, `STATS_DEVICE_ID="inkyframe-office"`, `STATS_PROJECT_KEY="inkyframe"`
+- `deploy_japan57.sh` -> `DEVICE_PROFILE="japan"`, `STATS_DEVICE_ID="inkyframe-japan-57"`, `STATS_PROJECT_KEY="inkyframe-japan"`, `INKY_DISPLAY="DISPLAY_INKY_FRAME_5_7"`
+
 ## 5) Verify update
 
 The e-ink screen should show your configured profile:
