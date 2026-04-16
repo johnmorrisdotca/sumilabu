@@ -21,8 +21,8 @@ type RecentEventsTableProps = {
   events: RecentEventRow[];
 };
 
-const PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
-const DEFAULT_PAGE_SIZE = 20;
+const PAGE_SIZE_OPTIONS = [10, 20, 25, 35, 50, 100] as const;
+const DEFAULT_PAGE_SIZE = 10;
 const DEFAULT_SORT_KEY: SortKey = "receivedAt";
 const DEFAULT_SORT_DIRECTION: SortDirection = "desc";
 const PAGE_SIZE_STORAGE_KEY = "sumilabu.recentEvents.pageSize";
