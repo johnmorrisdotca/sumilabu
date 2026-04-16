@@ -90,6 +90,7 @@ NTP_RETRIES = 3
 MIN_VALID_YEAR = 2024
 WIFI_CONNECT_TIMEOUT_S = 35
 APP_VERSION = "2026-04-15"
+NTP_RESYNC_SECONDS = getattr(secrets, "NTP_RESYNC_SECONDS", 0) if secrets else 0
 
 STATS_API_URL = getattr(secrets, "STATS_API_URL", None) if secrets else None
 STATS_API_TOKEN = getattr(secrets, "STATS_API_TOKEN", None) if secrets else None
@@ -398,6 +399,14 @@ def next_refresh_delay_s(current_epoch):
     if not clock_looks_valid(current_epoch):
         return INVALID_CLOCK_RETRY_SECONDS
     return REFRESH_SECONDS
+
+
+def should_attempt_ntp(current_epoch, last_ntp_sync_epoch):
+    if not clock_looks_valid(current_epoch):
+        return True
+    if NTP_RESYNC_SECONDS and last_ntp_sync_epoch:
+        return (current_epoch - last_ntp_sync_epoch) >= NTP_RESYNC_SECONDS
+    return False
 
 
 def compact_wifi_state(wifi_text):
@@ -1103,15 +1112,22 @@ def run_clock_loop():
     sync_text = "NTP: pending"
     wifi_text = "WiFi: off"
     last_error = ""
+    last_ntp_sync_epoch = 0
     mode = MODE_A
 
     utc_epoch = time.time()
     wlan = None
     try:
-        wlan, wifi_text = connect_wifi()
-        if wlan:
-            ntp_ok, sync_text = sync_time_ntp()
-            post_device_stats("boot", mode, ntp_ok, bitmap_assets_ok, sync_text, wifi_text)
+        if should_attempt_ntp(utc_epoch, last_ntp_sync_epoch):
+            wlan, wifi_text = connect_wifi()
+            if wlan:
+                ntp_ok, sync_text = sync_time_ntp()
+                if ntp_ok:
+                    last_ntp_sync_epoch = time.time()
+                post_device_stats("boot", mode, ntp_ok, bitmap_assets_ok, sync_text, wifi_text)
+        else:
+            ntp_ok = True
+            sync_text = "RTC ok"
     except Exception as exc:
         sync_text = "Boot err {}".format(type(exc).__name__)
         last_error = type(exc).__name__
@@ -1163,9 +1179,17 @@ def run_clock_loop():
         if mono_diff(now_ms, next_refresh_ms) >= 0 or manual_refresh:
             wlan = None
             try:
-                wlan, wifi_text = connect_wifi()
-                if wlan:
-                    ntp_ok, sync_text = sync_time_ntp()
+                utc_epoch = time.time()
+                if should_attempt_ntp(utc_epoch, last_ntp_sync_epoch):
+                    wlan, wifi_text = connect_wifi()
+                    if wlan:
+                        ntp_ok, sync_text = sync_time_ntp()
+                        if ntp_ok:
+                            last_ntp_sync_epoch = time.time()
+                elif clock_looks_valid(utc_epoch):
+                    ntp_ok = True
+                    sync_text = "RTC ok"
+                    wifi_text = "WiFi: off"
 
                 utc_epoch = time.time()
                 pst = timezone_struct(utc_epoch, PST_OFFSET_HOURS)
