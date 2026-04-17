@@ -172,9 +172,8 @@ def run() -> int:
         print(f"Using project key: {profile_values.get('STATS_PROJECT_KEY')}")
 
         env = dict(os.environ)
-        # 5.7" InkyFrame needs .mpy precompilation to fit in RAM.
-        if args.profile == "japan57":
-            env["MPY_COMPILE"] = "true"
+        # Precompile .mpy to reduce RAM usage on all InkyFrame devices.
+        env["MPY_COMPILE"] = "true"
 
         subprocess.run([str(deploy_script)], cwd=str(repo_root), check=True, env=env)
         return 0
