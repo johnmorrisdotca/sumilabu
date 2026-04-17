@@ -171,6 +171,26 @@ ACTIVE_CITY_NAME = getattr(secrets, "ACTIVE_CITY_NAME", REMOTE_CITY_NAME) if sec
 ACTIVE_CITY_NAME_JP = getattr(secrets, "ACTIVE_CITY_NAME_JP", REMOTE_CITY_NAME_JP) if secrets else REMOTE_CITY_NAME_JP
 ACTIVE_UTC_OFFSET = getattr(secrets, "ACTIVE_UTC_OFFSET", REMOTE_UTC_OFFSET) if secrets else REMOTE_UTC_OFFSET
 ACTIVE_TZ_LABEL = getattr(secrets, "ACTIVE_TZ_LABEL", REMOTE_TZ_LABEL) if secrets else REMOTE_TZ_LABEL
+
+# Mutable city state for japan profile (buttons A/B/C switch city).
+_jp_city = {
+    "name": ACTIVE_CITY_NAME,
+    "name_jp": ACTIVE_CITY_NAME_JP,
+    "offset": ACTIVE_UTC_OFFSET,
+    "tz": ACTIVE_TZ_LABEL,
+}
+
+def jp_set_city(name, name_jp, offset, tz):
+    _jp_city["name"] = name
+    _jp_city["name_jp"] = name_jp
+    _jp_city["offset"] = offset
+    _jp_city["tz"] = tz
+
+def jp_toggle_city():
+    if _jp_city["name"] == LOCAL_CITY_NAME:
+        jp_set_city(REMOTE_CITY_NAME, REMOTE_CITY_NAME_JP, REMOTE_UTC_OFFSET, REMOTE_TZ_LABEL)
+    else:
+        jp_set_city(LOCAL_CITY_NAME, LOCAL_CITY_NAME_JP, LOCAL_UTC_OFFSET, LOCAL_TZ_LABEL)
 DISPLAY_UPDATE_SPEED = getattr(secrets, "DISPLAY_UPDATE_SPEED", 0) if secrets else 0
 
 MODE_A = "A"
@@ -614,6 +634,27 @@ def diag_alert_text(utc_epoch, sync_text, ntp_ok, wifi_text, last_error):
     if wifi_text and wifi_text.startswith("WiFi fail"):
         return wifi_text
     return ""
+
+
+def read_jp_city_button():
+    """For japan profile: A=local, B=remote, C=toggle.  Returns True if city changed."""
+    try:
+        if inky_frame.button_a.read():
+            if _jp_city["name"] != LOCAL_CITY_NAME:
+                jp_set_city(LOCAL_CITY_NAME, LOCAL_CITY_NAME_JP, LOCAL_UTC_OFFSET, LOCAL_TZ_LABEL)
+                return True
+            return "refresh"
+        if inky_frame.button_b.read():
+            if _jp_city["name"] != REMOTE_CITY_NAME:
+                jp_set_city(REMOTE_CITY_NAME, REMOTE_CITY_NAME_JP, REMOTE_UTC_OFFSET, REMOTE_TZ_LABEL)
+                return True
+            return "refresh"
+        if inky_frame.button_c.read():
+            jp_toggle_city()
+            return True
+    except Exception:
+        pass
+    return False
 
 
 def read_mode_button(current_mode):
@@ -1353,16 +1394,22 @@ def draw_mode_japan_only(jst, sync_ok, wifi_text, diag_text):
     date_bottom = max(time_bottom + 40, int(HEIGHT * 0.74))
     weekday_bottom = max(date_bottom + 34, int(HEIGHT * 0.84))
 
+    city_name = _jp_city["name"]
+    city_name_jp = _jp_city["name_jp"]
+    city_offset = _jp_city["offset"]
+    city_tz = _jp_city["tz"]
+    jst = timezone_struct(time.time(), city_offset)
+
     if custom_assets_ready():
-        draw_bitmap_text_bottom(ACTIVE_CITY_NAME, FONT_UI_BIG, 20, title_bottom, WIDTH - 40, spacing=COL_W_SPACING)
+        draw_bitmap_text_bottom(city_name, FONT_UI_BIG, 20, title_bottom, WIDTH - 40, spacing=COL_W_SPACING)
         draw_bitmap_text_bottom(
-            ACTIVE_CITY_NAME_JP,
+            city_name_jp,
             FONT_JP,
             20,
             label_bottom,
             WIDTH - 40,
             spacing=COL_W_SPACING,
-            char_y_offsets={"ー": -12} if "ー" in ACTIVE_CITY_NAME_JP else None,
+            char_y_offsets={"ー": -12} if "ー" in city_name_jp else None,
         )
 
         time_scale = 1.34 if WIDTH >= 760 else 1.18
@@ -1383,12 +1430,12 @@ def draw_mode_japan_only(jst, sync_ok, wifi_text, diag_text):
         weekday_keys = ("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY")
         draw_jp_weekday(weekday_keys[jst[6] % 7], 20, weekday_bottom, WIDTH - 40)
     else:
-        draw_text_bold(ACTIVE_CITY_NAME, 20, 24, WIDTH - 40, 2)
+        draw_text_bold(city_name, 20, 24, WIDTH - 40, 2)
         draw_text_bold(fmt_time(jst), 20, max(78, int(HEIGHT * 0.26)), WIDTH - 40, 7)
         draw_text_bold(fmt_date_jp(jst), 20, max(188, int(HEIGHT * 0.54)), WIDTH - 40, 2, bold=False)
-        draw_text_bold(ACTIVE_TZ_LABEL, 20, max(228, int(HEIGHT * 0.64)), WIDTH - 40, 2, bold=False)
+        draw_text_bold(city_tz, 20, max(228, int(HEIGHT * 0.64)), WIDTH - 40, 2, bold=False)
 
-    status = "JP focus | NTP synced" if sync_ok else "JP focus | Clock not synced"
+    status = "{} | NTP synced".format(city_tz) if sync_ok else "{} | Clock not synced".format(city_tz)
     draw_footer(status, wifi_text, diag_text)
     graphics.update()
 
@@ -1477,7 +1524,7 @@ def run_clock_loop():
     utc_epoch = time.time()
 
     pst = timezone_struct(utc_epoch, PST_OFFSET_HOURS)
-    jst_offset = ACTIVE_UTC_OFFSET if JAPAN_ONLY_PROFILE else JST_OFFSET_HOURS
+    jst_offset = _jp_city["offset"] if JAPAN_ONLY_PROFILE else JST_OFFSET_HOURS
     jst = timezone_struct(utc_epoch, jst_offset)
     last_successful_draw_ms = mono_ms()
     diag_text = diag_alert_text(utc_epoch, sync_text, ntp_ok, wifi_text, last_error)
@@ -1492,13 +1539,34 @@ def run_clock_loop():
     prev_d_pressed = False
     while True:
         feed_watchdog()
+
+        # Japan profile: A/B/C switch city and force refresh
+        if JAPAN_ONLY_PROFILE:
+            city_btn = read_jp_city_button()
+            if city_btn:
+                try:
+                    utc_epoch = time.time()
+                    pst = timezone_struct(utc_epoch, PST_OFFSET_HOURS)
+                    jst = timezone_struct(utc_epoch, _jp_city["offset"])
+                    diag_text = diag_alert_text(utc_epoch, sync_text, ntp_ok, wifi_text, last_error)
+                    draw_by_mode(mode, utc_epoch, pst, jst, ntp_ok, wifi_text, diag_text)
+                    last_successful_draw_ms = mono_ms()
+                    event = "city_" + _jp_city["name"].lower()
+                    post_device_stats(event, mode, ntp_ok, bitmap_assets_ok, sync_text, wifi_text)
+                    gc.collect()
+                except Exception as exc:
+                    sync_text = "Draw err {}".format(type(exc).__name__)
+                    last_error = type(exc).__name__
+                safe_sleep(0.3)
+                continue
+
         mode_new = read_mode_button(mode)
         if mode_new != mode:
             mode = mode_new
             try:
                 utc_epoch = time.time()
                 pst = timezone_struct(utc_epoch, PST_OFFSET_HOURS)
-                jst_offset = ACTIVE_UTC_OFFSET if JAPAN_ONLY_PROFILE else JST_OFFSET_HOURS
+                jst_offset = _jp_city["offset"] if JAPAN_ONLY_PROFILE else JST_OFFSET_HOURS
                 jst = timezone_struct(utc_epoch, jst_offset)
                 diag_text = diag_alert_text(utc_epoch, sync_text, ntp_ok, wifi_text, last_error)
                 draw_by_mode(mode, utc_epoch, pst, jst, ntp_ok, wifi_text, diag_text)
@@ -1563,7 +1631,7 @@ def run_clock_loop():
 
                 utc_epoch = time.time()
                 pst = timezone_struct(utc_epoch, PST_OFFSET_HOURS)
-                jst_offset = ACTIVE_UTC_OFFSET if JAPAN_ONLY_PROFILE else JST_OFFSET_HOURS
+                jst_offset = _jp_city["offset"] if JAPAN_ONLY_PROFILE else JST_OFFSET_HOURS
                 jst = timezone_struct(utc_epoch, jst_offset)
                 diag_text = diag_alert_text(utc_epoch, sync_text, ntp_ok, wifi_text, last_error)
                 draw_by_mode(mode, utc_epoch, pst, jst, ntp_ok, wifi_text, diag_text)
