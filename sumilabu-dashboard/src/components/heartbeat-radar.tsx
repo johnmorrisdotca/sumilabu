@@ -31,9 +31,10 @@ function eventSummary(events: string[]): string {
 }
 
 export function HeartbeatRadar({ deviceId, status, timeline }: HeartbeatRadarProps) {
-  const [hovered, setHovered] = useState<number | null>(null);
+  const lastIndex = timeline.length - 1;
+  const [active, setActive] = useState<number>(lastIndex);
 
-  const hoveredSlot = hovered !== null ? timeline[hovered] : null;
+  const activeSlot = timeline[active] ?? timeline.at(-1) ?? null;
 
   return (
     <div>
@@ -41,9 +42,9 @@ export function HeartbeatRadar({ deviceId, status, timeline }: HeartbeatRadarPro
         {timeline.map((slot, slotIndex) => (
           <div
             key={`${deviceId}-${slotIndex}`}
-            className={`h-5 flex-1 min-w-[4px] rounded-full border cursor-pointer transition-opacity ${slot.hasPing ? "border-emerald-300 bg-emerald-500" : status === "offline" ? "border-red-200 bg-red-300" : "border-amber-200 bg-amber-300"} ${hovered !== null && hovered !== slotIndex ? "opacity-40" : ""}`}
-            onMouseEnter={() => setHovered(slotIndex)}
-            onMouseLeave={() => setHovered(null)}
+            className={`h-5 flex-1 min-w-[4px] rounded-full border cursor-pointer transition-opacity ${slot.hasPing ? "border-emerald-300 bg-emerald-500" : status === "offline" ? "border-red-200 bg-red-300" : "border-amber-200 bg-amber-300"} ${slotIndex !== active ? "opacity-40" : ""}`}
+            onMouseEnter={() => setActive(slotIndex)}
+            onMouseLeave={() => setActive(lastIndex)}
           />
         ))}
       </div>
@@ -53,31 +54,27 @@ export function HeartbeatRadar({ deviceId, status, timeline }: HeartbeatRadarPro
         <span>{timeline.at(-1)?.label || "now"}</span>
       </div>
 
-      <div
-        className={`mt-2 overflow-hidden transition-all duration-150 ${hoveredSlot ? "max-h-24 opacity-100" : "max-h-0 opacity-0"}`}
-      >
-        {hoveredSlot ? (
-          <div className="rounded-xl border border-stone-200 bg-white/95 px-3 py-2 text-xs text-stone-700 shadow-sm">
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-              <span className="font-semibold text-stone-900">{hoveredSlot.fromTime} – {hoveredSlot.toTime}</span>
-              <span>{hoveredSlot.count} ping{hoveredSlot.count === 1 ? "" : "s"}</span>
-              {hoveredSlot.events.length > 0 && (
-                <span className="text-stone-500">{eventSummary(hoveredSlot.events)}</span>
-              )}
-              {hoveredSlot.memFreeMin !== null && (
-                <span className="font-mono text-stone-500">
-                  mem {hoveredSlot.memFreeMin === hoveredSlot.memFreeMax
-                    ? hoveredSlot.memFreeMin.toLocaleString()
-                    : `${hoveredSlot.memFreeMin.toLocaleString()}–${hoveredSlot.memFreeMax!.toLocaleString()}`}
-                </span>
-              )}
-              {!hoveredSlot.hasPing && (
-                <span className="font-semibold text-amber-700">No activity in this window</span>
-              )}
-            </div>
+      {activeSlot ? (
+        <div className="mt-2 rounded-xl border border-stone-200 bg-white/95 px-3 py-2 text-xs text-stone-700 shadow-sm">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <span className="font-semibold text-stone-900">{activeSlot.fromTime} – {activeSlot.toTime}</span>
+            <span>{activeSlot.count} ping{activeSlot.count === 1 ? "" : "s"}</span>
+            {activeSlot.events.length > 0 && (
+              <span className="text-stone-500">{eventSummary(activeSlot.events)}</span>
+            )}
+            {activeSlot.memFreeMin !== null && (
+              <span className="font-mono text-stone-500">
+                mem {activeSlot.memFreeMin === activeSlot.memFreeMax
+                  ? activeSlot.memFreeMin.toLocaleString()
+                  : `${activeSlot.memFreeMin.toLocaleString()}–${activeSlot.memFreeMax!.toLocaleString()}`}
+              </span>
+            )}
+            {!activeSlot.hasPing && (
+              <span className="font-semibold text-amber-700">No activity in this window</span>
+            )}
           </div>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
     </div>
   );
 }
