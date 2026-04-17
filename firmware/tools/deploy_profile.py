@@ -71,7 +71,7 @@ def build_profile_values(source: dict[str, Any], profile: str) -> dict[str, Any]
             {
                 "INKY_DISPLAY": "DISPLAY_INKY_FRAME_7",
                 "DEVICE_PROFILE": "dual",
-                "STATS_DEVICE_ID": "inkyframe-office",
+                "STATS_DEVICE_ID": "inky-maxi",
                 "STATS_PROJECT_KEY": "inkyframe",
                 "ACTIVE_CITY_NAME": get_value(source, "ACTIVE_CITY_NAME", "TOKYO"),
                 "ACTIVE_CITY_NAME_JP": get_value(source, "ACTIVE_CITY_NAME_JP", "東京"),
@@ -86,7 +86,7 @@ def build_profile_values(source: dict[str, Any], profile: str) -> dict[str, Any]
             {
                 "INKY_DISPLAY": "DISPLAY_INKY_FRAME_5_7",
                 "DEVICE_PROFILE": "japan",
-                "STATS_DEVICE_ID": "inkyframe-japan-57",
+                "STATS_DEVICE_ID": "inky-mini",
                 "STATS_PROJECT_KEY": "inkyframe-japan",
                 "ACTIVE_CITY_NAME": "TOKYO",
                 "ACTIVE_CITY_NAME_JP": "東京",
