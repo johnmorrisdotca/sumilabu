@@ -73,6 +73,8 @@ type DeviceHealth = {
   maxGapSeconds: number | null;
   latestGapSeconds: number | null;
   missedHeartbeats: number;
+  observedUptimeSeconds: number;
+  activeStreakSeconds: number;
   timeline: HeartbeatSlot[];
 };
 
@@ -249,6 +251,25 @@ function buildDeviceHealth(device: DeviceCard, events: RecentEvent[], nowMs: num
     ? Math.max(0, Math.floor(lastPingAgeSeconds / EXPECTED_HEARTBEAT_SECONDS) - 1)
     : timeline.length || MAX_HEARTBEAT_SLOTS;
 
+  // Observed uptime: span from oldest to newest event
+  let observedUptimeSeconds = 0;
+  if (events.length >= 2) {
+    const newest = events[0].receivedAt.getTime();
+    const oldest = events.at(-1)!.receivedAt.getTime();
+    observedUptimeSeconds = Math.max(0, Math.floor((newest - oldest) / 1000));
+  }
+
+  // Active streak: consecutive filled slots from the end of the timeline
+  let streakSlots = 0;
+  for (let i = timeline.length - 1; i >= 0; i -= 1) {
+    if (!timeline[i].hasPing) break;
+    streakSlots += 1;
+  }
+  const slotDurationSeconds = timeline.length > 0
+    ? Math.round(observedUptimeSeconds / timeline.length) || EXPECTED_HEARTBEAT_SECONDS
+    : EXPECTED_HEARTBEAT_SECONDS;
+  const activeStreakSeconds = streakSlots * slotDurationSeconds;
+
   let status: DeviceHealth["status"] = "healthy";
 
   if (!device.lastSeenAt || !isOnline(device.lastSeenAt)) {
@@ -270,6 +291,8 @@ function buildDeviceHealth(device: DeviceCard, events: RecentEvent[], nowMs: num
     maxGapSeconds,
     latestGapSeconds,
     missedHeartbeats,
+    observedUptimeSeconds,
+    activeStreakSeconds,
     timeline,
   };
 }
@@ -570,7 +593,7 @@ export default async function Home({ searchParams }: PageProps) {
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p className="font-mono text-sm font-semibold text-stone-800">{device.deviceId}</p>
-                      <p className="text-sm text-stone-600">{fmtAge(device.lastSeenAt)} • max recent gap {fmtDuration(device.maxGapSeconds)}</p>
+                      <p className="text-sm text-stone-600">{fmtAge(device.lastSeenAt)} • max recent gap {fmtDuration(device.maxGapSeconds)} • streak {fmtDuration(device.activeStreakSeconds)} • observed {fmtDuration(device.observedUptimeSeconds)}</p>
                     </div>
                     <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${statusPillClasses(device.status)}`}>
                       {statusLabel(device.status)}
