@@ -32,8 +32,10 @@ function eventSummary(events: string[]): string {
 
 export function HeartbeatRadar({ deviceId, status, timeline }: HeartbeatRadarProps) {
   const lastIndex = timeline.length - 1;
-  const [active, setActive] = useState<number>(lastIndex);
+  const [pinned, setPinned] = useState<number | null>(null);
+  const [hovered, setHovered] = useState<number | null>(null);
 
+  const active = hovered ?? pinned ?? lastIndex;
   const activeSlot = timeline[active] ?? timeline.at(-1) ?? null;
 
   return (
@@ -43,8 +45,9 @@ export function HeartbeatRadar({ deviceId, status, timeline }: HeartbeatRadarPro
           <div
             key={`${deviceId}-${slotIndex}`}
             className={`h-5 flex-1 min-w-[4px] rounded-full border cursor-pointer transition-opacity ${slot.hasPing ? "border-emerald-300 bg-emerald-500" : status === "offline" ? "border-red-200 bg-red-300" : "border-amber-200 bg-amber-300"} ${slotIndex !== active ? "opacity-40" : ""}`}
-            onMouseEnter={() => setActive(slotIndex)}
-            onMouseLeave={() => setActive(lastIndex)}
+            onMouseEnter={() => setHovered(slotIndex)}
+            onMouseLeave={() => setHovered(null)}
+            onClick={() => setPinned(pinned === slotIndex ? null : slotIndex)}
           />
         ))}
       </div>
