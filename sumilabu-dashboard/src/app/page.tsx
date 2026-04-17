@@ -1,17 +1,19 @@
 import Image from "next/image";
+import Link from "next/link";
 
 import { AutoRefreshControl } from "@/components/auto-refresh-control";
 import { RecentEventsTable } from "@/components/recent-events-table";
 import { WidgetCanvas } from "@/components/widget-canvas";
 import { prisma } from "@/lib/prisma";
 import { formatDateTimeAtOffset, formatHourMinuteAtOffset } from "@/lib/timezone";
+import { LiveClock } from "@/components/live-clock";
 
 export const dynamic = "force-dynamic";
 
 const STALE_AFTER_SECONDS = Number(process.env.STALE_AFTER_SECONDS || "900");
 const EXPECTED_HEARTBEAT_SECONDS = Number(process.env.EXPECTED_HEARTBEAT_SECONDS || "300");
 const DASHBOARD_UTC_OFFSET_HOURS = Number(process.env.DASHBOARD_UTC_OFFSET_HOURS || "-8");
-const HEARTBEAT_TIMELINE_SLOTS = 12;
+const MAX_HEARTBEAT_SLOTS = 48;
 const CHART_WIDTH = 720;
 const CHART_HEIGHT = 240;
 const CHART_PADDING_X = 28;
@@ -57,6 +59,7 @@ type HeartbeatSlot = {
 };
 
 type DeviceHealth = {
+  projectKey: string;
   deviceId: string;
   status: "healthy" | "warning" | "offline";
   lastSeenAt: Date | null;
@@ -163,9 +166,17 @@ function eventBreakdown(events: RecentEvent[]): Array<{ label: string; value: nu
 }
 
 function buildHeartbeatTimeline(events: RecentEvent[], nowMs: number): HeartbeatSlot[] {
-  const slotSizeMs = EXPECTED_HEARTBEAT_SECONDS * 1000;
-  const windowStartMs = nowMs - HEARTBEAT_TIMELINE_SLOTS * slotSizeMs;
-  const counts = Array.from({ length: HEARTBEAT_TIMELINE_SLOTS }, () => 0);
+  if (events.length === 0) {
+    return [];
+  }
+
+  const oldestMs = events.at(-1)!.receivedAt.getTime();
+  const rangeMs = Math.max(nowMs - oldestMs, EXPECTED_HEARTBEAT_SECONDS * 1000);
+  const idealSlots = Math.ceil(rangeMs / (EXPECTED_HEARTBEAT_SECONDS * 1000));
+  const slotCount = Math.max(1, Math.min(idealSlots, MAX_HEARTBEAT_SLOTS));
+  const slotSizeMs = rangeMs / slotCount;
+  const windowStartMs = nowMs - slotCount * slotSizeMs;
+  const counts = Array.from({ length: slotCount }, () => 0);
 
   for (const event of events) {
     const eventMs = event.receivedAt.getTime();
@@ -174,7 +185,7 @@ function buildHeartbeatTimeline(events: RecentEvent[], nowMs: number): Heartbeat
     }
 
     const slotIndex = Math.min(
-      HEARTBEAT_TIMELINE_SLOTS - 1,
+      slotCount - 1,
       Math.max(0, Math.floor((eventMs - windowStartMs) / slotSizeMs)),
     );
 
@@ -182,7 +193,7 @@ function buildHeartbeatTimeline(events: RecentEvent[], nowMs: number): Heartbeat
   }
 
   return counts.map((count, index) => {
-    const secondsAgo = (HEARTBEAT_TIMELINE_SLOTS - 1 - index) * EXPECTED_HEARTBEAT_SECONDS;
+    const secondsAgo = Math.round((slotCount - 1 - index) * (slotSizeMs / 1000));
 
     return {
       count,
@@ -217,7 +228,7 @@ function buildDeviceHealth(device: DeviceCard, events: RecentEvent[], nowMs: num
   const timeline = buildHeartbeatTimeline(events, nowMs);
   const missedHeartbeats = lastPingAgeSeconds
     ? Math.max(0, Math.floor(lastPingAgeSeconds / EXPECTED_HEARTBEAT_SECONDS) - 1)
-    : HEARTBEAT_TIMELINE_SLOTS;
+    : timeline.length || MAX_HEARTBEAT_SLOTS;
 
   let status: DeviceHealth["status"] = "healthy";
 
@@ -226,12 +237,13 @@ function buildDeviceHealth(device: DeviceCard, events: RecentEvent[], nowMs: num
   } else if (
     (lastPingAgeSeconds !== null && lastPingAgeSeconds > EXPECTED_HEARTBEAT_SECONDS * 1.5)
     || (latestGapSeconds !== null && latestGapSeconds > EXPECTED_HEARTBEAT_SECONDS * 2)
-    || timeline.some((slot) => !slot.hasPing)
+    || timeline.slice(-4).some((slot) => !slot.hasPing)
   ) {
     status = "warning";
   }
 
   return {
+    projectKey: device.projectKey,
     deviceId: device.deviceId,
     status,
     lastSeenAt: device.lastSeenAt,
@@ -273,7 +285,6 @@ type PageProps = {
 
 export default async function Home({ searchParams }: PageProps) {
   const params = (await searchParams) || {};
-  const localTimeNow = formatHourMinuteAtOffset(new Date(), DASHBOARD_UTC_OFFSET_HOURS);
   const localTimezoneLabel = `UTC${DASHBOARD_UTC_OFFSET_HOURS >= 0 ? "+" : ""}${DASHBOARD_UTC_OFFSET_HOURS}`;
 
   const [deviceProjects, eventProjects] = await Promise.all([
@@ -295,13 +306,15 @@ export default async function Home({ searchParams }: PageProps) {
     ...eventProjects.map((project) => project.projectKey),
   ]);
 
-  const selectedProject = availableProjects.includes(params.project || "")
-    ? (params.project as string)
-    : (process.env.DEFAULT_PROJECT_KEY || availableProjects[0] || "default");
+  const selectedProject = params.project && availableProjects.includes(params.project)
+    ? params.project
+    : null;
+
+  const projectFilter = selectedProject ? { projectKey: selectedProject } : {};
 
   const [devices, projectEvents] = await Promise.all([
     prisma.device.findMany({
-      where: { projectKey: selectedProject },
+      where: projectFilter,
       orderBy: { lastSeenAt: "desc" },
       include: {
         events: {
@@ -311,9 +324,9 @@ export default async function Home({ searchParams }: PageProps) {
       },
     }),
     prisma.deviceEvent.findMany({
-      where: { projectKey: selectedProject },
+      where: projectFilter,
       orderBy: { receivedAt: "desc" },
-      take: 240,
+      take: 5000,
     }),
   ]);
 
@@ -341,7 +354,7 @@ export default async function Home({ searchParams }: PageProps) {
     }
   }
 
-  const recentEventsTableRows = projectEvents.map((event) => ({
+  const recentEventsTableRows = projectEvents.slice(0, 240).map((event) => ({
     id: event.id,
     receivedAt: event.receivedAt.toISOString(),
     projectKey: event.projectKey,
@@ -398,11 +411,11 @@ export default async function Home({ searchParams }: PageProps) {
             <div className="grid min-w-[270px] gap-1.5 rounded-2xl border border-stone-300/80 bg-white/75 p-2.5 backdrop-blur">
               <div className="rounded-xl border border-stone-300/70 bg-white/85 px-3 py-2">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-stone-500">Local time ({localTimezoneLabel})</p>
-                <p className="font-mono text-3xl font-semibold leading-none text-stone-900 md:text-4xl">{localTimeNow}</p>
+                <LiveClock utcOffsetHours={DASHBOARD_UTC_OFFSET_HOURS} />
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-stone-500">Current project</span>
-                <span className="font-mono text-xs text-stone-700">{selectedProject}</span>
+                <span className="text-stone-500">Filter</span>
+                <span className="font-mono text-xs text-stone-700">{selectedProject || "all projects"}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-stone-500">Devices online</span>
@@ -416,22 +429,26 @@ export default async function Home({ searchParams }: PageProps) {
             </div>
           </div>
 
-          {availableProjects.length > 1 ? (
-            <nav className="mt-3 flex flex-wrap gap-2">
-              {availableProjects.map((projectKey) => {
-                const active = projectKey === selectedProject;
-                return (
-                  <a
-                    key={projectKey}
-                    href={`/?project=${encodeURIComponent(projectKey)}`}
-                    className={`rounded-full border px-4 py-2 text-sm transition ${active ? "border-stone-900 bg-stone-900 text-stone-50" : "border-stone-300 bg-white/80 text-stone-700 hover:border-stone-500 hover:bg-white"}`}
-                  >
-                    {projectKey}
-                  </a>
-                );
-              })}
-            </nav>
-          ) : null}
+          <nav className="mt-3 flex flex-wrap gap-2">
+            <Link
+              href="/"
+              className={`rounded-full border px-4 py-2 text-sm transition ${!selectedProject ? "border-stone-900 bg-stone-900 text-stone-50" : "border-stone-300 bg-white/80 text-stone-700 hover:border-stone-500 hover:bg-white"}`}
+            >
+              All
+            </Link>
+            {availableProjects.map((projectKey) => {
+              const active = projectKey === selectedProject;
+              return (
+                <a
+                  key={projectKey}
+                  href={`/?project=${encodeURIComponent(projectKey)}`}
+                  className={`rounded-full border px-4 py-2 text-sm transition ${active ? "border-stone-900 bg-stone-900 text-stone-50" : "border-stone-300 bg-white/80 text-stone-700 hover:border-stone-500 hover:bg-white"}`}
+                >
+                  {projectKey}
+                </a>
+              );
+            })}
+          </nav>
         </header>
 
         <WidgetCanvas storageKey="sumilabu.dashboard.widgets.v4">
@@ -439,7 +456,7 @@ export default async function Home({ searchParams }: PageProps) {
           <article className="rounded-[20px] border border-stone-300/80 bg-white/88 p-4 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-stone-500">Devices</p>
             <p className="mt-2 text-3xl font-semibold">{devices.length}</p>
-            <p className="mt-1 text-sm text-stone-600">Tracked under this project key.</p>
+            <p className="mt-1 text-sm text-stone-600">{selectedProject ? "Tracked under this project key." : "Across all projects."}</p>
           </article>
           <article className="rounded-[20px] border border-stone-300/80 bg-white/88 p-4 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-stone-500">Online Now</p>
@@ -498,7 +515,7 @@ export default async function Home({ searchParams }: PageProps) {
                 <div key={device.deviceId} className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <p className="font-mono text-sm font-semibold text-stone-800">{selectedProject}/{device.deviceId}</p>
+                      <p className="font-mono text-sm font-semibold text-stone-800">{device.projectKey}/{device.deviceId}</p>
                       <p className="mt-1 text-sm text-stone-600">Last ping {fmtAge(device.lastSeenAt)}</p>
                     </div>
                     <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${statusPillClasses(device.status)}`}>
@@ -541,12 +558,12 @@ export default async function Home({ searchParams }: PageProps) {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-12 gap-1">
-                    {device.timeline.map((slot) => (
+                  <div className="flex gap-0.5">
+                    {device.timeline.map((slot, slotIndex) => (
                       <div
-                        key={`${device.deviceId}-${slot.label}`}
+                        key={`${device.deviceId}-${slotIndex}`}
                         title={`${slot.label}: ${slot.count} ping${slot.count === 1 ? "" : "s"}`}
-                        className={`h-5 rounded-full border ${slot.hasPing ? "border-emerald-300 bg-emerald-500" : device.status === "offline" ? "border-red-200 bg-red-300" : "border-amber-200 bg-amber-300"}`}
+                        className={`h-5 flex-1 min-w-[4px] rounded-full border ${slot.hasPing ? "border-emerald-300 bg-emerald-500" : device.status === "offline" ? "border-red-200 bg-red-300" : "border-amber-200 bg-amber-300"}`}
                       />
                     ))}
                   </div>
@@ -600,7 +617,7 @@ export default async function Home({ searchParams }: PageProps) {
 
           <article className="rounded-[22px] border border-stone-300/80 bg-white/90 p-4 shadow-sm">
             <h2 className="text-lg font-semibold">Ingest shape</h2>
-            <p className="mt-1 text-sm text-stone-600">What the API is receiving for <span className="font-mono">{selectedProject}</span>.</p>
+            <p className="mt-1 text-sm text-stone-600">What the API is receiving{selectedProject ? <> for <span className="font-mono">{selectedProject}</span></> : null}.</p>
             <div className="mt-4 space-y-3">
               {breakdown.length > 0 ? breakdown.map((item) => (
                 <div key={item.label}>
