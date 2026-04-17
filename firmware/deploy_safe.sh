@@ -52,16 +52,23 @@ echo "USING=${PORT}"
 if [[ "${MPY_COMPILE}" == "true" ]]; then
   echo "MPY_COMPILE=true — precompiling .py → .mpy"
   "${MPY_CROSS}" custom_bitmaps.py -o custom_bitmaps.mpy
-  "${MPY_CROSS}" main.py -o main.mpy
-  # Remove any stale .py on device so .mpy is loaded
+  "${MPY_CROSS}" main.py -o _main.mpy
+  # Remove stale files; keep a stub main.py that boots _main.mpy
   "${MPREMOTE[@]}" connect "${PORT}" exec "
 import os
-for f in ['main.py','custom_bitmaps.py']:
+for f in ['main.py','main.mpy','_main.py','custom_bitmaps.py']:
     try: os.remove(f)
     except: pass
 "
   "${MPREMOTE[@]}" connect "${PORT}" fs cp custom_bitmaps.mpy :custom_bitmaps.mpy
-  "${MPREMOTE[@]}" connect "${PORT}" fs cp main.mpy :main.mpy
+  "${MPREMOTE[@]}" connect "${PORT}" fs cp _main.mpy :_main.mpy
+  # Stub main.py so MicroPython auto-executes on boot
+  "${MPREMOTE[@]}" connect "${PORT}" exec "
+f = open('main.py', 'w')
+f.write('import _main\n')
+f.close()
+print('wrote main.py stub')
+"
   MIN_FREE_AFTER=20000
 else
   "${MPREMOTE[@]}" connect "${PORT}" fs cp custom_bitmaps.py :custom_bitmaps.py
