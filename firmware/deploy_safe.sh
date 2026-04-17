@@ -24,7 +24,11 @@ echo "BUILD_BITMAPS_WITH=${PY_BIN}"
 echo "MPREMOTE_CMD=${MPREMOTE[*]}"
 "${PY_BIN}" tools/generate_custom_bitmaps.py
 
-PORT="$(find /dev -maxdepth 1 -name 'cu.usbmodem*' | head -n1)"
+if [[ -n "${PORT:-}" ]]; then
+  echo "PORT_OVERRIDE=${PORT}"
+else
+  PORT="$(find /dev -maxdepth 1 -name 'cu.usbmodem*' | head -n1)"
+fi
 
 if [[ -z "${PORT}" ]]; then
   echo "NO_MODEM"

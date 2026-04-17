@@ -79,9 +79,11 @@ def resolve_display_constant():
         # Accept common 5.7 naming variants across firmware builds.
         aliases = [requested]
         if requested == "DISPLAY_INKY_FRAME_5_7":
-            aliases.append("DISPLAY_INKY_FRAME_5")
+            aliases.extend(["DISPLAY_INKY_FRAME_5", "DISPLAY_INKY_FRAME"])
         elif requested == "DISPLAY_INKY_FRAME_5":
-            aliases.append("DISPLAY_INKY_FRAME_5_7")
+            aliases.extend(["DISPLAY_INKY_FRAME_5_7", "DISPLAY_INKY_FRAME"])
+        elif requested == "DISPLAY_INKY_FRAME":
+            aliases.extend(["DISPLAY_INKY_FRAME_5_7", "DISPLAY_INKY_FRAME_5"])
         elif requested == "DISPLAY_INKY_FRAME_7_3":
             aliases.append("DISPLAY_INKY_FRAME_7")
         elif requested == "DISPLAY_INKY_FRAME_7":
