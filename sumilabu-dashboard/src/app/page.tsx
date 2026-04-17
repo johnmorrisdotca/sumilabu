@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { AutoRefreshControl } from "@/components/auto-refresh-control";
+import { HeartbeatRadar } from "@/components/heartbeat-radar";
 import { RecentEventsTable } from "@/components/recent-events-table";
 import { WidgetCanvas } from "@/components/widget-canvas";
 import { prisma } from "@/lib/prisma";
@@ -56,6 +57,11 @@ type HeartbeatSlot = {
   count: number;
   label: string;
   hasPing: boolean;
+  fromTime: string;
+  toTime: string;
+  events: string[];
+  memFreeMin: number | null;
+  memFreeMax: number | null;
 };
 
 type DeviceHealth = {
@@ -176,7 +182,9 @@ function buildHeartbeatTimeline(events: RecentEvent[], nowMs: number): Heartbeat
   const slotCount = Math.max(1, Math.min(idealSlots, MAX_HEARTBEAT_SLOTS));
   const slotSizeMs = rangeMs / slotCount;
   const windowStartMs = nowMs - slotCount * slotSizeMs;
-  const counts = Array.from({ length: slotCount }, () => 0);
+
+  type SlotAccum = { count: number; events: string[]; memValues: number[] };
+  const accums: SlotAccum[] = Array.from({ length: slotCount }, () => ({ count: 0, events: [], memValues: [] }));
 
   for (const event of events) {
     const eventMs = event.receivedAt.getTime();
@@ -189,16 +197,27 @@ function buildHeartbeatTimeline(events: RecentEvent[], nowMs: number): Heartbeat
       Math.max(0, Math.floor((eventMs - windowStartMs) / slotSizeMs)),
     );
 
-    counts[slotIndex] += 1;
+    accums[slotIndex].count += 1;
+    accums[slotIndex].events.push(event.event);
+    if (typeof event.memFree === "number") {
+      accums[slotIndex].memValues.push(event.memFree);
+    }
   }
 
-  return counts.map((count, index) => {
+  return accums.map((acc, index) => {
     const secondsAgo = Math.round((slotCount - 1 - index) * (slotSizeMs / 1000));
+    const slotStartMs = windowStartMs + index * slotSizeMs;
+    const slotEndMs = slotStartMs + slotSizeMs;
 
     return {
-      count,
-      hasPing: count > 0,
+      count: acc.count,
+      hasPing: acc.count > 0,
       label: secondsAgo === 0 ? "now" : `-${fmtDuration(secondsAgo)}`,
+      fromTime: formatHourMinuteAtOffset(new Date(slotStartMs), DASHBOARD_UTC_OFFSET_HOURS),
+      toTime: formatHourMinuteAtOffset(new Date(slotEndMs), DASHBOARD_UTC_OFFSET_HOURS),
+      events: acc.events,
+      memFreeMin: acc.memValues.length > 0 ? Math.min(...acc.memValues) : null,
+      memFreeMax: acc.memValues.length > 0 ? Math.max(...acc.memValues) : null,
     };
   });
 }
@@ -558,20 +577,11 @@ export default async function Home({ searchParams }: PageProps) {
                     </span>
                   </div>
 
-                  <div className="flex gap-0.5">
-                    {device.timeline.map((slot, slotIndex) => (
-                      <div
-                        key={`${device.deviceId}-${slotIndex}`}
-                        title={`${slot.label}: ${slot.count} ping${slot.count === 1 ? "" : "s"}`}
-                        className={`h-5 flex-1 min-w-[4px] rounded-full border ${slot.hasPing ? "border-emerald-300 bg-emerald-500" : device.status === "offline" ? "border-red-200 bg-red-300" : "border-amber-200 bg-amber-300"}`}
-                      />
-                    ))}
-                  </div>
-
-                  <div className="mt-2 flex justify-between text-[11px] uppercase tracking-[0.16em] text-stone-500">
-                    <span>{device.timeline[0]?.label || "-"}</span>
-                    <span>{device.timeline.at(-1)?.label || "now"}</span>
-                  </div>
+                  <HeartbeatRadar
+                    deviceId={device.deviceId}
+                    status={device.status}
+                    timeline={device.timeline}
+                  />
                 </div>
               )) : (
                 <div className="rounded-2xl border border-dashed border-stone-300 bg-stone-50 p-6 text-sm text-stone-500">
