@@ -1,6 +1,7 @@
 .venv-tools/
 __pycache__/
 *.pyc
+*.mpy
 .DS_Store
 
 # Local secrets (use secrets.py.example as template)

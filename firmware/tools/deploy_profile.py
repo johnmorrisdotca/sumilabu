@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -169,7 +170,13 @@ def run() -> int:
         print(f"Deploying profile: {args.profile}")
         print(f"Using device id: {profile_values.get('STATS_DEVICE_ID')}")
         print(f"Using project key: {profile_values.get('STATS_PROJECT_KEY')}")
-        subprocess.run([str(deploy_script)], cwd=str(repo_root), check=True)
+
+        env = dict(os.environ)
+        # 5.7" InkyFrame needs .mpy precompilation to fit in RAM.
+        if args.profile == "japan57":
+            env["MPY_COMPILE"] = "true"
+
+        subprocess.run([str(deploy_script)], cwd=str(repo_root), check=True, env=env)
         return 0
     finally:
         # Restore local working secrets so profile deploys are stateless.

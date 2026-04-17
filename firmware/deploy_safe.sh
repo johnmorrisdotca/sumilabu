@@ -6,9 +6,16 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 cd "${SCRIPT_DIR}"
 
 MIN_FREE_AFTER=100000
+MPY_COMPILE="${MPY_COMPILE:-false}"
 PY_BIN="${REPO_ROOT}/.venv-tools/bin/python"
 if [[ ! -x "${PY_BIN}" ]]; then
   PY_BIN="python3"
+fi
+
+MPY_CROSS="${REPO_ROOT}/.venv-tools/bin/mpy-cross"
+if [[ "${MPY_COMPILE}" == "true" ]] && ! command -v "${MPY_CROSS}" >/dev/null 2>&1; then
+  echo "MPY_CROSS_MISSING (install with: ${PY_BIN} -m pip install mpy-cross)"
+  exit 1
 fi
 
 if command -v mpremote >/dev/null 2>&1; then
@@ -41,8 +48,25 @@ if [[ ! -f "secrets.py" ]]; then
 fi
 
 echo "USING=${PORT}"
-"${MPREMOTE[@]}" connect "${PORT}" fs cp custom_bitmaps.py :custom_bitmaps.py
-"${MPREMOTE[@]}" connect "${PORT}" fs cp main.py :main.py
+
+if [[ "${MPY_COMPILE}" == "true" ]]; then
+  echo "MPY_COMPILE=true — precompiling .py → .mpy"
+  "${MPY_CROSS}" custom_bitmaps.py -o custom_bitmaps.mpy
+  "${MPY_CROSS}" main.py -o main.mpy
+  # Remove any stale .py on device so .mpy is loaded
+  "${MPREMOTE[@]}" connect "${PORT}" exec "
+import os
+for f in ['main.py','custom_bitmaps.py']:
+    try: os.remove(f)
+    except: pass
+"
+  "${MPREMOTE[@]}" connect "${PORT}" fs cp custom_bitmaps.mpy :custom_bitmaps.mpy
+  "${MPREMOTE[@]}" connect "${PORT}" fs cp main.mpy :main.mpy
+  MIN_FREE_AFTER=20000
+else
+  "${MPREMOTE[@]}" connect "${PORT}" fs cp custom_bitmaps.py :custom_bitmaps.py
+  "${MPREMOTE[@]}" connect "${PORT}" fs cp main.py :main.py
+fi
 "${MPREMOTE[@]}" connect "${PORT}" fs cp secrets.py :secrets.py
 
 ASSET_OUT="$("${MPREMOTE[@]}" connect "${PORT}" run probe_assets.py 2>&1 || true)"
