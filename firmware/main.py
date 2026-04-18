@@ -165,7 +165,7 @@ STATS_PROJECT_KEY = getattr(secrets, "STATS_PROJECT_KEY", "inkyframe") if secret
 STATS_INTERVAL_SECONDS = getattr(secrets, "STATS_INTERVAL_SECONDS", REFRESH_SECONDS) if secrets else REFRESH_SECONDS
 STATS_HTTP_TIMEOUT_S = getattr(secrets, "STATS_HTTP_TIMEOUT_S", 8) if secrets else 8
 RENDER_WDT_FEED_ROWS = 8
-ENABLE_AUTO_RECOVER_RESET = bool(getattr(secrets, "ENABLE_AUTO_RECOVER_RESET", False)) if secrets else False
+ENABLE_AUTO_RECOVER_RESET = bool(getattr(secrets, "ENABLE_AUTO_RECOVER_RESET", True)) if secrets else True
 
 ACTIVE_CITY_NAME = getattr(secrets, "ACTIVE_CITY_NAME", REMOTE_CITY_NAME) if secrets else REMOTE_CITY_NAME
 ACTIVE_CITY_NAME_JP = getattr(secrets, "ACTIVE_CITY_NAME_JP", REMOTE_CITY_NAME_JP) if secrets else REMOTE_CITY_NAME_JP
