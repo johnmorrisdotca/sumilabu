@@ -813,7 +813,7 @@ def draw_footer(status, wifi_text, diag_text):
         right_text = diag_text
     draw_text_bold(left_text, 20, HEIGHT - 34, WIDTH // 2, 2, bold=False)
     draw_text_bold(right_text, FOOTER_RIGHT_X, HEIGHT - 34, FOOTER_RIGHT_W, 2, bold=False)
-    draw_text_bold(bat, WIDTH - 160, HEIGHT - 54, 140, 2, bold=False)
+    draw_text_bold(bat, FOOTER_RIGHT_X, HEIGHT - 54, FOOTER_RIGHT_W, 2, bold=False)
 
 
 def draw_syncing_screen(wifi_text, diag_text):
@@ -1206,7 +1206,7 @@ def draw_mode_a(pst, jst, sync_ok, wifi_text, diag_text):
         draw_text_bold(weekday_en_map.get(weekday_keys[pst[6] % 7], "MONDAY"), LEFT_X, 290, COL_W, 2, bold=False)
         draw_text_bold(weekday_keys[jst[6] % 7], RIGHT_X, 290, COL_W, 2, bold=False)
 
-        status = "A Dual clocks | NTP synced" if sync_ok else "A Dual clocks | Clock not synced"
+        status = "A={}+{} | NTP synced".format(LOCAL_TZ_LABEL, REMOTE_TZ_LABEL) if sync_ok else "A={}+{} | Clock not synced".format(LOCAL_TZ_LABEL, REMOTE_TZ_LABEL)
         draw_footer(status, wifi_text, diag_text)
         graphics.update()
         return
@@ -1288,7 +1288,7 @@ def draw_mode_a(pst, jst, sync_ok, wifi_text, diag_text):
     draw_bitmap_text_bottom(weekday_text, FONT_UI_BIG, LEFT_X, WEEKDAY_Y_BOTTOM, COL_W, spacing=COL_W_SPACING)
     draw_jp_weekday(jst_weekday_key, RIGHT_X, WEEKDAY_Y_BOTTOM, COL_W)
 
-    status = "A Dual clocks | NTP synced" if sync_ok else "A Dual clocks | Clock not synced"
+    status = "A={}+{} | NTP synced".format(LOCAL_TZ_LABEL, REMOTE_TZ_LABEL) if sync_ok else "A={}+{} | Clock not synced".format(LOCAL_TZ_LABEL, REMOTE_TZ_LABEL)
     draw_footer(status, wifi_text, diag_text)
 
     graphics.update()
@@ -1407,9 +1407,10 @@ def draw_mode_japan_only(jst, sync_ok, wifi_text, diag_text):
     clear_inverted()
     set_best_font()
 
-    # Tighter layout: same font sizes as 7.3", less whitespace.
+    # Tighter layout: same physical font size as 7.3" (PPI compensation).
     title_bottom = max(44, int(HEIGHT * 0.12))
-    label_bottom = title_bottom + max(18, int(HEIGHT * 0.05))
+    jp_y = title_bottom + JP_LABEL_Y_OFFSET
+    label_bottom = jp_y + bitmap_text_height(city_name_jp, FONT_JP) if custom_assets_ready() else title_bottom + 30
     time_bottom = max(label_bottom + 58, int(HEIGHT * 0.52))
     date_bottom = max(time_bottom + 36, int(HEIGHT * 0.70))
     weekday_bottom = max(date_bottom + 30, int(HEIGHT * 0.80))
@@ -1433,7 +1434,8 @@ def draw_mode_japan_only(jst, sync_ok, wifi_text, diag_text):
             char_y_offsets={"ー": -12} if "ー" in city_name_jp else None,
         )
 
-        time_scale = TIME_SCALE_FACTOR
+        # Slightly larger scale on 5.7" to match physical size (131 vs 128 PPI)
+        time_scale = TIME_SCALE_FACTOR * 1.05
         draw_bitmap_text_bottom(
             fmt_time(jst),
             FONT_TIME,
@@ -1463,7 +1465,8 @@ def draw_mode_japan_only(jst, sync_ok, wifi_text, diag_text):
             draw_text_bold(fmt_date_jp(jst), 20, max(188, int(HEIGHT * 0.54)), WIDTH - 40, 2, bold=False)
             draw_text_bold(city_tz, 20, max(228, int(HEIGHT * 0.64)), WIDTH - 40, 2, bold=False)
 
-    status = "{} | NTP synced".format(city_tz) if sync_ok else "{} | Clock not synced".format(city_tz)
+    status = "A={} B={} C=Swap".format(LOCAL_TZ_LABEL, REMOTE_TZ_LABEL)
+    status += " | NTP synced" if sync_ok else " | Not synced"
     draw_footer(status, wifi_text, diag_text)
     graphics.update()
 
