@@ -1433,7 +1433,7 @@ def draw_mode_japan_only(jst, sync_ok, wifi_text, diag_text):
             char_y_offsets={"ー": -12} if "ー" in city_name_jp else None,
         )
 
-        time_scale = 1.34
+        time_scale = TIME_SCALE_FACTOR
         draw_bitmap_text_bottom(
             fmt_time(jst),
             FONT_TIME,
