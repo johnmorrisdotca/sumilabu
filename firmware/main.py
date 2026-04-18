@@ -568,6 +568,16 @@ def fmt_date_jp(t):
     return "{:04d}年{:02d}月{:02d}日".format(t[0], t[1], t[2])
 
 
+def fmt_date_en(t):
+    months = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+    return "{} {:d}, {:04d}".format(months[t[1] - 1], t[2], t[0])
+
+
+def fmt_weekday_en(t):
+    days = ("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY")
+    return days[t[6] % 7]
+
+
 def clock_looks_valid(utc_epoch):
     """Treat default firmware RTC years as invalid until NTP sync succeeds."""
     return time.gmtime(utc_epoch)[0] >= MIN_VALID_YEAR
@@ -655,6 +665,28 @@ def read_jp_city_button():
     except Exception:
         pass
     return False
+
+
+def read_battery():
+    """Return (voltage, on_usb).  voltage is VSYS in volts."""
+    try:
+        import machine
+        adc = machine.ADC(29)
+        raw = adc.read_u16()
+        voltage = raw * 3 * 3.3 / 65535
+        on_usb = machine.Pin('WL_GPIO2', machine.Pin.IN).value() == 1
+        return voltage, on_usb
+    except Exception:
+        return 0.0, True
+
+
+def battery_label():
+    voltage, on_usb = read_battery()
+    if on_usb:
+        return "USB {:.1f}V".format(voltage)
+    # 3xAA: ~4.5V full, ~3.0V empty
+    pct = max(0, min(100, int((voltage - 3.0) / (4.5 - 3.0) * 100)))
+    return "BAT {}% {:.1f}V".format(pct, voltage)
 
 
 def read_mode_button(current_mode):
@@ -788,6 +820,7 @@ def set_footer_font():
 
 def draw_footer(status, wifi_text, diag_text):
     set_footer_font()
+    bat = battery_label()
     draw_text_bold(status, 20, HEIGHT - 54, WIDTH - 40, 2, bold=False)
     left_text = "E=Refresh"
     right_text = wifi_text
@@ -795,6 +828,7 @@ def draw_footer(status, wifi_text, diag_text):
         right_text = diag_text
     draw_text_bold(left_text, 20, HEIGHT - 34, WIDTH // 2, 2, bold=False)
     draw_text_bold(right_text, FOOTER_RIGHT_X, HEIGHT - 34, FOOTER_RIGHT_W, 2, bold=False)
+    draw_text_bold(bat, WIDTH - 160, HEIGHT - 54, 140, 2, bold=False)
 
 
 def draw_syncing_screen(wifi_text, diag_text):
@@ -1398,6 +1432,7 @@ def draw_mode_japan_only(jst, sync_ok, wifi_text, diag_text):
     city_name_jp = _jp_city["name_jp"]
     city_offset = _jp_city["offset"]
     city_tz = _jp_city["tz"]
+    is_local = city_name == LOCAL_CITY_NAME
     jst = timezone_struct(time.time(), city_offset)
 
     if custom_assets_ready():
@@ -1425,15 +1460,22 @@ def draw_mode_japan_only(jst, sync_ok, wifi_text, diag_text):
             center_reference_chars=set("0123456789"),
             char_y_offsets={":": TIME_COLON_Y_OFFSET},
         )
-        draw_bitmap_text_bottom(fmt_date_jp(jst), FONT_DATE, 20, date_bottom, WIDTH - 40, spacing=DATE_SPACING)
-
-        weekday_keys = ("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY")
-        draw_jp_weekday(weekday_keys[jst[6] % 7], 20, weekday_bottom, WIDTH - 40)
+        if is_local:
+            draw_bitmap_text_bottom(fmt_date(jst), FONT_DATE, 20, date_bottom, WIDTH - 40, spacing=DATE_SPACING)
+            draw_bitmap_text_bottom(fmt_weekday_en(jst), FONT_UI_BIG, 20, weekday_bottom, WIDTH - 40, spacing=COL_W_SPACING)
+        else:
+            draw_bitmap_text_bottom(fmt_date_jp(jst), FONT_DATE, 20, date_bottom, WIDTH - 40, spacing=DATE_SPACING)
+            weekday_keys = ("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY")
+            draw_jp_weekday(weekday_keys[jst[6] % 7], 20, weekday_bottom, WIDTH - 40)
     else:
         draw_text_bold(city_name, 20, 24, WIDTH - 40, 2)
         draw_text_bold(fmt_time(jst), 20, max(78, int(HEIGHT * 0.26)), WIDTH - 40, 7)
-        draw_text_bold(fmt_date_jp(jst), 20, max(188, int(HEIGHT * 0.54)), WIDTH - 40, 2, bold=False)
-        draw_text_bold(city_tz, 20, max(228, int(HEIGHT * 0.64)), WIDTH - 40, 2, bold=False)
+        if is_local:
+            draw_text_bold(fmt_date(jst), 20, max(188, int(HEIGHT * 0.54)), WIDTH - 40, 2, bold=False)
+            draw_text_bold(fmt_weekday_en(jst), 20, max(228, int(HEIGHT * 0.64)), WIDTH - 40, 2, bold=False)
+        else:
+            draw_text_bold(fmt_date_jp(jst), 20, max(188, int(HEIGHT * 0.54)), WIDTH - 40, 2, bold=False)
+            draw_text_bold(city_tz, 20, max(228, int(HEIGHT * 0.64)), WIDTH - 40, 2, bold=False)
 
     status = "{} | NTP synced".format(city_tz) if sync_ok else "{} | Clock not synced".format(city_tz)
     draw_footer(status, wifi_text, diag_text)
