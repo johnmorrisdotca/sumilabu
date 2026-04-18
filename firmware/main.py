@@ -1407,6 +1407,13 @@ def draw_mode_japan_only(jst, sync_ok, wifi_text, diag_text):
     clear_inverted()
     set_best_font()
 
+    city_name = _jp_city["name"]
+    city_name_jp = _jp_city["name_jp"]
+    city_offset = _jp_city["offset"]
+    city_tz = _jp_city["tz"]
+    is_local = city_name == LOCAL_CITY_NAME
+    jst = timezone_struct(time.time(), city_offset)
+
     # Tighter layout: same physical font size as 7.3" (PPI compensation).
     title_bottom = max(44, int(HEIGHT * 0.12))
     jp_y = title_bottom + JP_LABEL_Y_OFFSET
@@ -1414,13 +1421,6 @@ def draw_mode_japan_only(jst, sync_ok, wifi_text, diag_text):
     time_bottom = max(label_bottom + 58, int(HEIGHT * 0.52))
     date_bottom = max(time_bottom + 36, int(HEIGHT * 0.70))
     weekday_bottom = max(date_bottom + 30, int(HEIGHT * 0.80))
-
-    city_name = _jp_city["name"]
-    city_name_jp = _jp_city["name_jp"]
-    city_offset = _jp_city["offset"]
-    city_tz = _jp_city["tz"]
-    is_local = city_name == LOCAL_CITY_NAME
-    jst = timezone_struct(time.time(), city_offset)
 
     if custom_assets_ready():
         draw_bitmap_text_bottom(city_name, FONT_UI_BIG, 20, title_bottom, WIDTH - 40, spacing=COL_W_SPACING)
