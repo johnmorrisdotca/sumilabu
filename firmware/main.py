@@ -316,24 +316,9 @@ def wifi_connected():
 
 
 def power_snapshot():
-    battery_v = None
-    usb_powered = None
-
-    try:
-        if hasattr(inky_frame, "battery_voltage"):
-            battery_v = round(float(inky_frame.battery_voltage()), 3)
-    except Exception:
-        battery_v = None
-
-    try:
-        if hasattr(inky_frame, "usb_power"):
-            usb_powered = bool(inky_frame.usb_power())
-        elif hasattr(inky_frame, "is_usb_powered"):
-            usb_powered = bool(inky_frame.is_usb_powered())
-    except Exception:
-        usb_powered = None
-
-    return battery_v, usb_powered
+    voltage, on_usb = read_battery()
+    battery_v = round(voltage, 3) if voltage > 0 else None
+    return battery_v, on_usb
 
 
 def post_device_stats(event_name, mode, ntp_ok, bitmap_assets_ok, sync_text, wifi_text):
@@ -683,10 +668,10 @@ def read_battery():
 def battery_label():
     voltage, on_usb = read_battery()
     if on_usb:
-        return "USB {:.1f}V".format(voltage)
-    # 3xAA: ~4.5V full, ~3.0V empty
-    pct = max(0, min(100, int((voltage - 3.0) / (4.5 - 3.0) * 100)))
-    return "BAT {}% {:.1f}V".format(pct, voltage)
+        return "USB"
+    # Li-ion 3.7V cell: 4.2V full, 3.0V cutoff
+    pct = max(0, min(100, int((voltage - 3.0) / (4.2 - 3.0) * 100)))
+    return "{}% {:.2f}V".format(pct, voltage)
 
 
 def read_mode_button(current_mode):
