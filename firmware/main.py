@@ -155,7 +155,10 @@ WATCHDOG_REQUESTED_TIMEOUT_MS = getattr(secrets, "WATCHDOG_TIMEOUT_MS", WATCHDOG
 WATCHDOG_TIMEOUT_MS = max(1000, min(WATCHDOG_REQUESTED_TIMEOUT_MS, WATCHDOG_MAX_TIMEOUT_MS))
 WATCHDOG_CLAMPED = WATCHDOG_TIMEOUT_MS != WATCHDOG_REQUESTED_TIMEOUT_MS
 ENABLE_WATCHDOG = bool(getattr(secrets, "ENABLE_WATCHDOG", False)) if secrets else False
-APP_VERSION = "2026-04-16-2"
+APP_VERSION = "2026-04-17-1"
+ERROR_LOG_FILE = "error_log.json"
+ERROR_LOG_MAX = 10
+MAX_CONSECUTIVE_CRASHES = 5
 NTP_RESYNC_SECONDS = getattr(secrets, "NTP_RESYNC_SECONDS", 0) if secrets else 0
 
 STATS_API_URL = getattr(secrets, "STATS_API_URL", None) if secrets else None
@@ -243,6 +246,103 @@ def default_device_id():
 
 
 DEVICE_ID = default_device_id()
+
+
+# --- On-device error log (file-backed ring buffer) ---
+
+def _read_error_log():
+    try:
+        with open(ERROR_LOG_FILE, "r") as f:
+            entries = json.load(f)
+        if isinstance(entries, list):
+            return entries
+    except Exception:
+        pass
+    return []
+
+
+def _write_error_log(entries):
+    try:
+        with open(ERROR_LOG_FILE, "w") as f:
+            json.dump(entries[-ERROR_LOG_MAX:], f)
+    except Exception:
+        pass
+
+
+def log_error(context, exc):
+    entry = {
+        "ts": int(time.time()),
+        "ctx": context,
+        "err": "{}: {}".format(type(exc).__name__, exc),
+        "mem": gc.mem_free(),
+        "up": int(time.ticks_ms() // 1000),
+    }
+    entries = _read_error_log()
+    entries.append(entry)
+    _write_error_log(entries)
+
+
+def flush_error_log():
+    """Post queued errors to the API and clear the log file. Returns list of entries flushed."""
+    entries = _read_error_log()
+    if not entries:
+        return []
+    # Clear immediately so we don't re-send on next boot even if POST fails
+    try:
+        import os
+        os.remove(ERROR_LOG_FILE)
+    except Exception:
+        _write_error_log([])
+    return entries
+
+
+def post_error_log(entries, wifi_text):
+    """Send queued error entries to dashboard API."""
+    request_mod = get_urequests()
+    if not STATS_API_URL or not request_mod or not entries:
+        return False
+    if not wifi_connected():
+        return False
+
+    battery_v, usb_powered = power_snapshot()
+    payload = {
+        "event": "error_flush",
+        "project_key": STATS_PROJECT_KEY,
+        "device_id": DEVICE_ID,
+        "device_profile": DEVICE_PROFILE,
+        "display_model": DISPLAY_MODEL,
+        "app_version": APP_VERSION,
+        "mode": "error",
+        "mem_free": gc.mem_free(),
+        "uptime_s": int(time.ticks_ms() // 1000),
+        "unix_ts": int(time.time()),
+        "wifi": wifi_text,
+        "sync": "errors:{}".format(len(entries)),
+        "error_log": entries,
+    }
+    if battery_v is not None:
+        payload["battery_v"] = battery_v
+    if usb_powered is not None:
+        payload["usb_powered"] = usb_powered
+
+    headers = {"Content-Type": "application/json"}
+    if STATS_API_TOKEN:
+        headers["Authorization"] = "Bearer {}".format(STATS_API_TOKEN)
+
+    resp = None
+    try:
+        feed_watchdog()
+        resp = request_mod.post(STATS_API_URL, data=json.dumps(payload), headers=headers)
+        feed_watchdog()
+        return True
+    except Exception:
+        return False
+    finally:
+        if resp is not None:
+            try:
+                resp.close()
+            except Exception:
+                pass
 
 
 def init_watchdog():
@@ -1534,12 +1634,17 @@ def run_clock_loop():
                     if ntp_ok:
                         last_ntp_sync_epoch = time.time()
                         post_device_stats("boot", mode, ntp_ok, bitmap_assets_ok, sync_text, wifi_text)
+                        # Flush any queued crash logs while we have wifi
+                        queued_errors = flush_error_log()
+                        if queued_errors:
+                            post_error_log(queued_errors, wifi_text)
                         last_error = ""
                         break
                     last_error = sync_text
                 else:
                     last_error = wifi_text
             except Exception as exc:
+                log_error("boot_ntp", exc)
                 sync_text = "Boot err {}".format(type(exc).__name__)
                 last_error = type(exc).__name__
             finally:
@@ -1586,6 +1691,7 @@ def run_clock_loop():
                     post_device_stats(event, mode, ntp_ok, bitmap_assets_ok, sync_text, wifi_text)
                     gc.collect()
                 except Exception as exc:
+                    log_error("city_draw", exc)
                     sync_text = "Draw err {}".format(type(exc).__name__)
                     last_error = type(exc).__name__
                 safe_sleep(0.3)
@@ -1605,6 +1711,7 @@ def run_clock_loop():
                 post_device_stats("mode_change", mode, ntp_ok, bitmap_assets_ok, sync_text, wifi_text)
                 gc.collect()
             except Exception as exc:
+                log_error("mode_draw", exc)
                 sync_text = "Draw err {}".format(type(exc).__name__)
                 last_error = type(exc).__name__
             safe_sleep(0.2)
@@ -1672,6 +1779,7 @@ def run_clock_loop():
                     event_mode = MODE_E if manual_refresh else mode
                     post_device_stats("refresh", event_mode, ntp_ok, bitmap_assets_ok, sync_text, wifi_text)
             except Exception as exc:
+                log_error("refresh_draw", exc)
                 sync_text = "Loop err {}".format(type(exc).__name__)
                 last_error = type(exc).__name__
             finally:
@@ -1703,20 +1811,28 @@ def run_clock_loop():
 
 
 def main():
+    consecutive_crashes = 0
     while True:
         try:
             run_clock_loop()
+            consecutive_crashes = 0
         except Exception as exc:
+            consecutive_crashes += 1
+            log_error("main_loop", exc)
             try:
                 clear_inverted()
                 set_footer_font()
-                draw_text_bold("Runtime error", 20, 20, WIDTH - 40, 2, bold=False)
+                draw_text_bold("Runtime error ({})".format(consecutive_crashes), 20, 20, WIDTH - 40, 2, bold=False)
                 draw_text_bold(type(exc).__name__, 20, 50, WIDTH - 40, 2, bold=False)
-                draw_text_bold("Auto restarting...", 20, 80, WIDTH - 40, 2, bold=False)
+                draw_text_bold(str(exc)[:60], 20, 80, WIDTH - 40, 2, bold=False)
+                draw_text_bold("Auto restarting...", 20, 110, WIDTH - 40, 2, bold=False)
                 graphics.update()
             except Exception:
                 pass
             gc.collect()
+            if consecutive_crashes >= MAX_CONSECUTIVE_CRASHES and machine and hasattr(machine, "reset"):
+                safe_sleep(1)
+                machine.reset()
             safe_sleep(2)
 
 

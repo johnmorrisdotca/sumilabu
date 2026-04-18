@@ -19,6 +19,13 @@ const payloadSchema = z.object({
   unix_ts: z.number().int().nonnegative().optional(),
   wifi: z.string().max(256).optional(),
   sync: z.string().max(256).optional(),
+  error_log: z.array(z.object({
+    ts: z.number().optional(),
+    ctx: z.string().optional(),
+    err: z.string().optional(),
+    mem: z.number().optional(),
+    up: z.number().optional(),
+  })).max(20).optional(),
 });
 
 function parseProjectTokens(): Record<string, string> {
