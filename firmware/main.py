@@ -1422,11 +1422,12 @@ def draw_mode_japan_only(jst, sync_ok, wifi_text, diag_text):
     clear_inverted()
     set_best_font()
 
-    title_bottom = max(52, int(HEIGHT * 0.17))
-    label_bottom = title_bottom + max(20, int(HEIGHT * 0.07))
-    time_bottom = max(label_bottom + 64, int(HEIGHT * 0.58))
-    date_bottom = max(time_bottom + 40, int(HEIGHT * 0.74))
-    weekday_bottom = max(date_bottom + 34, int(HEIGHT * 0.84))
+    # Tighter layout: same font sizes as 7.3", less whitespace.
+    title_bottom = max(44, int(HEIGHT * 0.12))
+    label_bottom = title_bottom + max(18, int(HEIGHT * 0.05))
+    time_bottom = max(label_bottom + 58, int(HEIGHT * 0.52))
+    date_bottom = max(time_bottom + 36, int(HEIGHT * 0.70))
+    weekday_bottom = max(date_bottom + 30, int(HEIGHT * 0.80))
 
     city_name = _jp_city["name"]
     city_name_jp = _jp_city["name_jp"]
@@ -1447,7 +1448,7 @@ def draw_mode_japan_only(jst, sync_ok, wifi_text, diag_text):
             char_y_offsets={"ー": -12} if "ー" in city_name_jp else None,
         )
 
-        time_scale = 1.34 if WIDTH >= 760 else 1.18
+        time_scale = 1.34
         draw_bitmap_text_bottom(
             fmt_time(jst),
             FONT_TIME,
