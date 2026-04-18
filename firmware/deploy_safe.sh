@@ -7,6 +7,11 @@ cd "${SCRIPT_DIR}"
 
 MIN_FREE_AFTER=100000
 MPY_COMPILE="${MPY_COMPILE:-false}"
+MAIN_SOURCE="${MAIN_SOURCE:-main.py}"
+if [[ ! -f "${MAIN_SOURCE}" ]]; then
+  echo "MISSING_MAIN_SOURCE (${MAIN_SOURCE})"
+  exit 4
+fi
 PY_BIN="${REPO_ROOT}/.venv-tools/bin/python"
 if [[ ! -x "${PY_BIN}" ]]; then
   PY_BIN="python3"
@@ -34,7 +39,17 @@ echo "MPREMOTE_CMD=${MPREMOTE[*]}"
 if [[ -n "${PORT:-}" ]]; then
   echo "PORT_OVERRIDE=${PORT}"
 else
-  PORT="$(find /dev -maxdepth 1 -name 'cu.usbmodem*' | head -n1)"
+  mapfile -t MODEM_PORTS < <(find /dev -maxdepth 1 -name 'cu.usbmodem*' | sort)
+  if (( ${#MODEM_PORTS[@]} == 1 )); then
+    PORT="${MODEM_PORTS[0]}"
+  elif (( ${#MODEM_PORTS[@]} > 1 )); then
+    echo "MULTIPLE_MODEMS_DETECTED"
+    printf '  %s\n' "${MODEM_PORTS[@]}"
+    echo "Set PORT=/dev/cu.usbmodemXXXX to deploy to a specific device."
+    exit 3
+  else
+    PORT=""
+  fi
 fi
 
 if [[ -z "${PORT}" ]]; then
@@ -52,7 +67,7 @@ echo "USING=${PORT}"
 if [[ "${MPY_COMPILE}" == "true" ]]; then
   echo "MPY_COMPILE=true — precompiling .py → .mpy"
   "${MPY_CROSS}" custom_bitmaps.py -o custom_bitmaps.mpy
-  "${MPY_CROSS}" main.py -o _main.mpy
+  "${MPY_CROSS}" "${MAIN_SOURCE}" -o _main.mpy
   # Remove stale files; keep a stub main.py that boots _main.mpy
   "${MPREMOTE[@]}" connect "${PORT}" exec "
 import os
@@ -72,7 +87,7 @@ print('wrote main.py stub')
   MIN_FREE_AFTER=20000
 else
   "${MPREMOTE[@]}" connect "${PORT}" fs cp custom_bitmaps.py :custom_bitmaps.py
-  "${MPREMOTE[@]}" connect "${PORT}" fs cp main.py :main.py
+  "${MPREMOTE[@]}" connect "${PORT}" fs cp "${MAIN_SOURCE}" :main.py
 fi
 "${MPREMOTE[@]}" connect "${PORT}" fs cp secrets.py :secrets.py
 

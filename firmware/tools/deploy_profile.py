@@ -14,6 +14,14 @@ import sys
 from pathlib import Path
 from typing import Any
 
+SCRIPT_PATH = Path(__file__).resolve()
+FIRMWARE_DIR = SCRIPT_PATH.parents[1]
+if str(FIRMWARE_DIR) not in sys.path:
+    sys.path.insert(0, str(FIRMWARE_DIR))
+
+from common.profile_utils import render_secrets
+from deploy.profile_registry import all_profiles, build_profile_registry
+
 
 def parse_assignments(path: Path) -> dict[str, Any]:
     text = path.read_text(encoding="utf-8")
@@ -34,119 +42,14 @@ def parse_assignments(path: Path) -> dict[str, Any]:
     return values
 
 
-def py_literal(value: Any) -> str:
-    return repr(value)
-
-
-def get_value(values: dict[str, Any], key: str, default: Any) -> Any:
-    return values.get(key, default)
-
-
-def build_profile_values(source: dict[str, Any], profile: str) -> dict[str, Any]:
-    common = {
-        "WIFI_SSID": get_value(source, "WIFI_SSID", ""),
-        "WIFI_PASSWORD": get_value(source, "WIFI_PASSWORD", ""),
-        "WIFI_COUNTRY": get_value(source, "WIFI_COUNTRY", "CA"),
-        "INKY_DISPLAY": get_value(source, "INKY_DISPLAY", "auto"),
-        "LOCAL_CITY_NAME": get_value(source, "LOCAL_CITY_NAME", "VANCOUVER"),
-        "LOCAL_CITY_NAME_JP": get_value(source, "LOCAL_CITY_NAME_JP", "バンクーバー"),
-        "LOCAL_UTC_OFFSET": get_value(source, "LOCAL_UTC_OFFSET", -7),
-        "LOCAL_TZ_LABEL": get_value(source, "LOCAL_TZ_LABEL", "PST"),
-        "REMOTE_CITY_NAME": get_value(source, "REMOTE_CITY_NAME", "TOKYO"),
-        "REMOTE_CITY_NAME_JP": get_value(source, "REMOTE_CITY_NAME_JP", "東京"),
-        "REMOTE_UTC_OFFSET": get_value(source, "REMOTE_UTC_OFFSET", 9),
-        "REMOTE_TZ_LABEL": get_value(source, "REMOTE_TZ_LABEL", "JST"),
-        "STATS_API_URL": get_value(source, "STATS_API_URL", ""),
-        "STATS_API_TOKEN": get_value(source, "STATS_API_TOKEN", ""),
-        "STATS_INTERVAL_SECONDS": get_value(source, "STATS_INTERVAL_SECONDS", 300),
-        "STATS_HTTP_TIMEOUT_S": get_value(source, "STATS_HTTP_TIMEOUT_S", 8),
-        "WATCHDOG_TIMEOUT_MS": get_value(source, "WATCHDOG_TIMEOUT_MS", 8388),
-        "ENABLE_WATCHDOG": False,
-        "ENABLE_AUTO_RECOVER_RESET": False,
-        "NTP_RESYNC_SECONDS": get_value(source, "NTP_RESYNC_SECONDS", 0),
-    }
-
-    if profile == "office":
-        common.update(
-            {
-                "INKY_DISPLAY": "DISPLAY_INKY_FRAME_7",
-                "DEVICE_PROFILE": "dual",
-                "STATS_DEVICE_ID": "inky-maxi",
-                "STATS_PROJECT_KEY": "sumilabu-clock",
-                "ACTIVE_CITY_NAME": get_value(source, "ACTIVE_CITY_NAME", "TOKYO"),
-                "ACTIVE_CITY_NAME_JP": get_value(source, "ACTIVE_CITY_NAME_JP", "東京"),
-                "ACTIVE_UTC_OFFSET": get_value(source, "ACTIVE_UTC_OFFSET", 9),
-                "ACTIVE_TZ_LABEL": get_value(source, "ACTIVE_TZ_LABEL", "JST"),
-            }
-        )
-        return common
-
-    if profile == "japan57":
-        common.update(
-            {
-                "INKY_DISPLAY": "DISPLAY_INKY_FRAME_5_7",
-                "DEVICE_PROFILE": "japan",
-                "STATS_DEVICE_ID": "inky-mini",
-                "STATS_PROJECT_KEY": "sumilabu-clock",
-                "ACTIVE_CITY_NAME": "TOKYO",
-                "ACTIVE_CITY_NAME_JP": "東京",
-                "ACTIVE_UTC_OFFSET": 9,
-                "ACTIVE_TZ_LABEL": "JST",
-            }
-        )
-        return common
-
-    raise ValueError(f"Unsupported profile: {profile}")
-
-
-def render_secrets(values: dict[str, Any], profile: str) -> str:
-    lines = [
-        "# Auto-generated for deploy profile: {}".format(profile),
-        "# Source credentials come from your existing firmware/secrets.py",
-        "",
-    ]
-
-    keys_in_order = [
-        "WIFI_SSID",
-        "WIFI_PASSWORD",
-        "WIFI_COUNTRY",
-        "INKY_DISPLAY",
-        "DEVICE_PROFILE",
-        "LOCAL_CITY_NAME",
-        "LOCAL_CITY_NAME_JP",
-        "LOCAL_UTC_OFFSET",
-        "LOCAL_TZ_LABEL",
-        "REMOTE_CITY_NAME",
-        "REMOTE_CITY_NAME_JP",
-        "REMOTE_UTC_OFFSET",
-        "REMOTE_TZ_LABEL",
-        "ACTIVE_CITY_NAME",
-        "ACTIVE_CITY_NAME_JP",
-        "ACTIVE_UTC_OFFSET",
-        "ACTIVE_TZ_LABEL",
-        "STATS_API_URL",
-        "STATS_API_TOKEN",
-        "STATS_PROJECT_KEY",
-        "STATS_DEVICE_ID",
-        "STATS_INTERVAL_SECONDS",
-        "STATS_HTTP_TIMEOUT_S",
-        "ENABLE_WATCHDOG",
-        "ENABLE_AUTO_RECOVER_RESET",
-        "WATCHDOG_TIMEOUT_MS",
-        "NTP_RESYNC_SECONDS",
-    ]
-
-    for key in keys_in_order:
-        if key in values:
-            lines.append(f"{key} = {py_literal(values[key])}")
-
-    lines.append("")
-    return "\n".join(lines)
-
-
 def run() -> int:
-    parser = argparse.ArgumentParser(description="Deploy a specific InkyFrame device profile")
-    parser.add_argument("--profile", choices=["office", "japan57"], required=True)
+    parser = argparse.ArgumentParser(description="Deploy a specific device profile")
+    parser.add_argument("--profile", choices=all_profiles(), required=True)
+    parser.add_argument(
+        "--port",
+        default="",
+        help="Optional serial port override passed to deploy_safe.sh (recommended when multiple boards are connected)",
+    )
     args = parser.parse_args()
 
     script_path = Path(__file__).resolve()
@@ -163,7 +66,11 @@ def run() -> int:
 
     try:
         source_values = parse_assignments(secrets_path)
-        profile_values = build_profile_values(source_values, args.profile)
+        profiles, profile_options = build_profile_registry(source_values)
+        if args.profile not in profiles:
+            raise ValueError(f"Unsupported profile: {args.profile}")
+
+        profile_values = profiles[args.profile]
         generated = render_secrets(profile_values, args.profile)
         secrets_path.write_text(generated, encoding="utf-8")
 
@@ -174,6 +81,11 @@ def run() -> int:
         env = dict(os.environ)
         # Precompile .mpy to reduce RAM usage on all InkyFrame devices.
         env["MPY_COMPILE"] = "true"
+        profile_env = profile_options.get(args.profile, {})
+        if "main_source" in profile_env:
+            env["MAIN_SOURCE"] = profile_env["main_source"]
+        if args.port:
+            env["PORT"] = args.port
 
         subprocess.run([str(deploy_script)], cwd=str(repo_root), check=True, env=env)
         return 0

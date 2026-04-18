@@ -33,9 +33,22 @@ gc.collect()
 
 import ntptime  # type: ignore[import-not-found]
 import network  # type: ignore[import-not-found]
-import inky_frame  # type: ignore[import-not-found]
-import picographics  # type: ignore[import-not-found]
-from picographics import PicoGraphics  # type: ignore[import-not-found]
+try:
+    import inky_frame  # type: ignore[import-not-found]
+except Exception:
+    inky_frame = None
+
+try:
+    import picographics  # type: ignore[import-not-found]
+    from picographics import PicoGraphics  # type: ignore[import-not-found]
+except Exception:
+    picographics = None
+    PicoGraphics = None
+
+try:
+    import picounicorn  # type: ignore[import-not-found]
+except Exception:
+    picounicorn = None
 
 try:
     import usocket as socket  # type: ignore[import-not-found]
@@ -56,6 +69,23 @@ except Exception:
     ubinascii = None
 
 urequests = None
+_UNICORN_DEVICE = None
+
+
+def _normalize_hw_target(value):
+    name = str(value or "").strip().lower().replace("_", "-")
+    if name in ("unicorn", "unicorn-pack", "picounicorn"):
+        return "unicorn-pack"
+    return "inkyframe"
+
+
+def detect_hardware_target():
+    requested = getattr(secrets, "HARDWARE_TARGET", "auto") if secrets else "auto"
+    if requested and requested != "auto":
+        return _normalize_hw_target(requested)
+    if picounicorn is not None:
+        return "unicorn-pack"
+    return "inkyframe"
 
 
 def get_urequests():
@@ -73,6 +103,9 @@ def get_urequests():
 
 
 def resolve_display_constant():
+    if picographics is None:
+        raise RuntimeError("picographics unavailable for InkyFrame target")
+
     requested = getattr(secrets, "INKY_DISPLAY", "auto") if secrets else "auto"
 
     if requested and requested != "auto":
@@ -111,7 +144,27 @@ def resolve_display_constant():
     raise RuntimeError("No supported InkyFrame display constant found in picographics")
 
 
-DISPLAY, DISPLAY_MODEL = resolve_display_constant()
+HARDWARE_TARGET = detect_hardware_target()
+IS_UNICORN_TARGET = HARDWARE_TARGET == "unicorn-pack"
+UNICORN_GRAPHICS_DISPLAY = None
+
+if IS_UNICORN_TARGET:
+    DISPLAY = None
+    if picographics is not None:
+        for _candidate in ("DISPLAY_UNICORN_PACK", "DISPLAY_GALACTIC_UNICORN"):
+            _const = getattr(picographics, _candidate, None)
+            if _const is not None:
+                UNICORN_GRAPHICS_DISPLAY = _const
+                DISPLAY_MODEL = _candidate
+                break
+        else:
+            DISPLAY_MODEL = "UNICORN_PACK"
+    else:
+        DISPLAY_MODEL = "UNICORN_PACK"
+else:
+    DISPLAY, DISPLAY_MODEL = resolve_display_constant()
+
+IS_UNICORN_GRAPHICS_MODE = IS_UNICORN_TARGET and (UNICORN_GRAPHICS_DISPLAY is not None)
 
 # --- Display Constants (dual-clock layout baseline) ---
 TITLE_BOTTOM = 66
@@ -164,7 +217,8 @@ NTP_RESYNC_SECONDS = getattr(secrets, "NTP_RESYNC_SECONDS", 0) if secrets else 0
 STATS_API_URL = getattr(secrets, "STATS_API_URL", None) if secrets else None
 STATS_API_TOKEN = getattr(secrets, "STATS_API_TOKEN", None) if secrets else None
 STATS_DEVICE_ID = getattr(secrets, "STATS_DEVICE_ID", None) if secrets else None
-STATS_PROJECT_KEY = getattr(secrets, "STATS_PROJECT_KEY", "inkyframe") if secrets else "inkyframe"
+DEFAULT_STATS_PROJECT_KEY = "pico-unicorn" if IS_UNICORN_TARGET else "inkyframe"
+STATS_PROJECT_KEY = getattr(secrets, "STATS_PROJECT_KEY", DEFAULT_STATS_PROJECT_KEY) if secrets else DEFAULT_STATS_PROJECT_KEY
 STATS_INTERVAL_SECONDS = getattr(secrets, "STATS_INTERVAL_SECONDS", REFRESH_SECONDS) if secrets else REFRESH_SECONDS
 STATS_HTTP_TIMEOUT_S = getattr(secrets, "STATS_HTTP_TIMEOUT_S", 8) if secrets else 8
 RENDER_WDT_FEED_ROWS = 8
@@ -202,6 +256,15 @@ MODE_C = "C"
 MODE_D = "D"
 MODE_E = "E"
 
+UNICORN_BUTTON_COLORS = {
+    "A": (255, 0, 0),
+    "B": (0, 255, 0),
+    "C": (0, 96, 255),
+    "D": (255, 170, 0),
+}
+UNICORN_IDLE_COLOR = (8, 8, 8)
+UNICORN_PATTERN_COMBO = ("A", "B")
+
 SAMPLE_MEETINGS_UTC = [
     # Same meeting list rendered in different local timezones.
     ("Standup", 17, 0),
@@ -209,12 +272,218 @@ SAMPLE_MEETINGS_UTC = [
     ("1:1", 0, 30),
 ]
 
-graphics = PicoGraphics(display=DISPLAY)
-try:
-    # Favor full-quality e-ink updates for readability and reduced ghosting.
-    graphics.set_update_speed(DISPLAY_UPDATE_SPEED)
-except Exception:
-    pass
+class NullGraphics:
+    """No-op graphics backend used on non-display hardware targets."""
+
+    def get_bounds(self):
+        return 53, 11
+
+    def create_pen(self, r, g, b):
+        return (r, g, b)
+
+    def set_update_speed(self, *_args, **_kwargs):
+        return None
+
+    def set_pen(self, *_args, **_kwargs):
+        return None
+
+    def clear(self):
+        return None
+
+    def text(self, *_args, **_kwargs):
+        return None
+
+    def update(self):
+        return None
+
+    def rectangle(self, *_args, **_kwargs):
+        return None
+
+    def pixel(self, *_args, **_kwargs):
+        return None
+
+    def set_font(self, *_args, **_kwargs):
+        return None
+
+    def measure_text(self, text, scale=1):
+        return len(text) * 6 * max(1, int(scale))
+
+
+if IS_UNICORN_GRAPHICS_MODE and PicoGraphics is not None:
+    graphics = PicoGraphics(display=UNICORN_GRAPHICS_DISPLAY)
+elif IS_UNICORN_TARGET:
+    graphics = NullGraphics()
+else:
+    graphics = PicoGraphics(display=DISPLAY)
+    try:
+        # Favor full-quality e-ink updates for readability and reduced ghosting.
+        graphics.set_update_speed(DISPLAY_UPDATE_SPEED)
+    except Exception:
+        pass
+
+
+def unicorn_dimensions():
+    dev = unicorn_device()
+    if dev is not None:
+        try:
+            if hasattr(dev, "get_width") and hasattr(dev, "get_height"):
+                return int(dev.get_width()), int(dev.get_height())
+        except Exception:
+            pass
+
+    if not picounicorn:
+        return 16, 7
+    w = 16
+    h = 7
+    try:
+        if hasattr(picounicorn, "get_width"):
+            w = int(picounicorn.get_width())
+        if hasattr(picounicorn, "get_height"):
+            h = int(picounicorn.get_height())
+    except Exception:
+        pass
+    return w, h
+
+
+def unicorn_device():
+    global _UNICORN_DEVICE
+    if _UNICORN_DEVICE is not None:
+        return _UNICORN_DEVICE
+    if not picounicorn:
+        return None
+    try:
+        if hasattr(picounicorn, "PicoUnicorn"):
+            _UNICORN_DEVICE = picounicorn.PicoUnicorn()
+            return _UNICORN_DEVICE
+    except Exception:
+        return None
+    return None
+
+
+def unicorn_init():
+    if not IS_UNICORN_TARGET or not picounicorn:
+        return
+    dev = unicorn_device()
+    if dev is not None:
+        return
+    try:
+        if hasattr(picounicorn, "init"):
+            picounicorn.init()
+    except Exception:
+        pass
+    try:
+        if hasattr(picounicorn, "set_brightness"):
+            picounicorn.set_brightness(0.45)
+    except Exception:
+        pass
+
+
+def unicorn_fill(color):
+    if not IS_UNICORN_TARGET:
+        return
+    r, g, b = color
+    if IS_UNICORN_GRAPHICS_MODE:
+        try:
+            graphics.set_pen(graphics.create_pen(r, g, b))
+            graphics.clear()
+            graphics.update()
+        except Exception:
+            pass
+        return
+
+    dev = unicorn_device()
+    if dev is not None:
+        w, h = unicorn_dimensions()
+        try:
+            for yy in range(h):
+                for xx in range(w):
+                    dev.set_pixel(xx, yy, r, g, b)
+            dev.update()
+        except Exception:
+            pass
+        return
+
+    if picounicorn:
+        w, h = unicorn_dimensions()
+        try:
+            for yy in range(h):
+                for xx in range(w):
+                    picounicorn.set_pixel(xx, yy, r, g, b)
+            if hasattr(picounicorn, "update"):
+                picounicorn.update()
+        except Exception:
+            pass
+        return
+
+def _hsv_to_rgb(h, s=1.0, v=1.0):
+    h = float(h % 360)
+    s = max(0.0, min(1.0, float(s)))
+    v = max(0.0, min(1.0, float(v)))
+    c = v * s
+    x = c * (1 - abs(((h / 60.0) % 2) - 1))
+    m = v - c
+    if h < 60:
+        rp, gp, bp = c, x, 0
+    elif h < 120:
+        rp, gp, bp = x, c, 0
+    elif h < 180:
+        rp, gp, bp = 0, c, x
+    elif h < 240:
+        rp, gp, bp = 0, x, c
+    elif h < 300:
+        rp, gp, bp = x, 0, c
+    else:
+        rp, gp, bp = c, 0, x
+    return (
+        int((rp + m) * 255),
+        int((gp + m) * 255),
+        int((bp + m) * 255),
+    )
+
+
+def unicorn_startup_pattern():
+    if not IS_UNICORN_TARGET:
+        return
+
+    if IS_UNICORN_GRAPHICS_MODE:
+        w, h = graphics.get_bounds()
+        for phase in range(0, 360, 18):
+            for yy in range(h):
+                for xx in range(w):
+                    hue = (phase + (xx * 22) + (yy * 10)) % 360
+                    r, g, b = _hsv_to_rgb(hue, 1.0, 0.34)
+                    graphics.set_pen(graphics.create_pen(r, g, b))
+                    graphics.pixel(xx, yy)
+            graphics.update()
+            safe_sleep(0.04)
+        unicorn_fill((0, 0, 0))
+        return
+
+    # Fallback when only picounicorn API is available.
+    for color in ((255, 0, 0), (255, 120, 0), (0, 255, 0), (0, 120, 255), (180, 0, 255)):
+        unicorn_fill(color)
+        safe_sleep(0.12)
+    unicorn_fill((0, 0, 0))
+
+
+def unicorn_pressed_button_name():
+    if not IS_UNICORN_TARGET:
+        return ""
+    if read_button_a():
+        return "A"
+    if read_button_b():
+        return "B"
+    if read_button_c():
+        return "C"
+    if read_button_d():
+        return "D"
+    return ""
+
+
+def unicorn_pattern_combo_pressed():
+    if not IS_UNICORN_TARGET:
+        return False
+    return read_button_a() and read_button_b()
 
 WIDTH, HEIGHT = graphics.get_bounds()
 WHITE = graphics.create_pen(255, 255, 255)
@@ -235,7 +504,10 @@ REQUIRED_UI_BIG_CHARS = tuple("".join(sorted(set(LOCAL_CITY_NAME + REMOTE_CITY_N
 def default_device_id():
     if STATS_DEVICE_ID:
         return STATS_DEVICE_ID
-    prefix = "inky-jp" if JAPAN_ONLY_PROFILE else "inky-dual"
+    if IS_UNICORN_TARGET:
+        prefix = "pico-unicorn"
+    else:
+        prefix = "inky-jp" if JAPAN_ONLY_PROFILE else "inky-dual"
     if machine and hasattr(machine, "unique_id") and ubinascii:
         try:
             chip_id = ubinascii.hexlify(machine.unique_id()).decode("ascii")
@@ -310,6 +582,7 @@ def post_error_log(entries, wifi_text):
         "project_key": STATS_PROJECT_KEY,
         "device_id": DEVICE_ID,
         "device_profile": DEVICE_PROFILE,
+        "hardware_target": HARDWARE_TARGET,
         "display_model": DISPLAY_MODEL,
         "app_version": APP_VERSION,
         "mode": "error",
@@ -437,6 +710,7 @@ def post_device_stats(event_name, mode, ntp_ok, bitmap_assets_ok, sync_text, wif
         "project_key": STATS_PROJECT_KEY,
         "device_id": DEVICE_ID,
         "device_profile": DEVICE_PROFILE,
+        "hardware_target": HARDWARE_TARGET,
         "display_model": DISPLAY_MODEL,
         "app_version": APP_VERSION,
         "mode": mode,
@@ -564,6 +838,8 @@ def has_keys(mapping, keys):
 
 
 def custom_assets_ready():
+    if IS_UNICORN_TARGET:
+        return True
     return (
         has_keys(FONT_UI_BIG, REQUIRED_UI_BIG_CHARS)
         and has_keys(FONT_JP, REQUIRED_JP_CHARS)
@@ -573,6 +849,8 @@ def custom_assets_ready():
 
 
 def show_asset_error_screen():
+    if IS_UNICORN_TARGET:
+        return
     graphics.set_pen(BLACK)
     graphics.clear()
     graphics.set_pen(WHITE)
@@ -623,7 +901,7 @@ def sync_time_ntp():
             try:
                 feed_watchdog()
                 # Some firmware builds expose inky_frame.set_time(), others do not.
-                if hasattr(inky_frame, "set_time"):
+                if inky_frame and hasattr(inky_frame, "set_time"):
                     inky_frame.set_time()
                 else:
                     ntptime.settime()
@@ -731,20 +1009,112 @@ def diag_alert_text(utc_epoch, sync_text, ntp_ok, wifi_text, last_error):
     return ""
 
 
+def _inky_button_pressed(name):
+    if not inky_frame:
+        return False
+    button = getattr(inky_frame, "button_{}".format(name.lower()), None)
+    if not button or not hasattr(button, "read"):
+        return False
+    try:
+        return bool(button.read())
+    except Exception:
+        return False
+
+
+def _unicorn_button_pressed(name):
+    dev = unicorn_device()
+    if dev is not None:
+        dev_const_names = {
+            "A": ("BUTTON_A",),
+            "B": ("BUTTON_B",),
+            "C": ("BUTTON_X",),
+            "D": ("BUTTON_Y",),
+        }
+        for const_name in dev_const_names.get(name, ()):
+            pin_ref = getattr(dev, const_name, None)
+            if pin_ref is None:
+                continue
+            try:
+                return bool(dev.is_pressed(pin_ref))
+            except Exception:
+                pass
+
+    if picounicorn:
+        const_names = {
+            "A": ("BUTTON_A", "SWITCH_A", "A"),
+            "B": ("BUTTON_B", "SWITCH_B", "B"),
+            "C": ("BUTTON_X", "SWITCH_X", "X", "BUTTON_C", "SWITCH_C", "C"),
+            "D": ("BUTTON_Y", "SWITCH_Y", "Y", "BUTTON_D", "SWITCH_D", "D"),
+        }
+
+        for const_name in const_names.get(name, ()):
+            pin_ref = getattr(picounicorn, const_name, None)
+            if pin_ref is None:
+                continue
+            try:
+                if hasattr(picounicorn, "is_pressed"):
+                    return bool(picounicorn.is_pressed(pin_ref))
+            except Exception:
+                pass
+
+    # Hardware fallback for Unicorn Pack button pins on Pico.
+    if machine and hasattr(machine, "Pin"):
+        pin_map = {"A": 12, "B": 13, "C": 14, "D": 15}
+        pin_no = pin_map.get(name)
+        if pin_no is None:
+            return False
+        try:
+            pin = machine.Pin(pin_no, machine.Pin.IN, machine.Pin.PULL_UP)
+            return pin.value() == 0
+        except Exception:
+            return False
+    return False
+
+
+def read_button_a():
+    if IS_UNICORN_TARGET:
+        return _unicorn_button_pressed("A")
+    return _inky_button_pressed("A")
+
+
+def read_button_b():
+    if IS_UNICORN_TARGET:
+        return _unicorn_button_pressed("B")
+    return _inky_button_pressed("B")
+
+
+def read_button_c():
+    if IS_UNICORN_TARGET:
+        return _unicorn_button_pressed("C")
+    return _inky_button_pressed("C")
+
+
+def read_button_d():
+    if IS_UNICORN_TARGET:
+        return _unicorn_button_pressed("D")
+    return _inky_button_pressed("D")
+
+
+def read_button_e():
+    if IS_UNICORN_TARGET:
+        return False
+    return _inky_button_pressed("E")
+
+
 def read_jp_city_button():
     """For japan profile: A=local, B=remote, C=toggle.  Returns True if city changed."""
     try:
-        if inky_frame.button_a.read():
+        if read_button_a():
             if _jp_city["name"] != LOCAL_CITY_NAME:
                 jp_set_city(LOCAL_CITY_NAME, LOCAL_CITY_NAME_JP, LOCAL_UTC_OFFSET, LOCAL_TZ_LABEL)
                 return True
             return "refresh"
-        if inky_frame.button_b.read():
+        if read_button_b():
             if _jp_city["name"] != REMOTE_CITY_NAME:
                 jp_set_city(REMOTE_CITY_NAME, REMOTE_CITY_NAME_JP, REMOTE_UTC_OFFSET, REMOTE_TZ_LABEL)
                 return True
             return "refresh"
-        if inky_frame.button_c.read():
+        if read_button_c():
             jp_toggle_city()
             return True
     except Exception:
@@ -779,11 +1149,11 @@ def read_mode_button(current_mode):
     if JAPAN_ONLY_PROFILE:
         return MODE_C
     try:
-        if inky_frame.button_a.read():
+        if read_button_a():
             return MODE_A
-        if inky_frame.button_b.read():
+        if read_button_b():
             return MODE_B
-        if inky_frame.button_c.read():
+        if read_button_c():
             return MODE_C
     except Exception:
         pass
@@ -793,15 +1163,20 @@ def read_mode_button(current_mode):
 def force_refresh_pressed():
     """E button forces immediate refresh."""
     try:
-        return inky_frame.button_e.read()
+        if IS_UNICORN_TARGET:
+            # Unicorn Pack has four buttons; map D to manual refresh.
+            return read_button_d()
+        return read_button_e()
     except Exception:
         return False
 
 
 def api_button_pressed():
     """D button sends a dedicated API event without redrawing the screen."""
+    if IS_UNICORN_TARGET:
+        return False
     try:
-        return inky_frame.button_d.read()
+        return read_button_d()
     except Exception:
         return False
 
@@ -1573,6 +1948,8 @@ def draw_mode_japan_only(jst, sync_ok, wifi_text, diag_text):
 
 def draw_by_mode(mode_key, now_utc_epoch, pst, jst, sync_ok, wifi_text, diag_text):
     feed_watchdog()
+    if IS_UNICORN_TARGET:
+        return
     if JAPAN_ONLY_PROFILE:
         draw_mode_japan_only(jst, sync_ok, wifi_text, diag_text)
         return
@@ -1613,6 +1990,10 @@ def auto_recover_reset(reason_text):
 
 def run_clock_loop():
     bitmap_assets_ok = custom_assets_ready()
+    if IS_UNICORN_TARGET:
+        unicorn_init()
+        unicorn_startup_pattern()
+        unicorn_fill((0, 0, 0))
 
     ntp_ok = False
     sync_text = "NTP: pending"
@@ -1622,7 +2003,12 @@ def run_clock_loop():
     mode = MODE_C if JAPAN_ONLY_PROFILE else MODE_A
 
     utc_epoch = time.time()
-    if should_attempt_ntp(utc_epoch, last_ntp_sync_epoch):
+    if IS_UNICORN_TARGET:
+        # Unicorn Pack setup should be local-only; skip Pico W Wi-Fi/NTP boot path.
+        ntp_ok = True
+        sync_text = "Unicorn local"
+        wifi_text = "WiFi: n/a"
+    elif should_attempt_ntp(utc_epoch, last_ntp_sync_epoch):
         attempts = STARTUP_NTP_ATTEMPTS if not clock_looks_valid(utc_epoch) else 1
         for attempt in range(attempts):
             wlan = None
@@ -1673,8 +2059,30 @@ def run_clock_loop():
     next_stats_ms = mono_add(mono_ms(), STATS_INTERVAL_SECONDS * 1000)
     prev_e_pressed = False
     prev_d_pressed = False
+    prev_unicorn_button = ""
+    prev_unicorn_combo = False
     while True:
         feed_watchdog()
+
+        if IS_UNICORN_TARGET:
+            combo_pressed = unicorn_pattern_combo_pressed()
+            if combo_pressed and not prev_unicorn_combo:
+                unicorn_startup_pattern()
+                unicorn_fill((0, 0, 0))
+                prev_unicorn_button = ""
+                prev_unicorn_combo = True
+                safe_sleep(0.15)
+                continue
+
+            prev_unicorn_combo = combo_pressed
+            active_button = unicorn_pressed_button_name()
+            if active_button and active_button != prev_unicorn_button:
+                unicorn_fill(UNICORN_BUTTON_COLORS.get(active_button, UNICORN_IDLE_COLOR))
+            elif not active_button and prev_unicorn_button:
+                unicorn_fill(UNICORN_IDLE_COLOR)
+            prev_unicorn_button = active_button
+            safe_sleep(0.05)
+            continue
 
         # Japan profile: A/B/C switch city and force refresh
         if JAPAN_ONLY_PROFILE:

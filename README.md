@@ -2,13 +2,18 @@
 
 This repository contains:
 
-- `firmware/`: MicroPython firmware for InkyFrame 7.3 / 5.7 (device clock app)
+- `firmware/`: MicroPython firmware for InkyFrame 7.3 / 5.7 and Pico Unicorn Pack (device clock/telemetry app)
 - `sumilabu-dashboard/`: Next.js + Neon telemetry API/dashboard (Vercel)
 
 The firmware app supports per-device profiles using `secrets.py`:
 
 - `DEVICE_PROFILE="dual"` for local/remote dual clocks (7.3 default)
 - `DEVICE_PROFILE="japan"` for a Japan-only full-screen layout (great for 5.7)
+
+And hardware targets:
+
+- `HARDWARE_TARGET="inkyframe"` for InkyFrame 7.3/5.7 devices
+- `HARDWARE_TARGET="unicorn-pack"` for Pimoroni Unicorn Pack (4-button Pico)
 
 ## 1) Device prerequisites
 
@@ -38,7 +43,7 @@ cp firmware/secrets.py.example firmware/secrets.py
 
 Then edit `firmware/secrets.py` with your Wi-Fi SSID/password and profile settings.
 
-Recommended for two devices:
+Recommended for your current devices:
 
 - Device 1 (InkyFrame 7.3):
 	- `DEVICE_PROFILE = "dual"`
@@ -48,6 +53,12 @@ Recommended for two devices:
 	- `STATS_DEVICE_ID = "inkyframe-japan-57"`
 	- `STATS_PROJECT_KEY = "inkyframe-japan"` (optional but recommended)
 	- `ACTIVE_CITY_NAME = "TOKYO"`, `ACTIVE_UTC_OFFSET = 9`
+
+For the new Unicorn Pack device:
+
+- `HARDWARE_TARGET = "unicorn-pack"`
+- `STATS_DEVICE_ID = "pico-unicorn-01"`
+- `STATS_PROJECT_KEY = "pico-unicorn"` (recommended to keep it separate from inkyframe)
 
 ## 4) Push files over USB (safe path)
 
@@ -71,6 +82,12 @@ Once your base `firmware/secrets.py` has working Wi-Fi and API credentials, you 
 ./deploy_japan57.sh
 ```
 
+For Unicorn Pack:
+
+```bash
+./deploy_unicorn.sh
+```
+
 What these do:
 
 - Generate a temporary profile-specific `firmware/secrets.py`
@@ -82,6 +99,18 @@ Profile defaults:
 
 - `deploy_office.sh` -> `DEVICE_PROFILE="dual"`, `STATS_DEVICE_ID="inkyframe-office"`, `STATS_PROJECT_KEY="inkyframe"`
 - `deploy_japan57.sh` -> `DEVICE_PROFILE="japan"`, `STATS_DEVICE_ID="inkyframe-japan-57"`, `STATS_PROJECT_KEY="inkyframe-japan"`, `INKY_DISPLAY="DISPLAY_INKY_FRAME_5_7"`
+- `deploy_unicorn.sh` -> `HARDWARE_TARGET="unicorn-pack"`, `DEVICE_PROFILE="dual"`, `STATS_DEVICE_ID="pico-unicorn-01"`, `STATS_PROJECT_KEY="pico-unicorn"`
+
+### Important safety when multiple boards are connected
+
+`firmware/deploy_safe.sh` supports explicit serial targeting via `PORT=`.
+When your configured InkyFrame is connected, pass the exact new-device port so you do not overwrite the wrong board.
+
+Example:
+
+```bash
+./deploy_unicorn.sh --port /dev/cu.usbmodemXXXXXXX
+```
 
 ## 5) Verify update
 
