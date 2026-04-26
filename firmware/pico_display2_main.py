@@ -123,6 +123,30 @@ def draw_pattern(gfx, pattern_index, phase):
     w, h = gfx.get_bounds()
     idx = pattern_index % PATTERN_COUNT
 
+    # Pattern 1: full-screen smooth hue drift with global brightness pulse.
+    if idx == 0:
+        hue = (phase // 6) % 360
+        t = (phase // 12) % 120
+        tri = t if t < 60 else (120 - t)
+        val = 0.22 + (tri / 60.0) * 0.56
+        r, gg, b = hsv_to_rgb(hue, 0.95, min(1.0, val))
+        gfx.set_pen(gfx.create_pen(r, gg, b))
+        gfx.clear()
+        gfx.update()
+        return
+
+    # Pattern 12: full-screen stepped palette with slow global fade.
+    if idx == (PATTERN_COUNT - 1):
+        hue = ((phase // 40) * 60 + 20) % 360
+        t = (phase // 14) % 100
+        tri = t if t < 50 else (100 - t)
+        val = 0.18 + (tri / 50.0) * 0.50
+        r, gg, b = hsv_to_rgb(hue, 0.90, min(1.0, val))
+        gfx.set_pen(gfx.create_pen(r, gg, b))
+        gfx.clear()
+        gfx.update()
+        return
+
     # Stripe rendering is much smoother than large blocks and remains responsive.
     use_rect = hasattr(gfx, "rectangle")
     v_step = 2
