@@ -19,6 +19,13 @@ const CHART_WIDTH = 720;
 const CHART_HEIGHT = 240;
 const CHART_PADDING_X = 28;
 const CHART_PADDING_Y = 20;
+const KNOWN_PRODUCT_KEYS = ["sumilabu-clock", "onibako"];
+const PROJECT_KEY_ALIASES: Record<string, string> = {
+  inkyframe: "sumilabu-clock",
+  "sumilabu clock": "sumilabu-clock",
+  "sumilabu-clock": "sumilabu-clock",
+  "sumilabu_clock": "sumilabu-clock",
+};
 
 type DeviceCard = {
   id: string;
@@ -162,6 +169,49 @@ function isOnline(ts?: Date | null): boolean {
 
 function uniqSorted(values: string[]): string[] {
   return Array.from(new Set(values.filter(Boolean))).sort((left, right) => left.localeCompare(right));
+}
+
+function sanitizeProjectParam(value?: string): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed || trimmed.length > 128) {
+    return null;
+  }
+
+  if (!/^[a-zA-Z0-9._ -]+$/.test(trimmed)) {
+    return null;
+  }
+
+  return canonicalProjectKey(trimmed);
+}
+
+function canonicalProjectKey(projectKey: string): string {
+  return PROJECT_KEY_ALIASES[projectKey.trim().toLowerCase()] || projectKey.trim();
+}
+
+function configuredProjectKeys(): string[] {
+  const raw = process.env.PROJECT_TOKENS_JSON;
+  if (!raw) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    return Object.keys(parsed || {})
+      .map((key) => sanitizeProjectParam(key))
+      .filter((key): key is string => Boolean(key));
+  } catch {
+    return [];
+  }
+}
+
+function projectKeyMatches(projectKey: string): string[] {
+  const canonical = canonicalProjectKey(projectKey);
+  return uniqSorted([
+    canonical,
+    ...Object.entries(PROJECT_KEY_ALIASES)
+      .filter(([, value]) => value === canonical)
+      .map(([alias]) => alias),
+  ]);
 }
 
 function buildMemChartPoints(events: RecentEvent[]): ChartPoint[] {
@@ -357,7 +407,7 @@ function statusLabel(status: DeviceHealth["status"]): string {
 }
 
 function productLabel(projectKey: string): string {
-  if (projectKey === "inkyframe") {
+  if (canonicalProjectKey(projectKey) === "sumilabu-clock") {
     return "SumiLabu Clock";
   }
 
@@ -404,6 +454,7 @@ type PageProps = {
 
 export default async function Home({ searchParams }: PageProps) {
   const params = (await searchParams) || {};
+  const selectedProject = sanitizeProjectParam(params.project);
   const localTimezoneLabel = `UTC${DASHBOARD_UTC_OFFSET_HOURS >= 0 ? "+" : ""}${DASHBOARD_UTC_OFFSET_HOURS}`;
 
   const [deviceProjects, eventProjects, appSourceProjects, appEventProjects] = await Promise.all([
@@ -430,18 +481,17 @@ export default async function Home({ searchParams }: PageProps) {
   ]);
 
   const availableProjects = uniqSorted([
-    process.env.DEFAULT_PROJECT_KEY || "default",
-    ...deviceProjects.map((project) => project.projectKey),
-    ...eventProjects.map((project) => project.projectKey),
-    ...appSourceProjects.map((project) => project.projectKey),
-    ...appEventProjects.map((project) => project.projectKey),
+    canonicalProjectKey(process.env.DEFAULT_PROJECT_KEY || "default"),
+    ...KNOWN_PRODUCT_KEYS,
+    ...configuredProjectKeys(),
+    ...(selectedProject ? [selectedProject] : []),
+    ...deviceProjects.map((project) => canonicalProjectKey(project.projectKey)),
+    ...eventProjects.map((project) => canonicalProjectKey(project.projectKey)),
+    ...appSourceProjects.map((project) => canonicalProjectKey(project.projectKey)),
+    ...appEventProjects.map((project) => canonicalProjectKey(project.projectKey)),
   ]);
 
-  const selectedProject = params.project && availableProjects.includes(params.project)
-    ? params.project
-    : null;
-
-  const projectFilter = selectedProject ? { projectKey: selectedProject } : {};
+  const projectFilter = selectedProject ? { projectKey: { in: projectKeyMatches(selectedProject) } } : {};
 
   const [devices, projectEvents, appSources, appEvents] = await Promise.all([
     prisma.device.findMany({
