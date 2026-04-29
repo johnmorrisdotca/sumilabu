@@ -54,6 +54,7 @@ model DeviceEvent {
 model AppTelemetrySource {
   id           String              @id @default(cuid())
   projectKey   String              @default("default")
+  sourceType   String              @default("app")
   appId        String
   displayName  String?
   environment  String              @default("default")
@@ -68,8 +69,9 @@ model AppTelemetrySource {
   updatedAt    DateTime            @updatedAt
   events       AppTelemetryEvent[]
 
-  @@unique([projectKey, appId, environment])
+  @@unique([projectKey, sourceType, appId, environment])
   @@index([projectKey, appId])
+  @@index([projectKey, sourceType])
   @@index([projectKey, service])
   @@index([projectKey, lastStatus])
   @@index([projectKey, lastSeverity])
@@ -79,6 +81,7 @@ model AppTelemetrySource {
 model AppTelemetryEvent {
   id          String    @id @default(cuid())
   projectKey  String    @default("default")
+  sourceType  String    @default("app")
   appId       String
   sourceRefId String
   environment String    @default("default")
@@ -104,6 +107,7 @@ model AppTelemetryEvent {
 
   @@index([projectKey, receivedAt(sort: Desc)])
   @@index([projectKey, appId, receivedAt(sort: Desc)])
+  @@index([projectKey, sourceType, receivedAt(sort: Desc)])
   @@index([projectKey, service, receivedAt(sort: Desc)])
   @@index([projectKey, status, receivedAt(sort: Desc)])
   @@index([projectKey, severity, receivedAt(sort: Desc)])

@@ -9,8 +9,9 @@ This app is designed to be generic and shared: one Vercel app + one Neon DB can 
 - Vercel-hosted Next.js app
 - Neon Postgres
 - Prisma ORM
-- Device ingestion endpoint: `POST /api/device-stats`
-- Generic app/server ingestion endpoint: `POST /api/app-telemetry`
+- Canonical telemetry ingestion endpoint: `POST /api/v1/telemetry/events`
+- Legacy device ingestion endpoint: `POST /api/device-stats`
+- Compatibility app/server ingestion endpoint: `POST /api/app-telemetry`
 - Machine-readable API contract: `GET /api/openapi` or `GET /api/openapi.json`
 
 ## Local setup
@@ -53,6 +54,17 @@ Sibling projects should discover the current API contracts from:
 
 The OpenAPI document is safe to share with consuming projects. It describes the JSON payloads, bearer-token auth, and the split between hardware device telemetry and generic app/server telemetry. Do not put secrets in the contract; pass tokens only through environment variables or deployment secret stores.
 
+New sibling projects should treat the versioned endpoint as canonical:
+
+- `POST /api/v1/telemetry/events`
+
+The older endpoints stay online as compatibility adapters:
+
+- `POST /api/device-stats` for already-deployed hardware/firmware devices.
+- `POST /api/app-telemetry` for the short-lived pre-v1 generic app telemetry shape.
+
+Versioning rule: keep `/api/v1/...` stable for existing consumers. If the contract needs a breaking change later, add `/api/v2/...` and leave v1 running.
+
 Auth is shared across ingest endpoints:
 
 - If `PROJECT_TOKENS_JSON` contains a token for the payload `project_key`, that token is required.
@@ -65,9 +77,76 @@ Example product token map shape:
 {"inkyframe":"device-product-token","onibako":"app-product-token"}
 ```
 
-### Hardware/firmware telemetry
+### Canonical v1 telemetry
+
+`POST /api/v1/telemetry/events`
+
+Use this endpoint for new SumiLabu sibling projects, including Onibako apps, servers, deployment scripts, jobs, and future producers. It is the preferred, guessable API contract.
+
+Headers:
+
+- `Authorization: Bearer <PROJECT_OR_FALLBACK_TOKEN>` (required if token is configured)
+- `Content-Type: application/json`
+
+Recommended body fields:
+
+- `api_version` (`v1`, optional because the path is authoritative)
+- `project_key` (product partition, e.g. `onibako`)
+- `source_type` (`app` | `server` | `job` | `deploy` | `device` | `service`)
+- `source_id` (stable producer identifier, e.g. `onibako`, `ds15`, `deploy-script`)
+- `display_name`
+- `environment`
+- `host`
+- `service`
+- `event`
+- `status`
+- `severity`
+- `message`
+- `duration_ms`
+- `metric_name`
+- `metric_value`
+- `metric_unit`
+- `tags`
+- `metrics`
+- `server`
+- `telemetry`
+- `occurred_at` (optional ISO timestamp, Unix seconds, or Unix milliseconds)
+
+Example without printing a real secret:
+
+```bash
+curl -sS https://app.sumilabu.com/api/v1/telemetry/events \
+	-H "Authorization: Bearer $SUMILABU_INGEST_TOKEN" \
+	-H "Content-Type: application/json" \
+	-d '{
+		"api_version": "v1",
+		"project_key": "onibako",
+		"source_type": "app",
+		"source_id": "onibako",
+		"display_name": "Onibako",
+		"environment": "ds15",
+		"host": "10.0.0.161",
+		"service": "compose",
+		"event": "deploy",
+		"status": "ok",
+		"severity": "info",
+		"message": "Remote deploy completed",
+		"duration_ms": 77000,
+		"metric_name": "remote_deploy",
+		"metric_value": 77,
+		"metric_unit": "seconds",
+		"tags": {},
+		"metrics": {},
+		"server": {},
+		"telemetry": {}
+	}'
+```
+
+### Legacy hardware/firmware telemetry
 
 `POST /api/device-stats`
+
+Existing SumiLabu Clock / InkyFrame firmware devices can keep using this endpoint. Do not break already-deployed devices just to move them to the canonical v1 contract.
 
 Headers:
 
@@ -90,11 +169,11 @@ Body fields (from hardware/firmware devices):
 - `wifi`
 - `sync`
 
-### Generic app/server telemetry
+### Compatibility app/server telemetry
 
 `POST /api/app-telemetry`
 
-Use this endpoint for sibling products, backend services, deployments, jobs, health checks, and server-side app telemetry. It is separate from the microcontroller hardware stream used by SumiLabu Clock / InkyFrame.
+This endpoint is a compatibility adapter for the first generic app/server shape. New integrations should prefer `POST /api/v1/telemetry/events`.
 
 Headers:
 
@@ -173,8 +252,9 @@ Dashboard project filtering:
 Recommended production hostnames:
 
 - Dashboard UI: `https://app.sumilabu.com`
-- Telemetry ingest: `https://api.sumilabu.com/api/device-stats`
-- App/server telemetry ingest: `https://api.sumilabu.com/api/app-telemetry`
+- Canonical telemetry ingest: `https://api.sumilabu.com/api/v1/telemetry/events`
+- Legacy firmware telemetry ingest: `https://api.sumilabu.com/api/device-stats`
+- Compatibility app/server telemetry ingest: `https://api.sumilabu.com/api/app-telemetry`
 - API contract: `https://api.sumilabu.com/api/openapi.json`
 
 If you want one Vercel project to serve both UI and ingest, point both hostnames at this same app.

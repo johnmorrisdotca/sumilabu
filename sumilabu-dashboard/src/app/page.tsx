@@ -48,6 +48,7 @@ type RecentEvent = {
 type AppTelemetrySourceCard = {
   id: string;
   projectKey: string;
+  sourceType: string;
   appId: string;
   displayName: string | null;
   environment: string;
@@ -63,6 +64,7 @@ type AppTelemetrySourceCard = {
 type AppTelemetryEventRow = {
   id: string;
   projectKey: string;
+  sourceType: string;
   appId: string;
   environment: string;
   host: string | null;
@@ -789,7 +791,7 @@ export default async function Home({ searchParams }: PageProps) {
                 <div key={source.id} className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <p className="font-mono text-sm font-semibold text-stone-800">{source.projectKey}/{source.appId}</p>
+                      <p className="font-mono text-sm font-semibold text-stone-800">{source.projectKey}/{source.sourceType}/{source.appId}</p>
                       <p className="mt-1 text-sm text-stone-600">{source.displayName || productLabel(source.projectKey)} • {source.environment}</p>
                     </div>
                     <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${appStatusPillClasses(source.lastStatus, source.lastSeverity)}`}>
@@ -831,7 +833,7 @@ export default async function Home({ searchParams }: PageProps) {
               {recentAppEvents.length > 0 ? recentAppEvents.map((event) => (
                 <div key={event.id} className="grid grid-cols-[1.1fr_0.8fr_0.7fr_1fr] gap-3 border-t border-stone-200 bg-white px-4 py-3 text-sm">
                   <div>
-                    <p className="font-mono text-xs font-semibold text-stone-800">{event.projectKey}/{event.appId}</p>
+                    <p className="font-mono text-xs font-semibold text-stone-800">{event.projectKey}/{event.sourceType}/{event.appId}</p>
                     <p className="mt-1 text-xs text-stone-500">{event.environment} • {fmtAge(event.receivedAt)}</p>
                   </div>
                   <div>
