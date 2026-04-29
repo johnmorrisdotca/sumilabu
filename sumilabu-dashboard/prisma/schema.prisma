@@ -9,16 +9,16 @@ datasource db {
 }
 
 model Device {
-  id         String        @id @default(cuid())
-  projectKey String        @default("default")
-  deviceId   String
+  id          String        @id @default(cuid())
+  projectKey  String        @default("default")
+  deviceId    String
   displayName String?
-  appVersion String?
-  lastMode   String?
-  lastSeenAt DateTime?
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
-  events     DeviceEvent[]
+  appVersion  String?
+  lastMode    String?
+  lastSeenAt  DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  events      DeviceEvent[]
 
   @@unique([projectKey, deviceId])
   @@index([projectKey, lastSeenAt(sort: Desc)])
@@ -48,5 +48,64 @@ model DeviceEvent {
 
   @@index([projectKey, receivedAt(sort: Desc)])
   @@index([deviceId, receivedAt(sort: Desc)])
+  @@index([receivedAt(sort: Desc)])
+}
+
+model AppTelemetrySource {
+  id           String              @id @default(cuid())
+  projectKey   String              @default("default")
+  appId        String
+  displayName  String?
+  environment  String              @default("default")
+  host         String?
+  service      String?
+  lastEvent    String?
+  lastStatus   String?
+  lastSeverity String?
+  lastMessage  String?
+  lastSeenAt   DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  events       AppTelemetryEvent[]
+
+  @@unique([projectKey, appId, environment])
+  @@index([projectKey, appId])
+  @@index([projectKey, service])
+  @@index([projectKey, lastStatus])
+  @@index([projectKey, lastSeverity])
+  @@index([lastSeenAt(sort: Desc)])
+}
+
+model AppTelemetryEvent {
+  id          String    @id @default(cuid())
+  projectKey  String    @default("default")
+  appId       String
+  sourceRefId String
+  environment String    @default("default")
+  host        String?
+  service     String?
+  event       String
+  status      String?
+  severity    String?
+  message     String?
+  durationMs  Int?
+  metricName  String?
+  metricValue Float?
+  metricUnit  String?
+  tags        Json?
+  metrics     Json?
+  server      Json?
+  telemetry   Json?
+  raw         Json?
+  occurredAt  DateTime?
+  receivedAt  DateTime  @default(now())
+
+  source AppTelemetrySource @relation(fields: [sourceRefId], references: [id], onDelete: Cascade)
+
+  @@index([projectKey, receivedAt(sort: Desc)])
+  @@index([projectKey, appId, receivedAt(sort: Desc)])
+  @@index([projectKey, service, receivedAt(sort: Desc)])
+  @@index([projectKey, status, receivedAt(sort: Desc)])
+  @@index([projectKey, severity, receivedAt(sort: Desc)])
   @@index([receivedAt(sort: Desc)])
 }

@@ -45,6 +45,39 @@ type RecentEvent = {
   receivedAt: Date;
 };
 
+type AppTelemetrySourceCard = {
+  id: string;
+  projectKey: string;
+  appId: string;
+  displayName: string | null;
+  environment: string;
+  host: string | null;
+  service: string | null;
+  lastEvent: string | null;
+  lastStatus: string | null;
+  lastSeverity: string | null;
+  lastMessage: string | null;
+  lastSeenAt: Date | null;
+};
+
+type AppTelemetryEventRow = {
+  id: string;
+  projectKey: string;
+  appId: string;
+  environment: string;
+  host: string | null;
+  service: string | null;
+  event: string;
+  status: string | null;
+  severity: string | null;
+  message: string | null;
+  durationMs: number | null;
+  metricName: string | null;
+  metricValue: number | null;
+  metricUnit: string | null;
+  receivedAt: Date;
+};
+
 type ChartPoint = {
   x: number;
   y: number;
@@ -321,6 +354,48 @@ function statusLabel(status: DeviceHealth["status"]): string {
   return "healthy";
 }
 
+function productLabel(projectKey: string): string {
+  if (projectKey === "inkyframe") {
+    return "SumiLabu Clock";
+  }
+
+  if (projectKey === "onibako") {
+    return "Onibako";
+  }
+
+  return projectKey;
+}
+
+function appStatusPillClasses(status?: string | null, severity?: string | null): string {
+  const value = (status || severity || "unknown").toLowerCase();
+
+  if (["error", "failed", "fail", "critical", "fatal"].includes(value)) {
+    return "bg-red-100 text-red-700";
+  }
+
+  if (["warn", "warning", "degraded"].includes(value)) {
+    return "bg-amber-100 text-amber-800";
+  }
+
+  if (["ok", "healthy", "success", "info"].includes(value)) {
+    return "bg-emerald-100 text-emerald-700";
+  }
+
+  return "bg-stone-100 text-stone-700";
+}
+
+function fmtMetric(event: AppTelemetryEventRow): string {
+  if (event.metricName && event.metricValue !== null) {
+    return `${event.metricName}: ${event.metricValue}${event.metricUnit ? ` ${event.metricUnit}` : ""}`;
+  }
+
+  if (event.durationMs !== null) {
+    return `duration: ${fmtDuration(Math.round(event.durationMs / 1000))}`;
+  }
+
+  return "-";
+}
+
 type PageProps = {
   searchParams?: Promise<{ project?: string }>;
 };
@@ -329,7 +404,7 @@ export default async function Home({ searchParams }: PageProps) {
   const params = (await searchParams) || {};
   const localTimezoneLabel = `UTC${DASHBOARD_UTC_OFFSET_HOURS >= 0 ? "+" : ""}${DASHBOARD_UTC_OFFSET_HOURS}`;
 
-  const [deviceProjects, eventProjects] = await Promise.all([
+  const [deviceProjects, eventProjects, appSourceProjects, appEventProjects] = await Promise.all([
     prisma.device.findMany({
       select: { projectKey: true },
       distinct: ["projectKey"],
@@ -340,12 +415,24 @@ export default async function Home({ searchParams }: PageProps) {
       distinct: ["projectKey"],
       orderBy: { projectKey: "asc" },
     }),
+    prisma.appTelemetrySource.findMany({
+      select: { projectKey: true },
+      distinct: ["projectKey"],
+      orderBy: { projectKey: "asc" },
+    }),
+    prisma.appTelemetryEvent.findMany({
+      select: { projectKey: true },
+      distinct: ["projectKey"],
+      orderBy: { projectKey: "asc" },
+    }),
   ]);
 
   const availableProjects = uniqSorted([
     process.env.DEFAULT_PROJECT_KEY || "default",
     ...deviceProjects.map((project) => project.projectKey),
     ...eventProjects.map((project) => project.projectKey),
+    ...appSourceProjects.map((project) => project.projectKey),
+    ...appEventProjects.map((project) => project.projectKey),
   ]);
 
   const selectedProject = params.project && availableProjects.includes(params.project)
@@ -354,7 +441,7 @@ export default async function Home({ searchParams }: PageProps) {
 
   const projectFilter = selectedProject ? { projectKey: selectedProject } : {};
 
-  const [devices, projectEvents] = await Promise.all([
+  const [devices, projectEvents, appSources, appEvents] = await Promise.all([
     prisma.device.findMany({
       where: projectFilter,
       orderBy: { lastSeenAt: "desc" },
@@ -370,9 +457,21 @@ export default async function Home({ searchParams }: PageProps) {
       orderBy: { receivedAt: "desc" },
       take: 5000,
     }),
+    prisma.appTelemetrySource.findMany({
+      where: projectFilter,
+      orderBy: { lastSeenAt: "desc" },
+      take: 24,
+    }),
+    prisma.appTelemetryEvent.findMany({
+      where: projectFilter,
+      orderBy: { receivedAt: "desc" },
+      take: 80,
+    }),
   ]);
 
   const recentEvents: RecentEvent[] = projectEvents.slice(0, 60);
+  const recentAppEvents: AppTelemetryEventRow[] = appEvents.slice(0, 24);
+  const appSourceCards: AppTelemetrySourceCard[] = appSources;
   const nowMs = new Date().getTime();
   const eventsByDevice = new Map<string, RecentEvent[]>();
 
@@ -445,7 +544,7 @@ export default async function Home({ searchParams }: PageProps) {
                 <p className="mb-2 text-xs font-semibold uppercase tracking-[0.3em] text-stone-500">SumiLabu Fleet</p>
                 <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Telemetry for live SumiLabu products</h1>
                 <p className="mt-2 max-w-xl text-sm leading-5 text-stone-600 md:text-[15px]">
-                  The InkyFrame is the first supported SumiLabu app. This dashboard tracks heartbeat, mode changes, memory data, and recent ingest activity for each project partition.
+                  SumiLabu is the top-level monitoring hub for product telemetry. Choose a product partition such as SumiLabu Clock or Onibako to inspect firmware devices, app services, and recent ingest activity.
                 </p>
               </div>
             </div>
@@ -456,16 +555,20 @@ export default async function Home({ searchParams }: PageProps) {
                 <LiveClock utcOffsetHours={DASHBOARD_UTC_OFFSET_HOURS} />
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-stone-500">Filter</span>
-                <span className="font-mono text-xs text-stone-700">{selectedProject || "all projects"}</span>
+                <span className="text-stone-500">Product</span>
+                <span className="font-mono text-xs text-stone-700">{selectedProject ? productLabel(selectedProject) : "all products"}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-stone-500">Devices online</span>
                 <span className="text-lg font-semibold text-emerald-700">{onlineDevices}/{devices.length}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
+                <span className="text-stone-500">App sources</span>
+                <span className="text-lg font-semibold text-[#2f6b5f]">{appSourceCards.length}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
                 <span className="text-stone-500">Latest ingest</span>
-                <span className="font-mono text-xs text-stone-700">{fmtTime(latestEvent?.receivedAt)}</span>
+                <span className="font-mono text-xs text-stone-700">{fmtTime(latestEvent?.receivedAt || recentAppEvents[0]?.receivedAt)}</span>
               </div>
               <AutoRefreshControl defaultMs={60000} />
             </div>
@@ -486,7 +589,7 @@ export default async function Home({ searchParams }: PageProps) {
                   href={`/?project=${encodeURIComponent(projectKey)}`}
                   className={`rounded-full border px-4 py-2 text-sm transition ${active ? "border-stone-900 bg-stone-900 text-stone-50" : "border-stone-300 bg-white/80 text-stone-700 hover:border-stone-500 hover:bg-white"}`}
                 >
-                  {projectKey}
+                  {productLabel(projectKey)}
                 </a>
               );
             })}
@@ -664,6 +767,91 @@ export default async function Home({ searchParams }: PageProps) {
                 </div>
               )) : (
                 <p className="text-sm text-stone-500">No events have been ingested for this project yet.</p>
+              )}
+            </div>
+          </article>
+        </section>
+
+        <section data-widget-id="app-telemetry" data-widget-title="App Telemetry" data-widget-cols="12" data-widget-rows="3" data-widget-body-class="grid gap-3 xl:grid-cols-[1fr_1.4fr]" className="rounded-[20px] border border-stone-300/70 bg-white/62 p-2 shadow-sm lg:col-span-12">
+          <article className="rounded-[22px] border border-stone-300/80 bg-white/90 p-4 shadow-sm">
+            <div className="mb-4 flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold">App & server sources</h2>
+                <p className="text-sm text-stone-600">Generic telemetry sources for product apps and servers{selectedProject ? <> under <span className="font-mono">{productLabel(selectedProject)}</span></> : null}.</p>
+              </div>
+              <span className="rounded-full bg-stone-900 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-stone-50">
+                {appSourceCards.length} sources
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              {appSourceCards.length > 0 ? appSourceCards.map((source) => (
+                <div key={source.id} className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="font-mono text-sm font-semibold text-stone-800">{source.projectKey}/{source.appId}</p>
+                      <p className="mt-1 text-sm text-stone-600">{source.displayName || productLabel(source.projectKey)} • {source.environment}</p>
+                    </div>
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${appStatusPillClasses(source.lastStatus, source.lastSeverity)}`}>
+                      {source.lastStatus || source.lastSeverity || "unknown"}
+                    </span>
+                  </div>
+                  <dl className="mt-3 space-y-1 text-sm">
+                    <div className="flex justify-between gap-3"><dt className="text-neutral-500">Service</dt><dd className="font-mono text-right text-stone-800">{source.service || "-"}</dd></div>
+                    <div className="flex justify-between gap-3"><dt className="text-neutral-500">Host</dt><dd className="font-mono text-right text-stone-800">{source.host || "-"}</dd></div>
+                    <div className="flex justify-between gap-3"><dt className="text-neutral-500">Last event</dt><dd className="text-right text-stone-800">{source.lastEvent || "-"}</dd></div>
+                    <div className="flex justify-between gap-3"><dt className="text-neutral-500">Last seen</dt><dd className="text-right text-stone-800">{fmtAge(source.lastSeenAt)}</dd></div>
+                  </dl>
+                  {source.lastMessage ? <p className="mt-3 rounded-xl bg-white px-3 py-2 text-sm text-stone-600">{source.lastMessage}</p> : null}
+                </div>
+              )) : (
+                <div className="rounded-2xl border border-dashed border-stone-300 bg-stone-50 p-6 text-sm text-stone-500">
+                  No app or server telemetry has reported for this product yet. Onibako deployments and service checks will appear here after posting to the generic ingest endpoint.
+                </div>
+              )}
+            </div>
+          </article>
+
+          <article className="rounded-[22px] border border-stone-300/80 bg-white/90 p-4 shadow-sm">
+            <div className="mb-4 flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold">Recent app events</h2>
+                <p className="text-sm text-stone-600">Latest generic app/server telemetry, separate from the hardware device heartbeat stream.</p>
+              </div>
+              <p className="text-xs uppercase tracking-[0.18em] text-stone-500">Newest first</p>
+            </div>
+
+            <div className="overflow-hidden rounded-2xl border border-stone-200">
+              <div className="grid grid-cols-[1.1fr_0.8fr_0.7fr_1fr] gap-3 bg-stone-100 px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">
+                <span>Source</span>
+                <span>Event</span>
+                <span>Status</span>
+                <span>Signal</span>
+              </div>
+              {recentAppEvents.length > 0 ? recentAppEvents.map((event) => (
+                <div key={event.id} className="grid grid-cols-[1.1fr_0.8fr_0.7fr_1fr] gap-3 border-t border-stone-200 bg-white px-4 py-3 text-sm">
+                  <div>
+                    <p className="font-mono text-xs font-semibold text-stone-800">{event.projectKey}/{event.appId}</p>
+                    <p className="mt-1 text-xs text-stone-500">{event.environment} • {fmtAge(event.receivedAt)}</p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-stone-800">{event.event}</p>
+                    <p className="mt-1 text-xs text-stone-500">{event.service || event.host || "-"}</p>
+                  </div>
+                  <div>
+                    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.12em] ${appStatusPillClasses(event.status, event.severity)}`}>
+                      {event.status || event.severity || "-"}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="font-mono text-xs text-stone-700">{fmtMetric(event)}</p>
+                    <p className="mt-1 line-clamp-2 text-xs text-stone-500">{event.message || "-"}</p>
+                  </div>
+                </div>
+              )) : (
+                <div className="border-t border-stone-200 bg-white px-4 py-6 text-sm text-stone-500">
+                  Recent app/server events will appear here once Onibako or another product posts telemetry.
+                </div>
               )}
             </div>
           </article>
