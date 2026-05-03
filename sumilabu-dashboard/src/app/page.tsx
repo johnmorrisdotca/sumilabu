@@ -415,6 +415,14 @@ function productLabel(projectKey: string): string {
     return "Onibako";
   }
 
+  if (projectKey === "wazadb-api") {
+    return "WazaDB API";
+  }
+
+  if (projectKey === "wazadb-web") {
+    return "WazaDB Web";
+  }
+
   return projectKey;
 }
 
