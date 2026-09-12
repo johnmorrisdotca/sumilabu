@@ -113,3 +113,63 @@ model AppTelemetryEvent {
   @@index([projectKey, severity, receivedAt(sort: Desc)])
   @@index([receivedAt(sort: Desc)])
 }
+
+/// One ticket on any site's board.
+///
+/// The board contract (docs/board/BOARD_RULES.md, identical in every client
+/// repository) is enforced here once, so UmaKuma's `pnpm task` and Itsutsu's
+/// backlog stop carrying their own copies of the lease, the move table and
+/// the caps. Canonical vocabulary on every row: status is open, inProgress,
+/// done or dropped; kind is feature, fix or chore; priority high, normal, low;
+/// effort small, medium, large. A client maps to its own words at its edge.
+///
+/// Caps are here as well as in code, because a cap that lives only in
+/// TypeScript is another door.
+model BoardTicket {
+  id         String    @id @default(cuid())
+  projectKey String    @default("default")
+  title      String    @db.VarChar(120)
+  detail     String?   @db.VarChar(4000)
+  /// Per project; a project with no areas leaves it null.
+  area       String?
+  kind       String    @default("feature")
+  status     String    @default("open")
+  /// Null until somebody grades the row. No default on purpose.
+  priority   String?
+  effort     String?
+  askedBy    String?   @db.VarChar(60)
+  /// Who holds it and since when. inProgress means exactly "claimedBy is set
+  /// and the hold is inside the six-hour lease" - no writer sets status
+  /// without writing these the same way.
+  claimedBy  String?   @db.VarChar(80)
+  claimedAt  DateTime?
+  /// Written by a release tool only, together with `done`.
+  releasedIn    String?   @db.VarChar(40)
+  /// The client's own release record id (UmaKuma's timeline entry), which is
+  /// what its unship check looks for on origin/main - a version alone is not
+  /// enough, since two entries can share a push.
+  releasedEntry String?   @db.VarChar(120)
+  releasedAt    DateTime?
+  createdAt  DateTime  @default(now())
+  /// Changes only on a status move. Grading is not movement.
+  movedAt    DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([projectKey, status, movedAt(sort: Desc)])
+  @@index([projectKey, claimedBy])
+  @@index([projectKey, createdAt(sort: Desc)])
+}
+
+/// A key/value setting for one project - signup mode, a feature flag.
+model BoardSetting {
+  projectKey String
+  key        String   @db.VarChar(80)
+  value      String   @db.VarChar(4000)
+  /// Who last wrote it, for the log that answers "who changed this".
+  setBy      String?  @db.VarChar(80)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@id([projectKey, key])
+}
+

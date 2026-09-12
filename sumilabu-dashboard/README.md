@@ -268,3 +268,28 @@ On each device (`secrets.py` in firmware repo):
 - `STATS_PROJECT_KEY = "inkyframe"`
 - `STATS_DEVICE_ID = "unique-device-name"`
 - `STATS_INTERVAL_SECONDS = 300`
+
+## Board and settings API (v1)
+
+One tickets board and one settings store for every site, scoped by
+`projectKey`, enforcing `docs/board/BOARD_RULES.md` once. Auth is a per-project
+token in `BOARD_TOKENS_JSON` (`{ "umakuma": "…", "itsutsu": "…" }`) sent as
+`Authorization: Bearer <token>`; a project with no token has no board. Every
+write also sends `X-Board-Actor: <who>` - there is no anonymous move.
+
+| Method | Path | Body | Notes |
+|---|---|---|---|
+| GET | `/api/v1/projects/{key}/tickets` | `?status=open,inProgress` or `?unfinished=1` | with `heldNow` computed; unfinished includes lapsed holds |
+| POST | `/api/v1/projects/{key}/tickets` | `{ title, detail?, area?, kind?, askedBy? }` | 422 with `problems[]` on a cap |
+| GET | `/api/v1/projects/{key}/tickets/{id}` | | |
+| PATCH | `/api/v1/projects/{key}/tickets/{id}` | `{ status?, priority?, effort? }` | `status` is `open`, `inProgress` or `dropped`; move first, then grade; 409 `{ error: "illegal" \| "held", heldBy }` |
+| POST | `/api/v1/projects/{key}/tickets/{id}/ship` | `{ version, entryId?, releasedAt? }` | release tools only; from `open` or `inProgress` under the claim condition; writes `done` |
+| POST | `/api/v1/projects/{key}/tickets/import` | `{ tickets: [row…] }` | one-time move of a client's board, ids and dates kept; upserts by id |
+| POST | `/api/v1/projects/{key}/tickets/{id}/unship` | `{ reason }` | only for a stamp the client's main never saw |
+| GET | `/api/v1/projects/{key}/settings` | | `{ settings: { key: value } }` |
+| GET/PUT | `/api/v1/projects/{key}/settings/{key}` | `{ value }` | key `[a-z0-9_.-]{1,80}`, value ≤ 4000 |
+
+Statuses are canonical (`open`, `inProgress`, `done`, `dropped`); kinds
+`feature`, `fix`, `chore`; priority `high`/`normal`/`low`; effort
+`small`/`medium`/`large`, both null until graded. The lease is six hours.
+
