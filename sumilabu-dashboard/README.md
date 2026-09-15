@@ -240,7 +240,12 @@ curl -sS https://app.sumilabu.com/api/app-telemetry \
 - `INGEST_API_TOKEN`
 - `DEFAULT_PROJECT_KEY`
 - `PROJECT_TOKENS_JSON`
-- `STALE_AFTER_SECONDS` (optional)
+- `EXPECTED_HEARTBEAT_SECONDS` (optional, default `1800`, the firmware's heartbeat)
+- `STALE_AFTER_SECONDS` (optional, default `5400`, three missed heartbeats)
+
+Leave both unset unless the firmware's interval changes: a value written
+for the old 5-minute heartbeat marks every device on the 30-minute one as
+offline.
 
 Dashboard project filtering:
 
@@ -267,7 +272,7 @@ On each device (`secrets.py` in firmware repo):
 - `STATS_API_TOKEN = "<same token as INGEST_API_TOKEN>"`
 - `STATS_PROJECT_KEY = "inkyframe"`
 - `STATS_DEVICE_ID = "unique-device-name"`
-- `STATS_INTERVAL_SECONDS = 300`
+- `STATS_INTERVAL_SECONDS = 1800` (the firmware raises anything under 900 to 900)
 
 ## Board and settings API (v1)
 

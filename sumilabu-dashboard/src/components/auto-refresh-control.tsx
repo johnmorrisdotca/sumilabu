@@ -1,50 +1,65 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-const OPTIONS_MS = [
-  0,
-  30000,
-  60000,
-  120000,
-  300000,
-] as const;
+import {
+  DEFAULT_REFRESH_MS,
+  IDLE_STOP_MS,
+  MINUTE_MS,
+  REFRESH_OPTIONS_MS,
+  createRefreshScheduler,
+  refreshLabel,
+  safeRefreshMs,
+  type RefreshScheduler,
+  type RefreshState,
+} from "@/lib/auto-refresh";
 
-function labelFor(ms: number): string {
-  if (ms <= 0) {
-    return "Off";
-  }
-  if (ms < 60000) {
-    return `${ms / 1000}s`;
-  }
-  return `${ms / 60000}m`;
-}
+/* What counts as somebody being here. The tab being shown is listened for
+   separately; pointer movement is not, since a cursor resting on a
+   wall-mounted screen is not a reader. */
+const WAKE_EVENTS = ["click", "keydown", "wheel", "focus"] as const;
 
 type AutoRefreshControlProps = {
   defaultMs?: number;
 };
 
-export function AutoRefreshControl({ defaultMs = 60000 }: AutoRefreshControlProps) {
-  const router = useRouter();
-  const safeDefaultMs = OPTIONS_MS.includes(defaultMs as (typeof OPTIONS_MS)[number]) ? defaultMs : 60000;
+function stateLabel(state: RefreshState, refreshMs: number): string {
+  if (state === "off") return "auto refresh off";
+  if (state === "hidden") return "paused while hidden";
+  if (state === "idle") return `paused after ${IDLE_STOP_MS / MINUTE_MS}m idle - click to resume`;
+  return `every ${refreshLabel(refreshMs)}`;
+}
 
-  const [refreshMs, setRefreshMs] = useState<number>(safeDefaultMs);
+export function AutoRefreshControl({ defaultMs = DEFAULT_REFRESH_MS }: AutoRefreshControlProps) {
+  const router = useRouter();
+  const [refreshMs, setRefreshMs] = useState<number>(() => safeRefreshMs(defaultMs));
+  const [state, setState] = useState<RefreshState>(refreshMs > 0 ? "running" : "off");
+  const schedulerRef = useRef<RefreshScheduler | null>(null);
 
   useEffect(() => {
-    if (refreshMs <= 0) {
-      return;
-    }
+    const scheduler = createRefreshScheduler({
+      intervalMs: refreshMs,
+      refresh: () => router.refresh(),
+      now: () => Date.now(),
+      isVisible: () => document.visibilityState === "visible",
+      setTimer: (run, ms) => window.setTimeout(run, ms),
+      clearTimer: (handle) => window.clearTimeout(handle as number),
+      onState: setState,
+    });
+    const wake = () => scheduler.wake();
+    const visibilityChanged = () => scheduler.visibilityChanged();
 
-    const timer = window.setInterval(() => {
-      if (document.visibilityState !== "visible") {
-        return;
-      }
-      router.refresh();
-    }, refreshMs);
+    for (const name of WAKE_EVENTS) window.addEventListener(name, wake, { passive: true });
+    document.addEventListener("visibilitychange", visibilityChanged);
+    schedulerRef.current = scheduler;
+    scheduler.start();
 
     return () => {
-      window.clearInterval(timer);
+      for (const name of WAKE_EVENTS) window.removeEventListener(name, wake);
+      document.removeEventListener("visibilitychange", visibilityChanged);
+      scheduler.stop();
+      schedulerRef.current = null;
     };
   }, [refreshMs, router]);
 
@@ -57,13 +72,12 @@ export function AutoRefreshControl({ defaultMs = 60000 }: AutoRefreshControlProp
           className="rounded-full border border-stone-300 bg-white px-2.5 py-1.5 text-xs text-stone-800 outline-none transition focus:border-stone-500"
           value={refreshMs}
           onChange={(event) => {
-            const next = Number(event.target.value);
-            setRefreshMs(next);
+            setRefreshMs(safeRefreshMs(Number(event.target.value)));
           }}
         >
-          {OPTIONS_MS.map((value) => (
+          {REFRESH_OPTIONS_MS.map((value) => (
             <option key={value} value={value}>
-              {labelFor(value)}
+              {refreshLabel(value)}
             </option>
           ))}
         </select>
@@ -73,13 +87,14 @@ export function AutoRefreshControl({ defaultMs = 60000 }: AutoRefreshControlProp
         type="button"
         className="rounded-full border border-stone-300 px-2.5 py-1.5 text-xs text-stone-700 transition hover:border-stone-500 hover:bg-white"
         onClick={() => {
-          router.refresh();
+          if (schedulerRef.current) schedulerRef.current.refreshByHand();
+          else router.refresh();
         }}
       >
         Refresh now
       </button>
 
-      <span className="font-mono text-[11px] text-stone-500">interval: {labelFor(refreshMs)}</span>
+      <span className="font-mono text-[11px] text-stone-500">{stateLabel(state, refreshMs)}</span>
     </div>
   );
 }

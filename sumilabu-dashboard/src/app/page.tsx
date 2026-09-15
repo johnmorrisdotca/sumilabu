@@ -5,14 +5,18 @@ import { AutoRefreshControl } from "@/components/auto-refresh-control";
 import { HeartbeatRadar } from "@/components/heartbeat-radar";
 import { RecentEventsTable } from "@/components/recent-events-table";
 import { WidgetCanvas } from "@/components/widget-canvas";
+import { latestEventByDevice } from "@/lib/device-latest-event";
 import { prisma } from "@/lib/prisma";
 import { formatDateTimeAtOffset, formatHourMinuteAtOffset } from "@/lib/timezone";
 import { LiveClock } from "@/components/live-clock";
 
 export const dynamic = "force-dynamic";
 
-const STALE_AFTER_SECONDS = Number(process.env.STALE_AFTER_SECONDS || "900");
-const EXPECTED_HEARTBEAT_SECONDS = Number(process.env.EXPECTED_HEARTBEAT_SECONDS || "300");
+/* Firmware heartbeats every 30 minutes (firmware/main.py). A device still
+   flashed at the old 5 minutes reads as healthy against these, and one on the
+   new cadence would read as offline against the old 300/900. */
+const STALE_AFTER_SECONDS = Number(process.env.STALE_AFTER_SECONDS || "5400");
+const EXPECTED_HEARTBEAT_SECONDS = Number(process.env.EXPECTED_HEARTBEAT_SECONDS || "1800");
 const DASHBOARD_UTC_OFFSET_HOURS = Number(process.env.DASHBOARD_UTC_OFFSET_HOURS || "-8");
 const MAX_HEARTBEAT_SLOTS = 48;
 const CHART_WIDTH = 720;
@@ -460,28 +464,55 @@ type PageProps = {
   searchParams?: Promise<{ project?: string }>;
 };
 
+/* Only the columns the page draws. `raw`, and the app events' JSON columns,
+   used to be read for every row loaded and were never shown. */
+const RECENT_EVENT_SELECT = {
+  id: true,
+  projectKey: true,
+  deviceId: true,
+  event: true,
+  mode: true,
+  memFree: true,
+  sync: true,
+  receivedAt: true,
+} as const;
+
+const APP_EVENT_SELECT = {
+  id: true,
+  projectKey: true,
+  sourceType: true,
+  appId: true,
+  environment: true,
+  host: true,
+  service: true,
+  event: true,
+  status: true,
+  severity: true,
+  message: true,
+  durationMs: true,
+  metricName: true,
+  metricValue: true,
+  metricUnit: true,
+  receivedAt: true,
+} as const;
+
 export default async function Home({ searchParams }: PageProps) {
   const params = (await searchParams) || {};
   const selectedProject = sanitizeProjectParam(params.project);
   const localTimezoneLabel = `UTC${DASHBOARD_UTC_OFFSET_HOURS >= 0 ? "+" : ""}${DASHBOARD_UTC_OFFSET_HOURS}`;
 
-  const [deviceProjects, eventProjects, appSourceProjects, appEventProjects] = await Promise.all([
+  /* Every event is written beside its device or source, under the same
+     project key (api/device-stats/route.ts, lib/app-telemetry-ingest.ts), so
+     those two small tables already name every project the event tables could.
+     Asking the event tables read every row they hold on every render: Prisma
+     applies `distinct` in memory, so that SQL had no DISTINCT and no LIMIT. */
+  const [deviceProjects, appSourceProjects] = await Promise.all([
     prisma.device.findMany({
       select: { projectKey: true },
       distinct: ["projectKey"],
       orderBy: { projectKey: "asc" },
     }),
-    prisma.deviceEvent.findMany({
-      select: { projectKey: true },
-      distinct: ["projectKey"],
-      orderBy: { projectKey: "asc" },
-    }),
     prisma.appTelemetrySource.findMany({
-      select: { projectKey: true },
-      distinct: ["projectKey"],
-      orderBy: { projectKey: "asc" },
-    }),
-    prisma.appTelemetryEvent.findMany({
       select: { projectKey: true },
       distinct: ["projectKey"],
       orderBy: { projectKey: "asc" },
@@ -494,28 +525,21 @@ export default async function Home({ searchParams }: PageProps) {
     ...configuredProjectKeys(),
     ...(selectedProject ? [selectedProject] : []),
     ...deviceProjects.map((project) => canonicalProjectKey(project.projectKey)),
-    ...eventProjects.map((project) => canonicalProjectKey(project.projectKey)),
     ...appSourceProjects.map((project) => canonicalProjectKey(project.projectKey)),
-    ...appEventProjects.map((project) => canonicalProjectKey(project.projectKey)),
   ]);
 
   const projectFilter = selectedProject ? { projectKey: { in: projectKeyMatches(selectedProject) } } : {};
 
-  const [devices, projectEvents, appSources, appEvents] = await Promise.all([
+  const [deviceRows, projectEvents, appSources, appEvents] = await Promise.all([
     prisma.device.findMany({
       where: projectFilter,
       orderBy: { lastSeenAt: "desc" },
-      include: {
-        events: {
-          orderBy: { receivedAt: "desc" },
-          take: 1,
-        },
-      },
     }),
     prisma.deviceEvent.findMany({
       where: projectFilter,
       orderBy: { receivedAt: "desc" },
       take: 5000,
+      select: RECENT_EVENT_SELECT,
     }),
     prisma.appTelemetrySource.findMany({
       where: projectFilter,
@@ -525,12 +549,19 @@ export default async function Home({ searchParams }: PageProps) {
     prisma.appTelemetryEvent.findMany({
       where: projectFilter,
       orderBy: { receivedAt: "desc" },
-      take: 80,
+      take: 24,
+      select: APP_EVENT_SELECT,
     }),
   ]);
 
+  const latestEvents = await latestEventByDevice(deviceRows.map((device) => device.id));
+  const devices: DeviceCard[] = deviceRows.map((device) => {
+    const latest = latestEvents.get(device.id);
+    return { ...device, events: latest ? [latest] : [] };
+  });
+
   const recentEvents: RecentEvent[] = projectEvents.slice(0, 60);
-  const recentAppEvents: AppTelemetryEventRow[] = appEvents.slice(0, 24);
+  const recentAppEvents: AppTelemetryEventRow[] = appEvents;
   const appSourceCards: AppTelemetrySourceCard[] = appSources;
   const nowMs = new Date().getTime();
   const eventsByDevice = new Map<string, RecentEvent[]>();
@@ -630,7 +661,7 @@ export default async function Home({ searchParams }: PageProps) {
                 <span className="text-stone-500">Latest ingest</span>
                 <span className="font-mono text-xs text-stone-700">{fmtTime(latestEvent?.receivedAt || recentAppEvents[0]?.receivedAt)}</span>
               </div>
-              <AutoRefreshControl defaultMs={60000} />
+              <AutoRefreshControl />
             </div>
           </div>
 

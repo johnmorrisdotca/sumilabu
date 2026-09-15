@@ -295,6 +295,10 @@ const spec = {
   },
 };
 
+/* The contract is a constant and GET reads nothing from the request, so it is
+   prerendered at build and served without a function invocation. */
+export const dynamic = "force-static";
+
 export async function GET() {
   return NextResponse.json(spec, {
     headers: {
