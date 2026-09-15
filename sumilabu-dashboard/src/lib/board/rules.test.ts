@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   LEASE_MS,
   SHIPPABLE_FROM,
+  TEXT_EDITABLE_FROM,
   TICKET_EFFORTS,
   TICKET_KINDS,
   TICKET_LIMITS,
@@ -17,9 +18,12 @@ import {
   foreignIdProblems,
   heldNow,
   isSettingKey,
+  keyProblems,
   moveData,
   moveWhere,
   shipData,
+  textData,
+  textProblems,
 } from "./rules";
 
 /**
@@ -47,8 +51,12 @@ describe("the board gate", () => {
     expect(SHIPPABLE_FROM).not.toContain("done");
   });
 
+  it("revises the words of every status but done", () => {
+    expect([...TEXT_EDITABLE_FROM]).toEqual(TICKET_STATUSES.filter((status) => status !== "done"));
+  });
+
   it("holds the caps the contract names", () => {
-    expect(TICKET_LIMITS).toMatchObject({ titleMin: 8, title: 120, detail: 4000, askedBy: 60, claimedBy: 80 });
+    expect(TICKET_LIMITS).toMatchObject({ titleMin: 8, title: 120, detail: 4000, askedBy: 60, claimedBy: 80, key: 80 });
     expect(LEASE_MS).toBe(6 * 60 * 60 * 1000);
   });
 
@@ -137,5 +145,32 @@ describe("settings and import", () => {
   it("refuses an import that would take another project's rows", () => {
     expect(foreignIdProblems([])).toEqual([]);
     expect(foreignIdProblems([{ id: "abc", projectKey: "itsutsu" }])).toEqual(["abc: already belongs to project itsutsu."]);
+  });
+});
+
+/* Invariants 11 and 12: a key is a kebab slug written once; words are revised under the draft's caps. */
+describe("keys and revisions", () => {
+  it("accepts a kebab slug up to the cap and nothing else", () => {
+    expect(keyProblems("its-xp-history")).toEqual([]);
+    expect(keyProblems("0-196-0")).toEqual([]);
+    expect(keyProblems("k".repeat(TICKET_LIMITS.key))).toEqual([]);
+    for (const bad of ["", "Its-xp", "its_xp", "its--xp", "-its", "its-", "its xp", "k".repeat(TICKET_LIMITS.key + 1)]) {
+      expect(keyProblems(bad), bad).toHaveLength(1);
+    }
+    expect(draftProblems({ title: "A fine title", key: "Not A Key" })).toHaveLength(1);
+    expect(draftProblems({ title: "A fine title", key: null })).toEqual([]);
+  });
+
+  it("checks only the words a revision carries, in the draft's own words", () => {
+    expect(textProblems({})).toEqual([]);
+    expect(textProblems({ detail: null })).toEqual([]);
+    expect(textProblems({ title: "short" })).toEqual(draftProblems({ title: "short" }));
+    expect(textProblems({ detail: "d".repeat(TICKET_LIMITS.detail + 1) })).toEqual(draftProblems({ title: "A fine title", detail: "d".repeat(TICKET_LIMITS.detail + 1) }));
+  });
+
+  it("writes the words it carries with who revised them, and never the status or movedAt", () => {
+    const now = new Date("2026-09-14T10:00:00Z");
+    expect(textData({ title: "  A fine title  " }, "its-builder", now)).toEqual({ title: "A fine title", editedBy: "its-builder", editedAt: now });
+    expect(textData({ detail: "  " }, "its-builder", now)).toEqual({ detail: null, editedBy: "its-builder", editedAt: now });
   });
 });
