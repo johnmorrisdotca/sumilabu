@@ -219,7 +219,16 @@ STATS_API_TOKEN = getattr(secrets, "STATS_API_TOKEN", None) if secrets else None
 STATS_DEVICE_ID = getattr(secrets, "STATS_DEVICE_ID", None) if secrets else None
 DEFAULT_STATS_PROJECT_KEY = "pico-unicorn" if IS_UNICORN_TARGET else "inkyframe"
 STATS_PROJECT_KEY = getattr(secrets, "STATS_PROJECT_KEY", DEFAULT_STATS_PROJECT_KEY) if secrets else DEFAULT_STATS_PROJECT_KEY
-STATS_INTERVAL_SECONDS = getattr(secrets, "STATS_INTERVAL_SECONDS", REFRESH_SECONDS) if secrets else REFRESH_SECONDS
+# Telemetry heartbeat, kept apart from the display's REFRESH_SECONDS. Every post
+# is a serverless invocation plus a stored row on accounts shared with other
+# projects, so the default is 30 minutes and nothing under 15 is honoured: a
+# secrets.py still saying 300 from the old example posts every 15 minutes.
+DEFAULT_STATS_INTERVAL_SECONDS = 30 * 60
+MIN_STATS_INTERVAL_SECONDS = 15 * 60
+STATS_INTERVAL_SECONDS = max(
+    MIN_STATS_INTERVAL_SECONDS,
+    getattr(secrets, "STATS_INTERVAL_SECONDS", DEFAULT_STATS_INTERVAL_SECONDS) if secrets else DEFAULT_STATS_INTERVAL_SECONDS,
+)
 STATS_HTTP_TIMEOUT_S = getattr(secrets, "STATS_HTTP_TIMEOUT_S", 8) if secrets else 8
 RENDER_WDT_FEED_ROWS = 8
 ENABLE_AUTO_RECOVER_RESET = bool(getattr(secrets, "ENABLE_AUTO_RECOVER_RESET", True)) if secrets else True

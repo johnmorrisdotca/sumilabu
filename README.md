@@ -136,7 +136,7 @@ Set in `firmware/secrets.py`:
 - `STATS_DEVICE_ID`: unique ID per device (for grouping in your GUI)
 - `DEVICE_PROFILE`: profile marker (`dual` or `japan`) included in payload
 - `display_model`: auto-detected display constant included in payload
-- `STATS_INTERVAL_SECONDS`: heartbeat interval (default `300`)
+- `STATS_INTERVAL_SECONDS`: heartbeat interval (default `1800`; values under `900` are raised to `900`, since every post is a server call and a stored row)
 
 Events sent:
 

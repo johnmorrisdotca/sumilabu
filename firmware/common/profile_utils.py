@@ -24,7 +24,7 @@ def build_common_values(source: dict[str, Any]) -> dict[str, Any]:
         "REMOTE_TZ_LABEL": get_value(source, "REMOTE_TZ_LABEL", "JST"),
         "STATS_API_URL": get_value(source, "STATS_API_URL", ""),
         "STATS_API_TOKEN": get_value(source, "STATS_API_TOKEN", ""),
-        "STATS_INTERVAL_SECONDS": get_value(source, "STATS_INTERVAL_SECONDS", 300),
+        "STATS_INTERVAL_SECONDS": get_value(source, "STATS_INTERVAL_SECONDS", 1800),
         "STATS_HTTP_TIMEOUT_S": get_value(source, "STATS_HTTP_TIMEOUT_S", 8),
         "WATCHDOG_TIMEOUT_MS": get_value(source, "WATCHDOG_TIMEOUT_MS", 8388),
         "ENABLE_WATCHDOG": False,
