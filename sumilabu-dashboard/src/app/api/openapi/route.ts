@@ -131,6 +131,12 @@ const deviceStatsPayload: OpenApiSchema = {
     unix_ts: { type: "integer", minimum: 0 },
     wifi: { type: "string" },
     sync: { type: "string" },
+    heartbeat_interval_s: {
+      type: "integer",
+      minimum: 1,
+      maximum: 86400,
+      description: "How often this device sends a heartbeat, in seconds. The dashboard expects a beat at this cadence and calls the device offline after three missed, never sooner than its global STALE_AFTER_SECONDS. Omit it and the global values apply. A value outside 1..86400 is ignored, never refused.",
+    },
     error_log: {
       type: "array",
       maxItems: 20,

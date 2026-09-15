@@ -6,17 +6,16 @@ import { HeartbeatRadar } from "@/components/heartbeat-radar";
 import { RecentEventsTable } from "@/components/recent-events-table";
 import { WidgetCanvas } from "@/components/widget-canvas";
 import { latestEventByDevice } from "@/lib/device-latest-event";
+import { globalHeartbeat, heartbeatThresholds, isFresh, type HeartbeatThresholds } from "@/lib/heartbeat-thresholds";
 import { prisma } from "@/lib/prisma";
 import { formatDateTimeAtOffset, formatHourMinuteAtOffset } from "@/lib/timezone";
 import { LiveClock } from "@/components/live-clock";
 
 export const dynamic = "force-dynamic";
 
-/* Firmware heartbeats every 30 minutes (firmware/main.py). A device still
-   flashed at the old 5 minutes reads as healthy against these, and one on the
-   new cadence would read as offline against the old 300/900. */
-const STALE_AFTER_SECONDS = Number(process.env.STALE_AFTER_SECONDS || "5400");
-const EXPECTED_HEARTBEAT_SECONDS = Number(process.env.EXPECTED_HEARTBEAT_SECONDS || "1800");
+/* The fallback for a device that reports no heartbeat interval. One that
+   reports it is judged by its own (lib/heartbeat-thresholds.ts). */
+const GLOBAL_HEARTBEAT = globalHeartbeat(process.env);
 const DASHBOARD_UTC_OFFSET_HOURS = Number(process.env.DASHBOARD_UTC_OFFSET_HOURS || "-8");
 const MAX_HEARTBEAT_SLOTS = 48;
 const CHART_WIDTH = 720;
@@ -38,6 +37,7 @@ type DeviceCard = {
   appVersion: string | null;
   lastMode: string | null;
   lastSeenAt: Date | null;
+  heartbeatIntervalSeconds: number | null;
   events: Array<{
     event: string;
     memFree: number | null;
@@ -114,6 +114,8 @@ type DeviceHealth = {
   projectKey: string;
   deviceId: string;
   status: "healthy" | "warning" | "offline";
+  /** The cadence and stale window this device was judged by, reported or global. */
+  thresholds: HeartbeatThresholds;
   lastSeenAt: Date | null;
   lastPingAgeSeconds: number | null;
   maxGapSeconds: number | null;
@@ -162,13 +164,6 @@ function fmtAge(ts?: Date | null): string {
 
   const ageSeconds = Math.max(0, Math.floor((Date.now() - ts.getTime()) / 1000));
   return `${fmtDuration(ageSeconds)} ago`;
-}
-
-function isOnline(ts?: Date | null): boolean {
-  if (!ts) {
-    return false;
-  }
-  return Date.now() - ts.getTime() <= STALE_AFTER_SECONDS * 1000;
 }
 
 function uniqSorted(values: string[]): string[] {
@@ -262,14 +257,14 @@ function eventBreakdown(events: RecentEvent[]): Array<{ label: string; value: nu
     .sort((left, right) => right.value - left.value);
 }
 
-function buildHeartbeatTimeline(events: RecentEvent[], nowMs: number): HeartbeatSlot[] {
+function buildHeartbeatTimeline(events: RecentEvent[], nowMs: number, expectedSeconds: number): HeartbeatSlot[] {
   if (events.length === 0) {
     return [];
   }
 
   const oldestMs = events.at(-1)!.receivedAt.getTime();
-  const rangeMs = Math.max(nowMs - oldestMs, EXPECTED_HEARTBEAT_SECONDS * 1000);
-  const idealSlots = Math.ceil(rangeMs / (EXPECTED_HEARTBEAT_SECONDS * 1000));
+  const rangeMs = Math.max(nowMs - oldestMs, expectedSeconds * 1000);
+  const idealSlots = Math.ceil(rangeMs / (expectedSeconds * 1000));
   const slotCount = Math.max(1, Math.min(idealSlots, MAX_HEARTBEAT_SLOTS));
   const slotSizeMs = rangeMs / slotCount;
   const windowStartMs = nowMs - slotCount * slotSizeMs;
@@ -314,6 +309,9 @@ function buildHeartbeatTimeline(events: RecentEvent[], nowMs: number): Heartbeat
 }
 
 function buildDeviceHealth(device: DeviceCard, events: RecentEvent[], nowMs: number): DeviceHealth {
+  /* Judged by the interval the device reports, or the global values when it reports none. */
+  const thresholds = heartbeatThresholds(device.heartbeatIntervalSeconds, GLOBAL_HEARTBEAT);
+  const expectedSeconds = thresholds.expectedSeconds;
   let maxGapSeconds: number | null = null;
   let latestGapSeconds: number | null = null;
 
@@ -335,9 +333,9 @@ function buildDeviceHealth(device: DeviceCard, events: RecentEvent[], nowMs: num
   const lastPingAgeSeconds = device.lastSeenAt
     ? Math.max(0, Math.floor((nowMs - device.lastSeenAt.getTime()) / 1000))
     : null;
-  const timeline = buildHeartbeatTimeline(events, nowMs);
+  const timeline = buildHeartbeatTimeline(events, nowMs, expectedSeconds);
   const missedHeartbeats = lastPingAgeSeconds
-    ? Math.max(0, Math.floor(lastPingAgeSeconds / EXPECTED_HEARTBEAT_SECONDS) - 1)
+    ? Math.max(0, Math.floor(lastPingAgeSeconds / expectedSeconds) - 1)
     : timeline.length || MAX_HEARTBEAT_SLOTS;
 
   // Observed uptime: span from oldest to newest event
@@ -355,17 +353,17 @@ function buildDeviceHealth(device: DeviceCard, events: RecentEvent[], nowMs: num
     streakSlots += 1;
   }
   const slotDurationSeconds = timeline.length > 0
-    ? Math.round(observedUptimeSeconds / timeline.length) || EXPECTED_HEARTBEAT_SECONDS
-    : EXPECTED_HEARTBEAT_SECONDS;
+    ? Math.round(observedUptimeSeconds / timeline.length) || expectedSeconds
+    : expectedSeconds;
   const activeStreakSeconds = streakSlots * slotDurationSeconds;
 
   let status: DeviceHealth["status"] = "healthy";
 
-  if (!device.lastSeenAt || !isOnline(device.lastSeenAt)) {
+  if (!device.lastSeenAt || !isFresh(device.lastSeenAt, nowMs, thresholds)) {
     status = "offline";
   } else if (
-    (lastPingAgeSeconds !== null && lastPingAgeSeconds > EXPECTED_HEARTBEAT_SECONDS * 1.5)
-    || (latestGapSeconds !== null && latestGapSeconds > EXPECTED_HEARTBEAT_SECONDS * 2)
+    (lastPingAgeSeconds !== null && lastPingAgeSeconds > expectedSeconds * 1.5)
+    || (latestGapSeconds !== null && latestGapSeconds > expectedSeconds * 2)
     || timeline.slice(-4).some((slot) => !slot.hasPing)
   ) {
     status = "warning";
@@ -375,6 +373,7 @@ function buildDeviceHealth(device: DeviceCard, events: RecentEvent[], nowMs: num
     projectKey: device.projectKey,
     deviceId: device.deviceId,
     status,
+    thresholds,
     lastSeenAt: device.lastSeenAt,
     lastPingAgeSeconds,
     maxGapSeconds,
@@ -598,8 +597,8 @@ export default async function Home({ searchParams }: PageProps) {
     sync: event.sync,
   }));
 
-  const onlineDevices = devices.filter((device) => isOnline(device.lastSeenAt)).length;
   const deviceHealth = devices.map((device) => buildDeviceHealth(device, eventsByDevice.get(device.deviceId) || [], nowMs));
+  const onlineDevices = deviceHealth.filter((device) => device.status !== "offline").length;
   const offlineDevices = deviceHealth.filter((device) => device.status === "offline").length;
   const warningDevices = deviceHealth.filter((device) => device.status === "warning").length;
   const longestSilenceSeconds = deviceHealth.length > 0
@@ -697,7 +696,7 @@ export default async function Home({ searchParams }: PageProps) {
           <article className="rounded-[20px] border border-stone-300/80 bg-white/88 p-4 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-stone-500">Online Now</p>
             <p className="mt-2 text-3xl font-semibold text-emerald-700">{onlineDevices}</p>
-            <p className="mt-1 text-sm text-stone-600">Seen within the last {STALE_AFTER_SECONDS}s.</p>
+            <p className="mt-1 text-sm text-stone-600">Seen within three of their own heartbeats, and at least {fmtDuration(GLOBAL_HEARTBEAT.staleAfterSeconds)}.</p>
           </article>
           <article className="rounded-[20px] border border-stone-300/80 bg-white/88 p-4 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-stone-500">Recent Events</p>
@@ -716,7 +715,7 @@ export default async function Home({ searchParams }: PageProps) {
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold">Gap Watch</h2>
-                <p className="text-sm text-stone-600">The page judges device health against an expected ping cadence of {EXPECTED_HEARTBEAT_SECONDS}s.</p>
+                <p className="text-sm text-stone-600">Each device is judged by the heartbeat interval it reports, or every {fmtDuration(GLOBAL_HEARTBEAT.expectedSeconds)} when it reports none.</p>
               </div>
               <span className="rounded-full bg-stone-900 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-stone-50">
                 Live gap detection
@@ -752,7 +751,10 @@ export default async function Home({ searchParams }: PageProps) {
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p className="font-mono text-sm font-semibold text-stone-800">{device.projectKey}/{device.deviceId}</p>
-                      <p className="mt-1 text-sm text-stone-600">Last ping {fmtAge(device.lastSeenAt)}</p>
+                      <p className="mt-1 text-sm text-stone-600">
+                        Last ping {fmtAge(device.lastSeenAt)} • expects every {fmtDuration(device.thresholds.expectedSeconds)}
+                        {device.thresholds.reported ? " (reported)" : " (default)"} • offline after {fmtDuration(device.thresholds.staleAfterSeconds)}
+                      </p>
                     </div>
                     <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${statusPillClasses(device.status)}`}>
                       {statusLabel(device.status)}
@@ -952,7 +954,9 @@ export default async function Home({ searchParams }: PageProps) {
           {devices.map((d) => {
             const last = d.events[0];
             const health = deviceHealth.find((device) => device.deviceId === d.deviceId);
-            const online = isOnline(d.lastSeenAt);
+            const online = health
+              ? health.status !== "offline"
+              : isFresh(d.lastSeenAt, nowMs, heartbeatThresholds(d.heartbeatIntervalSeconds, GLOBAL_HEARTBEAT));
 
             return (
               <article key={d.id} className="rounded-[20px] border border-stone-300/80 bg-white/90 p-4 shadow-sm">

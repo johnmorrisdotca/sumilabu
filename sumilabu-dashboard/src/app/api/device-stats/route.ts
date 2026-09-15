@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import { reportedIntervalSeconds } from "@/lib/heartbeat-thresholds";
 import { isAuthorizedIngest } from "@/lib/ingest-auth";
 import { prisma } from "@/lib/prisma";
 
@@ -20,6 +21,8 @@ const payloadSchema = z.object({
   unix_ts: z.number().int().nonnegative().optional(),
   wifi: z.string().max(256).optional(),
   sync: z.string().max(256).optional(),
+  /* Read leniently: a bad interval is ignored, never a reason to drop the heartbeat carrying it. */
+  heartbeat_interval_s: z.unknown().optional(),
   error_log: z.array(z.object({
     ts: z.number().optional(),
     ctx: z.string().optional(),
@@ -53,6 +56,7 @@ export async function POST(req: NextRequest) {
   }
 
   const now = new Date();
+  const heartbeatIntervalSeconds = reportedIntervalSeconds(p.heartbeat_interval_s);
 
   const device = await prisma.device.upsert({
     where: {
@@ -61,10 +65,12 @@ export async function POST(req: NextRequest) {
         deviceId: p.device_id,
       },
     },
+    /* An event that reports no interval leaves the stored one alone. */
     update: {
       appVersion: p.app_version,
       lastMode: p.mode,
       lastSeenAt: now,
+      ...(heartbeatIntervalSeconds !== null ? { heartbeatIntervalSeconds } : {}),
     },
     create: {
       projectKey,
@@ -72,7 +78,9 @@ export async function POST(req: NextRequest) {
       appVersion: p.app_version,
       lastMode: p.mode,
       lastSeenAt: now,
+      heartbeatIntervalSeconds,
     },
+    select: { id: true },
   });
 
   await prisma.deviceEvent.create({
@@ -93,6 +101,7 @@ export async function POST(req: NextRequest) {
       appVersion: p.app_version,
       raw: {
         ...p,
+        heartbeat_interval_s: heartbeatIntervalSeconds ?? undefined,
         project_key: projectKey,
       },
     },

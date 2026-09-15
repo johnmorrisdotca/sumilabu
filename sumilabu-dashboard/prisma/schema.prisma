@@ -16,6 +16,10 @@ model Device {
   appVersion  String?
   lastMode    String?
   lastSeenAt  DateTime?
+  /// The heartbeat interval the device last reported (`heartbeat_interval_s`
+  /// on /api/device-stats), in seconds. Null until it reports one, and the
+  /// dashboard then judges it by EXPECTED_HEARTBEAT_SECONDS/STALE_AFTER_SECONDS.
+  heartbeatIntervalSeconds Int?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   events      DeviceEvent[]

@@ -240,12 +240,14 @@ curl -sS https://app.sumilabu.com/api/app-telemetry \
 - `INGEST_API_TOKEN`
 - `DEFAULT_PROJECT_KEY`
 - `PROJECT_TOKENS_JSON`
-- `EXPECTED_HEARTBEAT_SECONDS` (optional, default `1800`, the firmware's heartbeat)
-- `STALE_AFTER_SECONDS` (optional, default `5400`, three missed heartbeats)
+- `EXPECTED_HEARTBEAT_SECONDS` (optional, default `1800`)
+- `STALE_AFTER_SECONDS` (optional, default `5400`)
 
-Leave both unset unless the firmware's interval changes: a value written
-for the old 5-minute heartbeat marks every device on the 30-minute one as
-offline.
+A device that sends `heartbeat_interval_s` on `/api/device-stats` is judged
+by it: a beat is expected at that interval, and the device is offline after
+three missed, never sooner than `STALE_AFTER_SECONDS`. These two values are
+the fallback for a device that reports no interval (InkyFrames flashed
+before 2026-09-15, and any client that omits it).
 
 Dashboard project filtering:
 

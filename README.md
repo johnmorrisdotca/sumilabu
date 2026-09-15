@@ -151,6 +151,7 @@ JSON fields include:
 - `ntp_ok`, `bitmap_assets_ok`
 - `mem_free`, `mem_alloc`, `uptime_s`, `unix_ts`
 - `wifi`, `sync`
+- `heartbeat_interval_s` (the device's `STATS_INTERVAL_SECONDS`; the dashboard judges its silence by it)
 
 Recommended backend shape for your GUI:
 

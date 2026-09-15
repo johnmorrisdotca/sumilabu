@@ -734,6 +734,8 @@ def post_device_stats(event_name, mode, ntp_ok, bitmap_assets_ok, sync_text, wif
         "wdt_enabled": bool(WATCHDOG),
         "wdt_timeout_ms": WATCHDOG_TIMEOUT_MS,
         "wdt_clamped": bool(WATCHDOG_CLAMPED),
+        # The dashboard judges this device's silence by its own cadence.
+        "heartbeat_interval_s": STATS_INTERVAL_SECONDS,
     }
 
     if battery_v is not None:
