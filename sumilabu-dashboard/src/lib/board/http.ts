@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { authorizeBoard, type BoardCaller } from "./auth";
+import { TOKEN_SCOPES, authorizeBoard, type BoardCaller, type TokenScope } from "./auth";
 import type { MoveOutcome } from "./server";
 
-/** 401 for a bad or missing token; 400 for a write with nobody named. */
-export function requireCaller(req: NextRequest, projectKey: string, needsActor: boolean): BoardCaller | NextResponse {
-  const caller = authorizeBoard(req, projectKey);
+/**
+ * 401 for a bad or missing token; 400 for a write with nobody named. The
+ * scope says which token map is asked: the ticket routes take the board
+ * token, the settings routes the settings token, and neither accepts the other.
+ */
+export function requireCaller(
+  req: NextRequest,
+  projectKey: string,
+  needsActor: boolean,
+  scope: TokenScope = TOKEN_SCOPES.board,
+): BoardCaller | NextResponse {
+  const caller = authorizeBoard(req, projectKey, scope);
   if (!caller) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   if (needsActor && !caller.actor) {
     return NextResponse.json({ ok: false, error: "actor_required", hint: "Send X-Board-Actor: <who>" }, { status: 400 });

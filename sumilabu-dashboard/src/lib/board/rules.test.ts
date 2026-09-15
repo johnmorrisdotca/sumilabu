@@ -10,10 +10,13 @@ import {
   TICKET_MOVE_TARGETS,
   TICKET_PRIORITIES,
   TICKET_STATUSES,
+  SETTING_LIMITS,
   byQuickWin,
   canMove,
   draftProblems,
+  foreignIdProblems,
   heldNow,
+  isSettingKey,
   moveData,
   moveWhere,
   shipData,
@@ -108,5 +111,31 @@ describe("drafts and ordering", () => {
       { id: "low-small", priority: "low" as const, effort: "small" as const, movedAt: at("2026-09-11T00:00:00Z") },
     ];
     expect([...rows].sort(byQuickWin).map((r) => r.id)).toEqual(["high-small", "high-large", "low-small", "ungraded"]);
+  });
+});
+
+/*
+ * Settings: a key every client can spell without escaping, and a cap that
+ * equals the column's. An import refuses another project's ids by name, so
+ * an upsert by id can never move a row across projects.
+ */
+describe("settings and import", () => {
+  it("accepts the key shape and nothing else", () => {
+    expect(isSettingKey("signup_mode")).toBe(true);
+    expect(isSettingKey("leaderboard.ranking_weights")).toBe(true);
+    expect(isSettingKey("sources.showcase.kanjivg")).toBe(true);
+    expect(isSettingKey("leaderboard.rankingWeights")).toBe(false);
+    expect(isSettingKey("sources:showcase:x")).toBe(false);
+    expect(isSettingKey("")).toBe(false);
+    expect(isSettingKey("k".repeat(SETTING_LIMITS.key + 1))).toBe(false);
+  });
+
+  it("names the settings caps", () => {
+    expect(SETTING_LIMITS).toEqual({ key: 80, value: 4000 });
+  });
+
+  it("refuses an import that would take another project's rows", () => {
+    expect(foreignIdProblems([])).toEqual([]);
+    expect(foreignIdProblems([{ id: "abc", projectKey: "itsutsu" }])).toEqual(["abc: already belongs to project itsutsu."]);
   });
 });

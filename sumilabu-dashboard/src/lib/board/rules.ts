@@ -31,6 +31,18 @@ export const TICKET_LIMITS = {
   releasedEntry: 120,
 } as const;
 
+/**
+ * A setting is `key -> value`, both strings; the structure is the client's
+ * own JSON inside the value. The key shape is what every client can spell
+ * without escaping, and the value cap is the column's `@db.VarChar`.
+ */
+export const SETTING_LIMITS = { key: 80, value: 4000 } as const;
+const SETTING_KEY = /^[a-z0-9_.-]{1,80}$/;
+
+export function isSettingKey(value: string): boolean {
+  return SETTING_KEY.test(value) && value.length <= SETTING_LIMITS.key;
+}
+
 /** Invariant 3. */
 export const LEASE_MS = 6 * 60 * 60 * 1000;
 
@@ -119,6 +131,15 @@ export function draftProblems(draft: { title: string; detail?: string | null; as
   if ((draft.detail ?? "").length > TICKET_LIMITS.detail) problems.push(`The detail is at most ${TICKET_LIMITS.detail.toLocaleString("en-US")} characters.`);
   if ((draft.askedBy ?? "").trim().length > TICKET_LIMITS.askedBy) problems.push(`A name is at most ${TICKET_LIMITS.askedBy} characters.`);
   return problems;
+}
+
+/**
+ * An import refuses ids that already belong to another project, by name.
+ * Ids are global, so an upsert by id would otherwise hand that project's row
+ * to this one, project key and all.
+ */
+export function foreignIdProblems(owned: readonly { id: string; projectKey: string }[]): string[] {
+  return owned.map((row) => `${row.id}: already belongs to project ${row.projectKey}.`);
 }
 
 /** Invariant 7. Ungraded sorts last on both axes. */

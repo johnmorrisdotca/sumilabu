@@ -273,9 +273,15 @@ On each device (`secrets.py` in firmware repo):
 
 One tickets board and one settings store for every site, scoped by
 `projectKey`, enforcing `docs/board/BOARD_RULES.md` once. Auth is a per-project
-token in `BOARD_TOKENS_JSON` (`{ "umakuma": "…", "itsutsu": "…" }`) sent as
-`Authorization: Bearer <token>`; a project with no token has no board. Every
-write also sends `X-Board-Actor: <who>` - there is no anonymous move.
+token sent as `Authorization: Bearer <token>`, from one of two maps: the
+ticket routes take `BOARD_TOKENS_JSON` (`{ "umakuma": "…", "itsutsu": "…" }`,
+the key every agent's worktree holds) and the settings routes take
+`SETTINGS_TOKENS_JSON` (same shape; only a site's production deployment holds
+it, because a setting decides who may sign up). Neither accepts the other. A
+project with no token has no board. Each site also has a `<key>-dev` project
+(`umakuma-dev`, `itsutsu-dev`) with its own entry in both maps, so local and
+test runs never touch the real rows. Every write also sends
+`X-Board-Actor: <who>` - there is no anonymous move.
 
 | Method | Path | Body | Notes |
 |---|---|---|---|
@@ -284,10 +290,11 @@ write also sends `X-Board-Actor: <who>` - there is no anonymous move.
 | GET | `/api/v1/projects/{key}/tickets/{id}` | | |
 | PATCH | `/api/v1/projects/{key}/tickets/{id}` | `{ status?, priority?, effort? }` | `status` is `open`, `inProgress` or `dropped`; move first, then grade; 409 `{ error: "illegal" \| "held", heldBy }` |
 | POST | `/api/v1/projects/{key}/tickets/{id}/ship` | `{ version, entryId?, releasedAt? }` | release tools only; from `open` or `inProgress` under the claim condition; writes `done` |
-| POST | `/api/v1/projects/{key}/tickets/import` | `{ tickets: [row…] }` | one-time move of a client's board, ids and dates kept; upserts by id |
+| POST | `/api/v1/projects/{key}/tickets/import` | `{ tickets: [row…] }` | one-time move of a client's board, ids and dates kept; upserts by id; 422 if an id already belongs to another project |
 | POST | `/api/v1/projects/{key}/tickets/{id}/unship` | `{ reason }` | only for a stamp the client's main never saw |
-| GET | `/api/v1/projects/{key}/settings` | | `{ settings: { key: value } }` |
-| GET/PUT | `/api/v1/projects/{key}/settings/{key}` | `{ value }` | key `[a-z0-9_.-]{1,80}`, value ≤ 4000 |
+| GET | `/api/v1/projects/{key}/settings` | | settings token; `{ settings: { key: value }, entries: [{ key, value, setBy, updatedAt }] }` |
+| GET/PUT | `/api/v1/projects/{key}/settings/{key}` | `{ value }` | settings token; key `[a-z0-9_.-]{1,80}`, value ≤ 4000; returns `{ key, value, setBy, updatedAt }` |
+| DELETE | `/api/v1/projects/{key}/settings/{key}` | | settings token; back to the client's default; `{ deleted }` says whether a row was there |
 
 Statuses are canonical (`open`, `inProgress`, `done`, `dropped`); kinds
 `feature`, `fix`, `chore`; priority `high`/`normal`/`low`; effort

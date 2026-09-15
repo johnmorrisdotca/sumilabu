@@ -4,6 +4,7 @@ import {
   SHIPPABLE_FROM,
   canMove,
   draftProblems,
+  foreignIdProblems,
   heldNow,
   isTicketStatus,
   moveData,
@@ -213,6 +214,13 @@ export async function importTickets(
     }
     if ((row.claimedBy ?? "").length > 80) problems.push(`${row.id}: claimedBy is at most 80 characters.`);
   }
+  /* An id is global, so an upsert by id would hand another project's row to
+     this one, project key and all. Refuse the batch by name instead. */
+  const owned = await prisma.boardTicket.findMany({
+    where: { id: { in: rows.map((row) => row.id) }, projectKey: { not: projectKey } },
+    select: { id: true, projectKey: true },
+  });
+  problems.push(...foreignIdProblems(owned));
   if (problems.length > 0) return { ok: false, problems };
 
   let imported = 0;
@@ -257,20 +265,37 @@ export async function unshipTicket(projectKey: string, id: string): Promise<Move
 
 /* --- Settings ------------------------------------------------------------ */
 
-export async function listSettings(projectKey: string): Promise<Record<string, string>> {
-  const rows = await prisma.boardSetting.findMany({ where: { projectKey }, select: { key: true, value: true } });
-  return Object.fromEntries(rows.map((row) => [row.key, row.value]));
+/** A setting as the API returns it: the value, and who last wrote it when. */
+export type SettingView = { key: string; value: string; setBy: string | null; updatedAt: string };
+
+const SETTING_SELECT = { key: true, value: true, setBy: true, updatedAt: true } as const;
+
+function settingView(row: { key: string; value: string; setBy: string | null; updatedAt: Date }): SettingView {
+  return { key: row.key, value: row.value, setBy: row.setBy, updatedAt: row.updatedAt.toISOString() };
 }
 
-export async function getSetting(projectKey: string, key: string): Promise<string | null> {
-  const row = await prisma.boardSetting.findUnique({ where: { projectKey_key: { projectKey, key } }, select: { value: true } });
-  return row?.value ?? null;
+export async function listSettings(projectKey: string): Promise<SettingView[]> {
+  const rows = await prisma.boardSetting.findMany({ where: { projectKey }, select: SETTING_SELECT, orderBy: { key: "asc" } });
+  return rows.map(settingView);
 }
 
-export async function setSetting(projectKey: string, key: string, value: string, actor: string): Promise<void> {
-  await prisma.boardSetting.upsert({
+export async function getSetting(projectKey: string, key: string): Promise<SettingView | null> {
+  const row = await prisma.boardSetting.findUnique({ where: { projectKey_key: { projectKey, key } }, select: SETTING_SELECT });
+  return row ? settingView(row) : null;
+}
+
+export async function setSetting(projectKey: string, key: string, value: string, actor: string): Promise<SettingView> {
+  const row = await prisma.boardSetting.upsert({
     where: { projectKey_key: { projectKey, key } },
     create: { projectKey, key, value, setBy: actor },
     update: { value, setBy: actor },
+    select: SETTING_SELECT,
   });
+  return settingView(row);
+}
+
+/** True when a row was there to remove; a missing row is already the default. */
+export async function deleteSetting(projectKey: string, key: string): Promise<boolean> {
+  const removed = await prisma.boardSetting.deleteMany({ where: { projectKey, key } });
+  return removed.count === 1;
 }

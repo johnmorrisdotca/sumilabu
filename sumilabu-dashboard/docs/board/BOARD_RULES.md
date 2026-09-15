@@ -212,6 +212,35 @@ export function draftProblems(draft: { title: string; detail: string; askedBy: s
 - Stored values stay as they are. Nobody renames a Postgres enum for spelling.
 - Itsutsu's `key` column is not added to UmaKuma in this pass.
 
+## Tokens and projects
+
+Two token maps on the service, each `{ "<projectKey>": "<token>" }`:
+`BOARD_TOKENS_JSON` for the ticket routes and `SETTINGS_TOKENS_JSON` for the
+settings routes. Neither accepts the other's token. The board token is in
+every agent's worktree; the settings token is only in a site's production
+deployment, because a setting decides who may sign up and a key every
+checkout holds is not the key for that.
+
+Each site has two projects: its real one (`umakuma`, `itsutsu`) and a
+`<key>-dev` one (`umakuma-dev`, `itsutsu-dev`) with its own entry in both
+maps and its own rows, for local and test runs. A test never writes to the
+real board or its settings.
+
+Import (`POST tickets/import`) upserts by id and keeps dates, and refuses the
+whole batch when an id already belongs to another project - ids are global,
+and an upsert would otherwise move that row across.
+
+## Settings
+
+A project's settings are `key -> value`, both strings: key matches
+`[a-z0-9_.-]{1,80}`, value is at most 4,000 characters, structure is the
+client's own JSON inside the value. `GET settings` returns every row as one
+object a client caches whole, plus `entries` with `setBy` and `updatedAt`.
+`PUT settings/{key}` writes one and records the actor as `setBy`.
+`DELETE settings/{key}` removes the row, which is how a client goes back to
+its built-in default: "no row" is the one representation of "unset", never
+an empty string. Deleting what is not there is not an error.
+
 ## Out of scope for these tickets
 
 - The shared service (step three). It gets its own plan once both boards pass
