@@ -128,6 +128,10 @@ model AppTelemetryEvent {
 model BoardTicket {
   id         String    @id @default(cuid())
   projectKey String    @default("default")
+  /// A client's citable name, as Itsutsu cites `its-xp-history`: a kebab
+  /// slug, unique within the project, written once at create or import and
+  /// never changed. Null for a client that cites the id, as UmaKuma does.
+  key        String?   @db.VarChar(80)
   title      String    @db.VarChar(120)
   detail     String?   @db.VarChar(4000)
   /// Per project; a project with no areas leaves it null.
@@ -150,11 +154,17 @@ model BoardTicket {
   /// enough, since two entries can share a push.
   releasedEntry String?   @db.VarChar(120)
   releasedAt    DateTime?
+  /// Who last revised the title or detail, and when. A move or a grade is not
+  /// a revision and writes neither.
+  editedBy   String?   @db.VarChar(80)
+  editedAt   DateTime?
   createdAt  DateTime  @default(now())
   /// Changes only on a status move. Grading is not movement.
   movedAt    DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
+  /// Postgres treats nulls as distinct, so any number of unkeyed rows coexist.
+  @@unique([projectKey, key])
   @@index([projectKey, status, movedAt(sort: Desc)])
   @@index([projectKey, claimedBy])
   @@index([projectKey, createdAt(sort: Desc)])

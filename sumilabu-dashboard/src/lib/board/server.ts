@@ -1,7 +1,10 @@
+import { Prisma } from "@prisma/client";
+
 import { prisma } from "@/lib/prisma";
 
 import {
   SHIPPABLE_FROM,
+  TEXT_EDITABLE_FROM,
   canMove,
   draftProblems,
   foreignIdProblems,
@@ -10,6 +13,7 @@ import {
   moveData,
   moveWhere,
   shipData,
+  textData,
   unshipData,
   type TicketEffort,
   type TicketKind,
@@ -22,6 +26,8 @@ import {
 export type BoardTicketView = {
   id: string;
   projectKey: string;
+  /** Invariant 11. Null for a ticket its client cites by id. */
+  key: string | null;
   title: string;
   detail: string | null;
   area: string | null;
@@ -37,14 +43,18 @@ export type BoardTicketView = {
   releasedIn: string | null;
   releasedEntry: string | null;
   releasedAt: string | null;
+  /** Invariant 12. Who last revised the title or detail, and when. */
+  editedBy: string | null;
+  editedAt: string | null;
   createdAt: string;
   movedAt: string;
 };
 
 type Row = {
-  id: string; projectKey: string; title: string; detail: string | null; area: string | null; kind: string;
+  id: string; projectKey: string; key: string | null; title: string; detail: string | null; area: string | null; kind: string;
   status: string; priority: string | null; effort: string | null; askedBy: string | null; claimedBy: string | null;
-  claimedAt: Date | null; releasedIn: string | null; releasedEntry: string | null; releasedAt: Date | null; createdAt: Date; movedAt: Date;
+  claimedAt: Date | null; releasedIn: string | null; releasedEntry: string | null; releasedAt: Date | null;
+  editedBy: string | null; editedAt: Date | null; createdAt: Date; movedAt: Date;
 };
 
 function view(row: Row, now = new Date()): BoardTicketView {
@@ -56,9 +66,15 @@ function view(row: Row, now = new Date()): BoardTicketView {
     claimedAt: row.claimedAt?.toISOString() ?? null,
     heldNow: heldNow(row, now.getTime()),
     releasedAt: row.releasedAt?.toISOString() ?? null,
+    editedAt: row.editedAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString(),
     movedAt: row.movedAt.toISOString(),
   };
+}
+
+/** The unique index on (projectKey, key) refusing a write. It is the lock; any read before it only names the holder. */
+function keyTaken(error: unknown): boolean {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
 }
 
 /**
@@ -85,41 +101,75 @@ export async function getTicket(projectKey: string, id: string): Promise<BoardTi
   return row ? view(row) : null;
 }
 
+/** Invariant 11. A client resolves a key to an id here, and addresses every write by the id. */
+export async function getTicketByKey(projectKey: string, key: string): Promise<BoardTicketView | null> {
+  const row = await prisma.boardTicket.findFirst({ where: { projectKey, key } });
+  return row ? view(row) : null;
+}
+
 export type TicketDraft = {
   title: string;
   detail?: string | null;
   area?: string | null;
   kind: TicketKind;
   askedBy?: string | null;
+  key?: string | null;
 };
 
-export type CreateOutcome = { ok: true; ticket: BoardTicketView } | { ok: false; problems: string[] };
+export type CreateOutcome =
+  | { ok: true; ticket: BoardTicketView }
+  | { ok: false; reason: "invalid"; problems: string[] }
+  | { ok: false; reason: "keyTaken"; problems: string[]; ticketId: string | null };
 
 export async function createTicket(projectKey: string, draft: TicketDraft): Promise<CreateOutcome> {
   const problems = draftProblems(draft);
-  if (problems.length > 0) return { ok: false, problems };
-  const row = await prisma.boardTicket.create({
-    data: {
-      projectKey,
-      title: draft.title.trim(),
-      detail: draft.detail?.trim() || null,
-      area: draft.area?.trim() || null,
-      kind: draft.kind,
-      askedBy: draft.askedBy?.trim() || null,
-    },
-  });
-  return { ok: true, ticket: view(row) };
+  if (problems.length > 0) return { ok: false, reason: "invalid", problems };
+  try {
+    const row = await prisma.boardTicket.create({
+      data: {
+        projectKey,
+        key: draft.key ?? null,
+        title: draft.title.trim(),
+        detail: draft.detail?.trim() || null,
+        area: draft.area?.trim() || null,
+        kind: draft.kind,
+        askedBy: draft.askedBy?.trim() || null,
+      },
+    });
+    return { ok: true, ticket: view(row) };
+  } catch (error) {
+    if (!draft.key || !keyTaken(error)) throw error;
+    const holder = await getTicketByKey(projectKey, draft.key);
+    return {
+      ok: false,
+      reason: "keyTaken",
+      problems: [`The key ${draft.key} already belongs to ${holder ? `ticket ${holder.id}` : "another ticket"} in this project.`],
+      ticketId: holder?.id ?? null,
+    };
+  }
 }
 
 export type MoveOutcome =
   | { ok: true; ticket: BoardTicketView }
-  | { ok: false; reason: "missing" | "illegal" | "held"; ticket: BoardTicketView | null; heldBy?: string | null };
+  | { ok: false; reason: "missing" | "illegal" | "held" | "done"; ticket: BoardTicketView | null; heldBy?: string | null };
+
+/** Invariant 12. The words a PATCH revises; an omitted field is left as it is. */
+export type TicketText = { title?: string; detail?: string | null };
 
 /**
  * Invariant 4: one conditional write, then a re-read only to say why it
  * did not happen. Never read-then-write.
+ *
+ * `text` rides in the same write, so a refused move revises nothing. A move
+ * never starts from `done`, so the words it carries are always editable.
  */
-export async function moveTicket(projectKey: string, id: string, to: TicketMoveTarget, actor: string): Promise<MoveOutcome> {
+export async function moveTicket(
+  projectKey: string,
+  id: string,
+  to: TicketMoveTarget,
+  actor: string,
+  text?: TicketText,
+): Promise<MoveOutcome> {
   const now = new Date();
   const before = await prisma.boardTicket.findFirst({ where: { id, projectKey }, select: { status: true } });
   if (!before || !isTicketStatus(before.status)) return { ok: false, reason: "missing", ticket: null };
@@ -127,13 +177,29 @@ export async function moveTicket(projectKey: string, id: string, to: TicketMoveT
 
   const moved = await prisma.boardTicket.updateMany({
     where: moveWhere(id, projectKey, before.status, actor, now),
-    data: moveData(to, actor, now),
+    data: { ...moveData(to, actor, now), ...(text ? textData(text, actor, now) : {}) },
   });
   const after = await getTicket(projectKey, id);
   if (moved.count === 1 && after) return { ok: true, ticket: after };
   if (!after) return { ok: false, reason: "missing", ticket: null };
   if (after.status !== before.status) return { ok: false, reason: "illegal", ticket: after };
   return { ok: false, reason: "held", ticket: after, heldBy: after.claimedBy };
+}
+
+/**
+ * Invariant 12: a revision of the words, conditional on the row not being
+ * `done`. It is not a move, so it carries no claim condition and `movedAt`
+ * stays (invariant 8); the re-read only says why nothing was written.
+ */
+export async function reviseTicket(projectKey: string, id: string, text: TicketText, actor: string): Promise<MoveOutcome> {
+  const revised = await prisma.boardTicket.updateMany({
+    where: { id, projectKey, status: { in: [...TEXT_EDITABLE_FROM] } },
+    data: textData(text, actor, new Date()),
+  });
+  const after = await getTicket(projectKey, id);
+  if (revised.count === 1 && after) return { ok: true, ticket: after };
+  if (!after) return { ok: false, reason: "missing", ticket: null };
+  return { ok: false, reason: after.status === "done" ? "done" : "illegal", ticket: after };
 }
 
 export type TicketGrade = { priority?: TicketPriority | null; effort?: TicketEffort | null };
@@ -177,6 +243,7 @@ export async function shipTicket(
 /** One row of a client's existing board, brought over as it stands. */
 export type ImportRow = {
   id: string;
+  key?: string | null;
   title: string;
   detail?: string | null;
   area?: string | null;
@@ -195,13 +262,48 @@ export type ImportRow = {
 };
 
 /**
- * The one-time move of a client's board, keeping ids and dates.
+ * Invariant 11, asked of a whole import before anything is written: a key
+ * that belongs to a different ticket is refused by row rather than
+ * overwritten, and a key already stored on a row is never changed. A row
+ * that omits its key keeps the stored one.
+ */
+async function importKeyProblems(projectKey: string, rows: readonly ImportRow[]): Promise<string[]> {
+  const problems: string[] = [];
+  const keyed = rows.filter((row): row is ImportRow & { key: string } => row.key != null);
+  if (keyed.length === 0) return problems;
+
+  const inBatch = new Map<string, string>();
+  for (const row of keyed) {
+    const first = inBatch.get(row.key);
+    if (first === undefined) inBatch.set(row.key, row.id);
+    else if (first !== row.id) problems.push(`${row.id}: the key ${row.key} is also on ${first} in this import.`);
+  }
+
+  const [holders, stored] = await Promise.all([
+    prisma.boardTicket.findMany({ where: { projectKey, key: { in: keyed.map((row) => row.key) } }, select: { id: true, key: true } }),
+    prisma.boardTicket.findMany({ where: { projectKey, id: { in: keyed.map((row) => row.id) } }, select: { id: true, key: true } }),
+  ]);
+  const holderOf = new Map(holders.map((row) => [row.key, row.id]));
+  const keyOf = new Map(stored.map((row) => [row.id, row.key]));
+  for (const row of keyed) {
+    const holder = holderOf.get(row.key);
+    if (holder !== undefined && holder !== row.id) {
+      problems.push(`${row.id}: the key ${row.key} belongs to ticket ${holder}; refused rather than overwritten.`);
+    }
+    const current = keyOf.get(row.id);
+    if (current != null && current !== row.key) problems.push(`${row.id}: its key is ${current}, and a key is never changed.`);
+  }
+  return problems;
+}
+
+/**
+ * The one-time move of a client's board, keeping ids, keys and dates.
  *
- * Every plan, memory note and commit message on the client cites ticket ids,
- * and three hundred createdAt/movedAt values mean something; a migration that
- * renumbered would rewrite every reference. Upserts by id so it can be re-run
- * after a failed half. The caps still apply: a row past them is refused by
- * name rather than truncated, and the client trims it first.
+ * Every plan, memory note and commit message on the client cites ticket ids
+ * or keys, and three hundred createdAt/movedAt values mean something; a
+ * migration that renumbered would rewrite every reference. Upserts by id so
+ * it can be re-run after a failed half. The caps still apply: a row past them
+ * is refused by name rather than truncated, and the client trims it first.
  */
 export async function importTickets(
   projectKey: string,
@@ -209,7 +311,7 @@ export async function importTickets(
 ): Promise<{ ok: true; imported: number } | { ok: false; problems: string[] }> {
   const problems: string[] = [];
   for (const row of rows) {
-    for (const problem of draftProblems({ title: row.title, detail: row.detail, askedBy: row.askedBy })) {
+    for (const problem of draftProblems({ title: row.title, detail: row.detail, askedBy: row.askedBy, key: row.key })) {
       problems.push(`${row.id}: ${problem}`);
     }
     if ((row.claimedBy ?? "").length > 80) problems.push(`${row.id}: claimedBy is at most 80 characters.`);
@@ -220,13 +322,14 @@ export async function importTickets(
     where: { id: { in: rows.map((row) => row.id) }, projectKey: { not: projectKey } },
     select: { id: true, projectKey: true },
   });
-  problems.push(...foreignIdProblems(owned));
+  problems.push(...foreignIdProblems(owned), ...(await importKeyProblems(projectKey, rows)));
   if (problems.length > 0) return { ok: false, problems };
 
   let imported = 0;
   for (const row of rows) {
     const data = {
       projectKey,
+      ...(row.key != null ? { key: row.key } : {}),
       title: row.title.trim(),
       detail: row.detail ?? null,
       area: row.area ?? null,
@@ -243,7 +346,15 @@ export async function importTickets(
       createdAt: row.createdAt,
       movedAt: row.movedAt,
     };
-    await prisma.boardTicket.upsert({ where: { id: row.id }, create: { id: row.id, ...data }, update: data });
+    try {
+      await prisma.boardTicket.upsert({ where: { id: row.id }, create: { id: row.id, ...data }, update: data });
+    } catch (error) {
+      if (!keyTaken(error)) throw error;
+      return {
+        ok: false,
+        problems: [`${row.id}: the key ${row.key} was taken by another ticket during this import; ${imported} rows before it were written, and a re-run continues from there.`],
+      };
+    }
     imported += 1;
   }
   return { ok: true, imported };

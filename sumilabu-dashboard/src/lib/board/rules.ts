@@ -29,6 +29,7 @@ export const TICKET_LIMITS = {
   claimedBy: 80,
   releasedIn: 40,
   releasedEntry: 120,
+  key: 80,
 } as const;
 
 /**
@@ -41,6 +42,20 @@ const SETTING_KEY = /^[a-z0-9_.-]{1,80}$/;
 
 export function isSettingKey(value: string): boolean {
   return SETTING_KEY.test(value) && value.length <= SETTING_LIMITS.key;
+}
+
+/**
+ * Invariant 11. A client's citable name for a ticket, as Itsutsu cites
+ * `its-xp-history`. Optional, unique within a project, and written once: by
+ * the time anybody wants a different key the old one is in a commit message,
+ * so it is never changed.
+ */
+export const TICKET_KEY_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+
+export function keyProblems(key: string): string[] {
+  if (key.length > TICKET_LIMITS.key) return [`A key is at most ${TICKET_LIMITS.key} characters.`];
+  if (!TICKET_KEY_PATTERN.test(key)) return ["A key is lower-case letters and digits joined by single hyphens, like its-xp-history."];
+  return [];
 }
 
 /** Invariant 3. */
@@ -122,14 +137,22 @@ export function unshipData(now: Date) {
   return { status: "open" as const, claimedBy: null, claimedAt: null, releasedIn: null, releasedEntry: null, releasedAt: null, movedAt: now };
 }
 
+function titleProblems(raw: string): string[] {
+  const title = raw.trim();
+  if (title.length < TICKET_LIMITS.titleMin) return [`Say what is wanted in at least ${TICKET_LIMITS.titleMin} characters.`];
+  if (title.length > TICKET_LIMITS.title) return [`A title is at most ${TICKET_LIMITS.title} characters; the rest belongs in the detail.`];
+  return [];
+}
+
+function detailProblems(detail: string | null | undefined): string[] {
+  return (detail ?? "").length > TICKET_LIMITS.detail ? [`The detail is at most ${TICKET_LIMITS.detail.toLocaleString("en-US")} characters.`] : [];
+}
+
 /** Invariant 6, in words a person can act on. */
-export function draftProblems(draft: { title: string; detail?: string | null; askedBy?: string | null }): string[] {
-  const problems: string[] = [];
-  const title = draft.title.trim();
-  if (title.length < TICKET_LIMITS.titleMin) problems.push(`Say what is wanted in at least ${TICKET_LIMITS.titleMin} characters.`);
-  if (title.length > TICKET_LIMITS.title) problems.push(`A title is at most ${TICKET_LIMITS.title} characters; the rest belongs in the detail.`);
-  if ((draft.detail ?? "").length > TICKET_LIMITS.detail) problems.push(`The detail is at most ${TICKET_LIMITS.detail.toLocaleString("en-US")} characters.`);
+export function draftProblems(draft: { title: string; detail?: string | null; askedBy?: string | null; key?: string | null }): string[] {
+  const problems = [...titleProblems(draft.title), ...detailProblems(draft.detail)];
   if ((draft.askedBy ?? "").trim().length > TICKET_LIMITS.askedBy) problems.push(`A name is at most ${TICKET_LIMITS.askedBy} characters.`);
+  if (draft.key != null) problems.push(...keyProblems(draft.key));
   return problems;
 }
 
@@ -140,6 +163,31 @@ export function draftProblems(draft: { title: string; detail?: string | null; as
  */
 export function foreignIdProblems(owned: readonly { id: string; projectKey: string }[]): string[] {
   return owned.map((row) => `${row.id}: already belongs to project ${row.projectKey}.`);
+}
+
+/**
+ * Invariant 12. A revision of a ticket's words passes the same caps as a
+ * draft, for the fields it carries; an omitted field is not revised.
+ */
+export function textProblems(text: { title?: string; detail?: string | null }): string[] {
+  return [...(text.title === undefined ? [] : titleProblems(text.title)), ...detailProblems(text.detail)];
+}
+
+/**
+ * Invariant 12. A `done` row's words are part of the release record, so they
+ * are revised only from here; a ticket that shipped under the wrong words
+ * gets a new row citing it, the way a regression does.
+ */
+export const TEXT_EDITABLE_FROM = ["open", "inProgress", "dropped"] as const satisfies readonly TicketStatus[];
+
+/** Invariant 12. What a revision writes: the words it carries, trimmed as a create trims them, and who wrote them. */
+export function textData(text: { title?: string; detail?: string | null }, actor: string, now: Date) {
+  return {
+    ...(text.title === undefined ? {} : { title: text.title.trim() }),
+    ...(text.detail === undefined ? {} : { detail: text.detail?.trim() || null }),
+    editedBy: actor,
+    editedAt: now,
+  };
 }
 
 /** Invariant 7. Ungraded sorts last on both axes. */
