@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { TOKEN_SCOPES, tokenFor } from "./auth";
+import { TOKEN_SCOPES, boardProjectKeys, tokenFor } from "./auth";
 
 /*
  * Two maps, two scopes. A worktree's board key must not open the settings
@@ -32,5 +32,28 @@ describe("tokenFor", () => {
     expect(tokenFor(TOKEN_SCOPES.settings, "umakuma", {})).toBeNull();
     expect(tokenFor(TOKEN_SCOPES.board, "umakuma", { BOARD_TOKENS_JSON: "{" })).toBeNull();
     expect(tokenFor(TOKEN_SCOPES.board, "umakuma", { BOARD_TOKENS_JSON: JSON.stringify({ umakuma: "" }) })).toBeNull();
+  });
+});
+
+/*
+ * Names, never tokens - what `GET /api/v1/projects` hands a client that
+ * already holds one project's board token and wants to know which other
+ * project keys exist before it is separately handed a token for one.
+ */
+describe("boardProjectKeys", () => {
+  it("lists every project key configured for the scope, sorted", () => {
+    const env = { BOARD_TOKENS_JSON: JSON.stringify({ umakuma: "a", itsutsu: "b", "umakuma-dev": "c" }) };
+    expect(boardProjectKeys(TOKEN_SCOPES.board, env)).toEqual(["itsutsu", "umakuma", "umakuma-dev"]);
+  });
+
+  it("never lists a settings-only project under the board scope", () => {
+    const env = { BOARD_TOKENS_JSON: JSON.stringify({ umakuma: "a" }), SETTINGS_TOKENS_JSON: JSON.stringify({ itsutsu: "b" }) };
+    expect(boardProjectKeys(TOKEN_SCOPES.board, env)).toEqual(["umakuma"]);
+  });
+
+  it("is empty when the map is missing, empty or broken", () => {
+    expect(boardProjectKeys(TOKEN_SCOPES.board, {})).toEqual([]);
+    expect(boardProjectKeys(TOKEN_SCOPES.board, { BOARD_TOKENS_JSON: "{" })).toEqual([]);
+    expect(boardProjectKeys(TOKEN_SCOPES.board, { BOARD_TOKENS_JSON: JSON.stringify({ umakuma: "" }) })).toEqual([]);
   });
 });

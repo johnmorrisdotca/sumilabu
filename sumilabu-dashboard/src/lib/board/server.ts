@@ -14,6 +14,7 @@ import {
   moveWhere,
   shipData,
   textData,
+  textProblems,
   unshipData,
   type TicketEffort,
   type TicketKind,
@@ -153,8 +154,8 @@ export type MoveOutcome =
   | { ok: true; ticket: BoardTicketView }
   | { ok: false; reason: "missing" | "illegal" | "held" | "done"; ticket: BoardTicketView | null; heldBy?: string | null };
 
-/** Invariant 12. The words a PATCH revises; an omitted field is left as it is. */
-export type TicketText = { title?: string; detail?: string | null };
+/** Invariant 12. The fields a PATCH revises; an omitted field is left as it is. */
+export type TicketText = { title?: string; detail?: string | null; area?: string | null; askedBy?: string | null; kind?: TicketKind };
 
 /**
  * Invariant 4: one conditional write, then a re-read only to say why it
@@ -212,6 +213,48 @@ export async function gradeTicket(projectKey: string, id: string, grade: TicketG
   if (Object.keys(data).length === 0) return getTicket(projectKey, id);
   const updated = await prisma.boardTicket.updateMany({ where: { id, projectKey }, data });
   return updated.count === 1 ? getTicket(projectKey, id) : null;
+}
+
+/** What `PATCH tickets/[id]` and `POST tickets/bulk` both take: a move, a revision, and a grade, in one body. */
+export type TicketPatch = {
+  status?: TicketMoveTarget;
+  priority?: TicketPriority | null;
+  effort?: TicketEffort | null;
+} & TicketText;
+
+export type PatchOutcome =
+  | { ok: true; ticket: BoardTicketView }
+  | { ok: false; reason: "invalid"; problems: string[] }
+  | { ok: false; reason: "missing" | "illegal" | "held" | "done"; ticket: BoardTicketView | null; heldBy?: string | null };
+
+function patchText(patch: TicketPatch): TicketText | null {
+  const { title, detail, area, askedBy, kind } = patch;
+  if (title === undefined && detail === undefined && area === undefined && askedBy === undefined && kind === undefined) return null;
+  return { title, detail, area, askedBy, kind };
+}
+
+/**
+ * The one write behind both a single PATCH and a bulk one: the words are
+ * checked, then a move carries them (or they are revised alone), then the
+ * grade - the same order `PATCH tickets/[id]` has always used, so a refused
+ * move or revision still writes no grade. `actor` is unused when the patch
+ * neither moves nor revises anything (a grade alone needs nobody named).
+ */
+export async function patchTicket(projectKey: string, id: string, patch: TicketPatch, actor: string): Promise<PatchOutcome> {
+  const text = patchText(patch);
+  if (text) {
+    const problems = textProblems(text);
+    if (problems.length > 0) return { ok: false, reason: "invalid", problems };
+  }
+  if (patch.status !== undefined) {
+    const outcome = await moveTicket(projectKey, id, patch.status, actor, text ?? undefined);
+    if (!outcome.ok) return outcome;
+  } else if (text) {
+    const outcome = await reviseTicket(projectKey, id, text, actor);
+    if (!outcome.ok) return outcome;
+  }
+  const ticket = await gradeTicket(projectKey, id, { priority: patch.priority, effort: patch.effort });
+  return ticket ? { ok: true, ticket } : { ok: false, reason: "missing", ticket: null };
 }
 
 /**

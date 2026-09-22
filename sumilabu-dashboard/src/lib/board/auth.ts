@@ -58,6 +58,11 @@ function tokenMatches(presented: string, expected: string): boolean {
 
 export type BoardCaller = { projectKey: string; actor: string | null };
 
+function actorOf(req: NextRequest): string | null {
+  const actor = req.headers.get("x-board-actor")?.trim() ?? "";
+  return actor.length > 0 && actor.length <= 80 ? actor : null;
+}
+
 /** The caller, or null when the request may not touch this project in this scope. */
 export function authorizeBoard(req: NextRequest, projectKey: string, scope: TokenScope = TOKEN_SCOPES.board): BoardCaller | null {
   const expected = tokenFor(scope, projectKey);
@@ -65,6 +70,42 @@ export function authorizeBoard(req: NextRequest, projectKey: string, scope: Toke
   const auth = req.headers.get("authorization") ?? "";
   if (!auth.startsWith("Bearer ")) return null;
   if (!tokenMatches(auth.slice("Bearer ".length).trim(), expected)) return null;
-  const actor = req.headers.get("x-board-actor")?.trim() ?? "";
-  return { projectKey, actor: actor.length > 0 && actor.length <= 80 ? actor : null };
+  return { projectKey, actor: actorOf(req) };
+}
+
+function tokenMap(scope: TokenScope, env: Record<string, string | undefined> = process.env): Record<string, string> {
+  const raw = env[TOKEN_ENV[scope]];
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    return Object.fromEntries(Object.entries(parsed).filter((entry): entry is [string, string] => typeof entry[1] === "string" && entry[1].length > 0));
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Every project key configured for a scope - a name, never a token. A client
+ * that already holds one project's board token asks this to learn which
+ * other project keys exist before it is (separately, out of band) handed a
+ * token for one of them; the list itself grants no write access anywhere.
+ */
+export function boardProjectKeys(scope: TokenScope = TOKEN_SCOPES.board, env: Record<string, string | undefined> = process.env): string[] {
+  return Object.keys(tokenMap(scope, env)).sort();
+}
+
+/**
+ * The caller, under whichever configured project's token was presented - not
+ * this project's alone. Used only for `GET projects`: proving the caller
+ * already holds *some* legitimate board credential, without that credential
+ * granting it a write anywhere but the project it actually names.
+ */
+export function authorizeAnyBoard(req: NextRequest, scope: TokenScope = TOKEN_SCOPES.board): BoardCaller | null {
+  const auth = req.headers.get("authorization") ?? "";
+  if (!auth.startsWith("Bearer ")) return null;
+  const presented = auth.slice("Bearer ".length).trim();
+  for (const [projectKey, expected] of Object.entries(tokenMap(scope))) {
+    if (tokenMatches(presented, expected)) return { projectKey, actor: actorOf(req) };
+  }
+  return null;
 }

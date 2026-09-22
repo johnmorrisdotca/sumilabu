@@ -56,7 +56,7 @@ describe("the board gate", () => {
   });
 
   it("holds the caps the contract names", () => {
-    expect(TICKET_LIMITS).toMatchObject({ titleMin: 8, title: 120, detail: 4000, askedBy: 60, claimedBy: 80, key: 80 });
+    expect(TICKET_LIMITS).toMatchObject({ titleMin: 8, title: 120, detail: 4000, askedBy: 60, claimedBy: 80, key: 80, area: 80 });
     expect(LEASE_MS).toBe(6 * 60 * 60 * 1000);
   });
 
@@ -168,9 +168,25 @@ describe("keys and revisions", () => {
     expect(textProblems({ detail: "d".repeat(TICKET_LIMITS.detail + 1) })).toEqual(draftProblems({ title: "A fine title", detail: "d".repeat(TICKET_LIMITS.detail + 1) }));
   });
 
+  it("checks area and askedBy against their own caps, only when the revision carries them", () => {
+    expect(textProblems({ area: "a".repeat(TICKET_LIMITS.area) })).toEqual([]);
+    expect(textProblems({ area: "a".repeat(TICKET_LIMITS.area + 1) })).toHaveLength(1);
+    expect(textProblems({ askedBy: "a".repeat(TICKET_LIMITS.askedBy) })).toEqual([]);
+    expect(textProblems({ askedBy: "a".repeat(TICKET_LIMITS.askedBy + 1) })).toHaveLength(1);
+    expect(textProblems({ area: undefined, askedBy: undefined })).toEqual([]);
+  });
+
   it("writes the words it carries with who revised them, and never the status or movedAt", () => {
     const now = new Date("2026-09-14T10:00:00Z");
     expect(textData({ title: "  A fine title  " }, "its-builder", now)).toEqual({ title: "A fine title", editedBy: "its-builder", editedAt: now });
     expect(textData({ detail: "  " }, "its-builder", now)).toEqual({ detail: null, editedBy: "its-builder", editedAt: now });
+  });
+
+  it("writes area, askedBy and kind the same way, trimmed and blank-as-null", () => {
+    const now = new Date("2026-09-14T10:00:00Z");
+    expect(textData({ area: "  leaderboard  " }, "its-builder", now)).toEqual({ area: "leaderboard", editedBy: "its-builder", editedAt: now });
+    expect(textData({ area: "  " }, "its-builder", now)).toEqual({ area: null, editedBy: "its-builder", editedAt: now });
+    expect(textData({ askedBy: "  a player  " }, "its-builder", now)).toEqual({ askedBy: "a player", editedBy: "its-builder", editedAt: now });
+    expect(textData({ kind: "fix" }, "its-builder", now)).toEqual({ kind: "fix", editedBy: "its-builder", editedAt: now });
   });
 });

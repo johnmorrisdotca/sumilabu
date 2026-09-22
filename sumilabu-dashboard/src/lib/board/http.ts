@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { TOKEN_SCOPES, authorizeBoard, type BoardCaller, type TokenScope } from "./auth";
-import type { MoveOutcome } from "./server";
+import type { MoveOutcome, PatchOutcome } from "./server";
 
 /**
  * 401 for a bad or missing token; 400 for a write with nobody named. The
@@ -42,4 +42,11 @@ export function moveResponse(outcome: MoveOutcome): NextResponse {
     { ok: false, error: outcome.reason, heldBy: outcome.heldBy ?? null, ticket: outcome.ticket },
     { status: 409 },
   );
+}
+
+/** `moveResponse`, plus the 422 a patch's own words can be refused with, before any move is attempted. */
+export function patchResponse(outcome: PatchOutcome): NextResponse {
+  if (outcome.ok) return moveResponse(outcome);
+  if (outcome.reason === "invalid") return NextResponse.json({ ok: false, error: outcome.problems[0], problems: outcome.problems }, { status: 422 });
+  return moveResponse(outcome);
 }

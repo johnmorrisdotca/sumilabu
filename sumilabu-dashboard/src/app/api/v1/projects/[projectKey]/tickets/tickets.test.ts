@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { GET as getOne, PATCH } from "./[ticketId]/route";
 import { POST as shipRoute } from "./[ticketId]/ship/route";
 import { POST as unshipRoute } from "./[ticketId]/unship/route";
+import { POST as bulkRoute } from "./bulk/route";
 import { POST as importRoute } from "./import/route";
 import { GET as list, POST as createRoute } from "./route";
 
@@ -27,6 +28,8 @@ const TOKEN = "test-board-token";
 const ITS = "itsutsu-dev";
 const UK = "umakuma-dev";
 
+type BulkResult = { id: string; ok: boolean; error?: string; problems?: string[]; heldBy?: string | null; ticket?: BoardTicketView };
+
 type Body = {
   ok: boolean;
   error?: string;
@@ -35,6 +38,7 @@ type Body = {
   imported?: number;
   ticket?: BoardTicketView;
   tickets?: BoardTicketView[];
+  results?: BulkResult[];
 };
 
 function request(method: string, path: string, { body, actor = "its-builder" }: { body?: unknown; actor?: string | null } = {}) {
@@ -65,6 +69,8 @@ const patch = async (projectKey: string, id: string, body: unknown, actor: strin
   read(await PATCH(request("PATCH", `${projectKey}/tickets/${id}`, { body, actor }), onTicket(projectKey, id)));
 const importRows = async (projectKey: string, tickets: Record<string, unknown>[]) =>
   read(await importRoute(request("POST", `${projectKey}/tickets/import`, { body: { tickets } }), inProject(projectKey)));
+const bulk = async (projectKey: string, updates: Record<string, unknown>[], actor: string | null = "its-builder") =>
+  read(await bulkRoute(request("POST", `${projectKey}/tickets/bulk`, { body: { updates }, actor }), inProject(projectKey)));
 
 function row(id: string, extra: Record<string, unknown> = {}) {
   return { id, title: "A ticket brought over", kind: "feature", status: "open", createdAt: "2026-09-01T00:00:00.000Z", movedAt: "2026-09-01T00:00:00.000Z", ...extra };
@@ -224,5 +230,96 @@ describe("revising a ticket's words (invariant 12)", () => {
     const id = (await create(ITS, { title: "Show a player's XP history" })).json.ticket!.id;
     expect((await patch(ITS, id, { status: "dropped" })).json.ticket!.status).toBe("dropped");
     expect((await patch(ITS, id, { title: "Dropped, and worded better" })).json.ticket).toMatchObject({ status: "dropped", title: "Dropped, and worded better" });
+  });
+
+  it("revises area, askedBy and kind alongside title and detail, stamping the actor", async () => {
+    const id = (await create(ITS, { title: "Show a player's XP history", area: "profile" })).json.ticket!.id;
+    const revised = await patch(ITS, id, { area: "leaderboard", askedBy: "a player", kind: "fix" }, "its-editor");
+    expect(revised.status).toBe(200);
+    expect(revised.json.ticket).toMatchObject({ area: "leaderboard", askedBy: "a player", kind: "fix", editedBy: "its-editor" });
+
+    expect((await patch(ITS, id, { area: null })).json.ticket!.area).toBeNull();
+    expect((await patch(ITS, id, { askedBy: "  " })).json.ticket!.askedBy).toBeNull();
+  });
+
+  it("refuses an area or askedBy past its cap on revise, the same as on create", async () => {
+    const id = (await create(ITS, { title: "Show a player's XP history", askedBy: "a player" })).json.ticket!.id;
+    expect((await patch(ITS, id, { area: "a".repeat(TICKET_LIMITS.area + 1) })).status).toBe(422);
+    expect((await patch(ITS, id, { askedBy: "a".repeat(TICKET_LIMITS.askedBy + 1) })).status).toBe(422);
+    expect((await getTicket(ITS, id)).json.ticket).toMatchObject({ area: null, askedBy: "a player" });
+  });
+});
+
+describe("moving a ticket through PATCH (invariant 1 and 4)", () => {
+  it("refuses a move the table does not allow, without touching the row", async () => {
+    const id = (await create(ITS, { title: "Show a player's XP history" })).json.ticket!.id;
+    const refused = await patch(ITS, id, { status: "open" });
+    expect(refused.status).toBe(409);
+    expect(refused.json).toMatchObject({ error: "illegal" });
+    expect((await getTicket(ITS, id)).json.ticket!.status).toBe("open");
+  });
+
+  it("refuses a move onto a ticket somebody else holds, naming who holds it", async () => {
+    const id = (await create(ITS, { title: "Show a player's XP history" })).json.ticket!.id;
+    await patch(ITS, id, { status: "inProgress" }, "its-first-claimer");
+    const refused = await patch(ITS, id, { status: "dropped" }, "its-second-claimer");
+    expect(refused.status).toBe(409);
+    expect(refused.json).toMatchObject({ error: "held", heldBy: "its-first-claimer" });
+    expect((await getTicket(ITS, id)).json.ticket).toMatchObject({ status: "inProgress", claimedBy: "its-first-claimer" });
+  });
+
+  it("lets the claim holder move its own ticket on, clearing the claim", async () => {
+    const id = (await create(ITS, { title: "Show a player's XP history" })).json.ticket!.id;
+    await patch(ITS, id, { status: "inProgress" }, "its-builder");
+    const moved = await patch(ITS, id, { status: "dropped" }, "its-builder");
+    expect(moved.status).toBe(200);
+    expect(moved.json.ticket).toMatchObject({ status: "dropped", claimedBy: null, claimedAt: null });
+  });
+});
+
+describe("bulk-patching tickets (tickets/bulk)", () => {
+  it("moves and grades several tickets in one request, each independently", async () => {
+    const a = (await create(ITS, { title: "First of a batch of tickets" })).json.ticket!.id;
+    const b = (await create(ITS, { title: "Second of a batch of tickets" })).json.ticket!.id;
+    const result = await bulk(ITS, [
+      { id: a, status: "inProgress" },
+      { id: b, priority: "high", effort: "small" },
+    ]);
+    expect(result.status).toBe(200);
+    expect(result.json.results).toMatchObject([
+      { id: a, ok: true, ticket: { status: "inProgress", claimedBy: "its-builder" } },
+      { id: b, ok: true, ticket: { priority: "high", effort: "small" } },
+    ]);
+  });
+
+  it("reports a missing id and a held ticket without failing the rest of the batch", async () => {
+    const held = (await create(ITS, { title: "Claimed by somebody else" })).json.ticket!.id;
+    await patch(ITS, held, { status: "inProgress" }, "its-first-claimer");
+    const free = (await create(ITS, { title: "Nobody holds this one" })).json.ticket!.id;
+
+    const result = await bulk(ITS, [
+      { id: held, status: "dropped" },
+      { id: "no-such-ticket", priority: "high" },
+      { id: free, status: "dropped" },
+    ], "its-second-claimer");
+    expect(result.status).toBe(200);
+    expect(result.json.results).toMatchObject([
+      { id: held, ok: false, error: "held", heldBy: "its-first-claimer" },
+      { id: "no-such-ticket", ok: false, error: "missing" },
+      { id: free, ok: true, ticket: { status: "dropped" } },
+    ]);
+  });
+
+  it("needs an actor only when a row moves or revises words, not for grading alone", async () => {
+    const id = (await create(ITS, { title: "Graded without an actor" })).json.ticket!.id;
+    expect(await bulk(ITS, [{ id, priority: "low" }], null)).toMatchObject({ status: 200 });
+    expect(await bulk(ITS, [{ id, status: "inProgress" }], null)).toMatchObject({ status: 400, json: { error: "actor_required" } });
+  });
+
+  it("refuses a batch naming a key, and an empty or oversized batch", async () => {
+    const id = (await create(ITS, { title: "A ticket for an oversized batch" })).json.ticket!.id;
+    expect(await bulk(ITS, [{ id, key: "nope" }])).toMatchObject({ status: 400, json: { error: "key_immutable" } });
+    expect((await bulk(ITS, [])).status).toBe(400);
+    expect((await bulk(ITS, Array.from({ length: 101 }, () => ({ id, priority: "low" })))).status).toBe(400);
   });
 });

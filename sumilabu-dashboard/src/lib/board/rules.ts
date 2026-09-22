@@ -30,6 +30,8 @@ export const TICKET_LIMITS = {
   releasedIn: 40,
   releasedEntry: 120,
   key: 80,
+  /** Not `@db.VarChar` capped (invariant 6 lists only the columns that are); checked here so create and revise agree. */
+  area: 80,
 } as const;
 
 /**
@@ -167,10 +169,19 @@ export function foreignIdProblems(owned: readonly { id: string; projectKey: stri
 
 /**
  * Invariant 12. A revision of a ticket's words passes the same caps as a
- * draft, for the fields it carries; an omitted field is not revised.
+ * draft, for the fields it carries; an omitted field is not revised. `kind`
+ * is checked by the route's enum, not here, the same way a create's `kind`
+ * is never a `draftProblems` concern.
  */
-export function textProblems(text: { title?: string; detail?: string | null }): string[] {
-  return [...(text.title === undefined ? [] : titleProblems(text.title)), ...detailProblems(text.detail)];
+export function textProblems(text: { title?: string; detail?: string | null; area?: string | null; askedBy?: string | null }): string[] {
+  const problems = [...(text.title === undefined ? [] : titleProblems(text.title)), ...detailProblems(text.detail)];
+  if (text.area !== undefined && (text.area ?? "").trim().length > TICKET_LIMITS.area) {
+    problems.push(`An area is at most ${TICKET_LIMITS.area} characters.`);
+  }
+  if (text.askedBy !== undefined && (text.askedBy ?? "").trim().length > TICKET_LIMITS.askedBy) {
+    problems.push(`A name is at most ${TICKET_LIMITS.askedBy} characters.`);
+  }
+  return problems;
 }
 
 /**
@@ -180,11 +191,18 @@ export function textProblems(text: { title?: string; detail?: string | null }): 
  */
 export const TEXT_EDITABLE_FROM = ["open", "inProgress", "dropped"] as const satisfies readonly TicketStatus[];
 
-/** Invariant 12. What a revision writes: the words it carries, trimmed as a create trims them, and who wrote them. */
-export function textData(text: { title?: string; detail?: string | null }, actor: string, now: Date) {
+/** Invariant 12. What a revision writes: the fields it carries, trimmed as a create trims them, and who wrote them. */
+export function textData(
+  text: { title?: string; detail?: string | null; area?: string | null; askedBy?: string | null; kind?: TicketKind },
+  actor: string,
+  now: Date,
+) {
   return {
     ...(text.title === undefined ? {} : { title: text.title.trim() }),
     ...(text.detail === undefined ? {} : { detail: text.detail?.trim() || null }),
+    ...(text.area === undefined ? {} : { area: text.area?.trim() || null }),
+    ...(text.askedBy === undefined ? {} : { askedBy: text.askedBy?.trim() || null }),
+    ...(text.kind === undefined ? {} : { kind: text.kind }),
     editedBy: actor,
     editedAt: now,
   };

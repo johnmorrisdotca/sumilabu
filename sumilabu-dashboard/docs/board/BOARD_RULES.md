@@ -56,7 +56,7 @@ Every row has these. The middle columns give each repository's name for them.
 | `movedAt` | `movedAt` | `movedAt` | Changes only on a status move. |
 | `releasedIn` | via `filedAs` (the timeline entry carries `version`) | `releasedIn` | The version that carried the work. Written by the release tool only. |
 | `releasedAt` | via `filedAs` (entry's `releasedAt`) | `releasedAt` | The release instant. Written by the release tool only. |
-| `editedBy` | none | none | The actor who last revised `title` or `detail`. Written by the service. See invariant 12. |
+| `editedBy` | none | none | The actor who last revised `title`, `detail`, `area`, `askedBy` or `kind`. Written by the service. See invariant 12. |
 | `editedAt` | none | none | When they did. Null on a row never revised. |
 
 ## Invariants
@@ -131,6 +131,7 @@ Numbered so a ticket and a test can cite them.
    | askedBy | 60 |
    | claimedBy | 80 |
    | key | 80 |
+   | area | 80, checked in code only - the column carries no `@db.VarChar` |
 
 7. **Quick wins order.** Priority descending (`high`, `normal`, `low`, then
    ungraded), then effort ascending (`small`, `medium`, `large`, then
@@ -195,22 +196,26 @@ Numbered so a ticket and a test can cite them.
       400 `key_immutable`, rather than dropping it as an unknown field.
 
 12. **A ticket's words are revised by `PATCH`, and not once it is done.**
-    `PATCH tickets/{id}` takes `title` and `detail` under the caps in
-    invariant 6, refused in `draftProblems`' own words (422), alone or with
-    `status`, `priority` and `effort`. Null or empty `detail` clears it. A
-    revision needs an actor, writes `editedBy = actor` and `editedAt = now`,
-    and touches neither the claim nor `movedAt` (invariant 8). Carried with a
-    move, it rides in the move's conditional write, so a refused move
-    revises nothing; a refused revision writes no grade.
+    `PATCH tickets/{id}` takes `title`, `detail`, `area`, `askedBy` and `kind`
+    under the caps in invariant 6, refused in `textProblems`' own words
+    (422), alone or with `status`, `priority` and `effort`. Null or empty
+    `detail`, `area` or `askedBy` clears it; `kind` is checked by the same
+    enum a create's `kind` is. A revision needs an actor, writes
+    `editedBy = actor` and `editedAt = now`, and touches neither the claim
+    nor `movedAt` (invariant 8). Carried with a move, it rides in the move's
+    conditional write, so a refused move revises nothing; a refused revision
+    writes no grade. `POST tickets/bulk` takes an array of these same bodies,
+    each addressed by its own `id`; see "Bulk patching" below.
 
     A `done` row's words are refused, 409 `done`. Invariant 1 makes `done`
     terminal because its release stamp is a fact about a release that went
-    out. The title and detail are what that release is recorded as carrying,
-    and rewording them afterwards changes the record just as reopening would.
-    The contract already has the answer for shipped work that needs other
-    words: a new row citing the old one, the way a regression is filed. A
-    stamp that never went out is unshipped first, and its words are editable
-    again. A `dropped` row may be revised, since it may be reopened.
+    out. The title, detail, area, asker and kind are what that release is
+    recorded as carrying, and rewording them afterwards changes the record
+    just as reopening would. The contract already has the answer for shipped
+    work that needs other words: a new row citing the old one, the way a
+    regression is filed. A stamp that never went out is unshipped first, and
+    its words are editable again. A `dropped` row may be revised, since it
+    may be reopened.
 
 ## Reference shapes
 
@@ -281,6 +286,52 @@ real board or its settings.
 Import (`POST tickets/import`) upserts by id and keeps dates, and refuses the
 whole batch when an id already belongs to another project - ids are global,
 and an upsert would otherwise move that row across.
+
+### One project's client filing a ticket in another project
+
+There is no token that writes to more than the one project it was issued
+for, and no route that accepts one project's token on another project's
+path. A client that wants to write into another project's board (UmaKuma
+filing an Itsutsu ticket, say) is handed that project's own board token out
+of band, the same way its own token is, and calls `tickets` on that
+project's path with it. Nothing in the service changes for this; it is the
+existing per-project token model, used once more.
+
+Widening this instead - a token that could name which project it acts on, or
+a caller identity trusted across every project - was considered and
+rejected. `authorizeBoard` is a lookup of one presented token against one
+project's expected token (`auth.ts`); the whole reason the two token maps
+are kept apart from each other (see above) and from `PROJECT_TOKENS_JSON` is
+that a leaked token costs exactly one project's board, never more than one.
+A caller that could act as any project on request would make every worktree
+holding a board token a way to write to every other project's board, which
+is a strictly larger blast radius for the same leak. If cross-project
+filing turns out to want more than "hand over another token" - a per-token
+allowlist of which other projects it may also write to, say - that is a new
+piece of the auth model and its own pass, not a default a ticket route
+should carry quietly.
+
+What a client does need, to make use of a token it is handed: a way to learn
+that `itsutsu` is a real project key before it holds a token for it.
+`GET /api/v1/projects`, authorized by *any* one configured board token (not
+necessarily for the project it is asking about), answers with the list of
+project keys - names only, never tokens, and granting no write anywhere by
+itself. `boardProjectKeys` in `auth.ts` is the same token map `tokenFor`
+already reads, listed instead of looked up.
+
+### Bulk patching
+
+`POST tickets/bulk` takes `{ updates: [...] }`, up to 100 entries, each the
+same body a single `PATCH tickets/{id}` takes plus its own `id`. Every entry
+runs through the same conditional write invariant 4 describes, so it is not
+one transaction: a hold taken on one row between two entries of a batch
+refuses only that row, and the response is a `results` array of per-id
+outcomes (`{ id, ok: true, ticket }` or `{ id, ok: false, error, heldBy? }`)
+rather than one status for the whole call. An actor is required exactly when
+some entry in the batch moves or revises words (invariant 5); a batch that
+only grades needs nobody named. A `key` on any entry is refused, 400
+`key_immutable`, the same as a single PATCH (invariant 11). `patchTicket` in
+`server.ts` is the one function behind both routes, so the two never drift.
 
 ## Settings
 

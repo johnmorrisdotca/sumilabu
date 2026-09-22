@@ -49,7 +49,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
 const createSchema = z.object({
   title: z.string().max(TICKET_LIMITS.title * 4),
   detail: z.string().max(TICKET_LIMITS.detail * 4).nullable().optional(),
-  area: z.string().max(80).nullable().optional(),
+  area: z.string().max(TICKET_LIMITS.area).nullable().optional(),
   kind: z.enum(TICKET_KINDS).default("feature"),
   askedBy: z.string().max(TICKET_LIMITS.askedBy * 4).nullable().optional(),
   key: z.string().max(TICKET_LIMITS.key * 4).nullable().optional(),
