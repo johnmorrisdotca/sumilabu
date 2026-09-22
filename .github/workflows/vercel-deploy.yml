@@ -30,8 +30,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Action inputs ignore `defaults.run.working-directory`; the version comes
+      # from the dashboard's pinned `packageManager`, not a root package.json.
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
+        with:
+          package_json_file: sumilabu-dashboard/package.json
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -66,8 +70,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Action inputs ignore `defaults.run.working-directory`; the version comes
+      # from the dashboard's pinned `packageManager`, not a root package.json.
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
+        with:
+          package_json_file: sumilabu-dashboard/package.json
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
