@@ -1,0 +1,161 @@
+name: Deploy dashboard to Vercel
+
+# A push to master that touches the dashboard is a production release. Nothing
+# else deploys it: the Vercel project has no Git integration (deliberately, so
+# firmware commits, doc edits and branch pushes never spend one of the team's
+# 100 deployments a day), and the CLI runs here, the same way itsutsu and
+# umakuma ship. The `paths` filter is what keeps a firmware-only push from
+# building a site nothing changed in.
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "sumilabu-dashboard/**"
+      - ".github/workflows/vercel-deploy.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: vercel-production
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: sumilabu-dashboard
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: sumilabu-dashboard/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck, lint, unit tests
+        run: pnpm check
+
+      # Every page is force-dynamic and the OpenAPI routes are constants, so a
+      # build never opens the database; these placeholders only satisfy Prisma's
+      # URL check at generate time.
+      - name: Build
+        run: pnpm build
+        env:
+          DATABASE_URL: postgresql://build:build@localhost:5432/build
+          DIRECT_URL: postgresql://build:build@localhost:5432/build
+
+  deploy:
+    needs: verify
+    if: needs.verify.result == 'success'
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: sumilabu-dashboard/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          DATABASE_URL: postgresql://build:build@localhost:5432/build
+          DIRECT_URL: postgresql://build:build@localhost:5432/build
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel environment information
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      # This repo applies its schema with `prisma db push`, not migrations (the
+      # SQL each push ran is kept in prisma/manual-migrations for review). The
+      # push runs before the new code is live, so a column the code reads is
+      # there when the first request arrives; every change is additive, which
+      # is what lets the old deployment keep serving meanwhile. Without
+      # --accept-data-loss, `db push` refuses a change that would drop data,
+      # and that refusal fails the deploy: a destructive change is a decision a
+      # person makes at a keyboard, not something CI carries out.
+      #
+      # The credentials are this repository's own secrets rather than the pulled
+      # env: both database URLs are Sensitive in Vercel, and a Sensitive value
+      # pulls as a placeholder that Prisma reads as a broken database (P1013).
+      - name: Push schema to production
+        env:
+          DATABASE_URL: ${{ secrets.MIGRATE_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.MIGRATE_DIRECT_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ] || [ -z "$DIRECT_URL" ]; then
+            echo "::error::MIGRATE_DATABASE_URL and MIGRATE_DIRECT_URL must be set as repository secrets (the Neon connection strings). See the note above this step."
+            exit 1
+          fi
+          case "$DIRECT_URL" in
+            postgres://*|postgresql://*) ;;
+            *)
+              echo "::error::MIGRATE_DIRECT_URL is not a postgres:// URL. A Vercel Sensitive variable pulls as a placeholder; use the connection string from Neon."
+              exit 1
+              ;;
+          esac
+          pnpm exec prisma db push --skip-generate
+          pnpm exec prisma migrate diff --from-url "$DIRECT_URL" --to-schema-datamodel prisma/schema.prisma --exit-code \
+            && echo "Production schema matches prisma/schema.prisma."
+
+      - name: Build project artifacts
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      # The upload is the one network call with no other safety net, and
+      # `cancel-in-progress` above is what makes a retry safe: a superseded run
+      # is killed before its retry could re-alias production to older code. A
+      # refusal for the team's daily cap (api-deployments-free-per-day) creates
+      # nothing and names its reset time; rerun this job then, with
+      # `gh run rerun <id> --failed`, rather than pushing again.
+      - name: Deploy prebuilt output to production
+        run: |
+          for attempt in 1 2 3; do
+            if vercel deploy --prebuilt --archive=tgz --prod --token=${{ secrets.VERCEL_TOKEN }}; then
+              echo "Deployed on attempt $attempt."
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "::warning::Deploy attempt $attempt failed; retrying in 15s."
+              sleep 15
+            fi
+          done
+          echo "::error::Deploy failed three times. Read the upload errors above."
+          exit 1
+
+      # One request, never a loop: every page here is a server render, so a
+      # smoke check is one paid function call per page.
+      - name: Smoke check the live site
+        run: |
+          code=$(curl -sS -o /dev/null -w '%{http_code}' https://app.sumilabu.com/api/openapi.json)
+          [ "$code" = "200" ] || { echo "::error::app.sumilabu.com/api/openapi.json answered $code"; exit 1; }
+          echo "app.sumilabu.com answers 200."
+
+      # Keep the live deployment and the one before it, nothing older; see the
+      # script for why, and why it removes one address at a time.
+      - name: Remove superseded deployments
+        timeout-minutes: 10
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: bash scripts/prune-deployments.sh

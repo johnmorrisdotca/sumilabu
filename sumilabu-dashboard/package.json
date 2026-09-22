@@ -11,9 +11,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "check": "pnpm typecheck && pnpm lint && pnpm test",
     "postinstall": "prisma generate",
     "db:push": "prisma db push",
-    "db:studio": "prisma studio"
+    "db:drift": "prisma migrate diff --from-url \"$DIRECT_URL\" --to-schema-datamodel prisma/schema.prisma --script",
+    "db:studio": "prisma studio",
+    "deploy:prune": "bash scripts/prune-deployments.sh"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

@@ -22,14 +22,16 @@ This app is designed to be generic and shared: one Vercel app + one Neon DB can 
 cp env/.env.example .env.local
 ```
 
-2. Fill values in `.env.local`:
+2. Fill values in `.env.local` (`env/.env.example` is the only tracked template):
 
 - `DATABASE_URL` (Neon pooled URL)
 - `DIRECT_URL` (Neon direct URL)
 - `INGEST_API_TOKEN` (must match device token)
 - `DEFAULT_PROJECT_KEY` (default product partition, e.g. `inkyframe`)
 - `PROJECT_TOKENS_JSON` (optional per-project token map)
-- `STALE_AFTER_SECONDS` (optional)
+- `EXPECTED_HEARTBEAT_SECONDS`, `STALE_AFTER_SECONDS` (optional)
+- `DASHBOARD_UTC_OFFSET_HOURS` (optional, default `-8`)
+- `BOARD_TOKENS_JSON`, `SETTINGS_TOKENS_JSON` (the board; see below)
 
 3. Push Prisma schema:
 
@@ -44,6 +46,15 @@ pnpm dev
 ```
 
 Open `http://localhost:3000`.
+
+5. Before committing:
+
+```bash
+pnpm check
+```
+
+`AGENTS.md` beside this file is the full guide: setup, tests, conventions,
+schema changes, and how a push becomes a production release.
 
 ## API contracts
 
@@ -230,18 +241,25 @@ curl -sS https://app.sumilabu.com/api/app-telemetry \
 	}'
 ```
 
-## Vercel deployment
+## Production
 
-1. Import this folder as a Vercel project.
-2. Set env vars in Vercel Project Settings:
+**A push to `master` that touches this folder is the release.**
+`.github/workflows/vercel-deploy.yml` runs the gates (`pnpm check`,
+`pnpm build`), pushes the schema to Neon, builds and deploys with the Vercel
+CLI, makes one smoke request, and removes every deployment but the live one
+and the one before it. The Vercel project (`sumilabu-dashboard`, team
+`spxis-projects-0d6306b4`) has no Git integration on purpose — see
+`AGENTS.md`, "Releasing to production", for the secrets it needs, how to
+know a deploy landed, the daily cap, rollback and the manual fallback.
 
-- `DATABASE_URL`
-- `DIRECT_URL`
-- `INGEST_API_TOKEN`
-- `DEFAULT_PROJECT_KEY`
-- `PROJECT_TOKENS_JSON`
+Environment, set in Vercel Project Settings (the database URLs as Sensitive):
+
+- `DATABASE_URL`, `DIRECT_URL`
+- `INGEST_API_TOKEN`, `PROJECT_TOKENS_JSON`, `DEFAULT_PROJECT_KEY`
+- `BOARD_TOKENS_JSON`, `SETTINGS_TOKENS_JSON`
 - `EXPECTED_HEARTBEAT_SECONDS` (optional, default `1800`)
 - `STALE_AFTER_SECONDS` (optional, default `5400`)
+- `DASHBOARD_UTC_OFFSET_HOURS` (optional, default `-8`)
 
 A device that sends `heartbeat_interval_s` on `/api/device-stats` is judged
 by it: a beat is expected at that interval, and the device is offline after
@@ -254,17 +272,14 @@ Dashboard project filtering:
 - `/?project=inkyframe`
 - `/?project=wanikami`
 
-3. Deploy.
-
-Recommended production hostnames:
+Production hostnames, all aliases of the one deployment:
 
 - Dashboard UI: `https://app.sumilabu.com`
 - Canonical telemetry ingest: `https://api.sumilabu.com/api/v1/telemetry/events`
 - Legacy firmware telemetry ingest: `https://api.sumilabu.com/api/device-stats`
 - Compatibility app/server telemetry ingest: `https://api.sumilabu.com/api/app-telemetry`
 - API contract: `https://api.sumilabu.com/api/openapi.json`
-
-If you want one Vercel project to serve both UI and ingest, point both hostnames at this same app.
+- Board and settings: `https://api.sumilabu.com/api/v1/projects/…`
 
 ## Device config
 
@@ -292,10 +307,12 @@ test runs never touch the real rows. Every write also sends
 
 | Method | Path | Body | Notes |
 |---|---|---|---|
-| GET | `/api/v1/projects/{key}/tickets` | `?status=open,inProgress` or `?unfinished=1` | with `heldNow` computed; unfinished includes lapsed holds |
-| POST | `/api/v1/projects/{key}/tickets` | `{ title, detail?, area?, kind?, askedBy? }` | 422 with `problems[]` on a cap |
+| GET | `/api/v1/projects` | | any project's board token; `{ projects: ["itsutsu", "umakuma", …] }` — names only, no write access implied |
+| GET | `/api/v1/projects/{key}/tickets` | `?status=open,inProgress`, `?unfinished=1`, or `?key=<slug>` alone | with `heldNow` computed; unfinished includes lapsed holds; `?key=` answers as `tickets/{id}` does |
+| POST | `/api/v1/projects/{key}/tickets` | `{ title, detail?, area?, kind?, askedBy?, key? }` | 422 with `problems[]` on a cap; 409 `key_taken` |
 | GET | `/api/v1/projects/{key}/tickets/{id}` | | |
-| PATCH | `/api/v1/projects/{key}/tickets/{id}` | `{ status?, priority?, effort? }` | `status` is `open`, `inProgress` or `dropped`; move first, then grade; 409 `{ error: "illegal" \| "held", heldBy }` |
+| PATCH | `/api/v1/projects/{key}/tickets/{id}` | `{ status?, priority?, effort?, title?, detail?, area?, askedBy?, kind? }` | `status` is `open`, `inProgress` or `dropped`; words checked, then move (carrying the words), then grade; 422 on a cap, 409 `{ error: "illegal" \| "held" \| "done", heldBy }`; a body naming `key` is 400 `key_immutable` |
+| POST | `/api/v1/projects/{key}/tickets/bulk` | `{ updates: [{ id, …same fields as PATCH }] }` (≤ 100) | each row independently, as its own PATCH; `{ results: [{ id, ok, ticket \| error }] }` — no rollback across rows |
 | POST | `/api/v1/projects/{key}/tickets/{id}/ship` | `{ version, entryId?, releasedAt? }` | release tools only; from `open` or `inProgress` under the claim condition; writes `done` |
 | POST | `/api/v1/projects/{key}/tickets/import` | `{ tickets: [row…] }` | one-time move of a client's board, ids and dates kept; upserts by id; 422 if an id already belongs to another project |
 | POST | `/api/v1/projects/{key}/tickets/{id}/unship` | `{ reason }` | only for a stamp the client's main never saw |
