@@ -206,8 +206,8 @@ walks it. The PATCH move outcomes (`illegal`, `held`) had no route test until
 - **Batch the push.** Every push to `master` that touches `sumilabu-dashboard/`
   is one production deployment, counted against the team's 100 a day
   (across every project; the account hit it on 2026-09-15). Three finished
-  commits are one push. A docs-only or firmware-only push deploys nothing,
-  by the workflow's `paths` filter.
+  commits are one push. A firmware-only push, or one that changes only `.md`
+  files, deploys nothing, by the workflow's `paths` filter.
 - Small work goes straight to `master`. Open a branch and a PR when you want
   Copilot's review first (as on 2026-09-15); a PR's branch pushes deploy
   nothing, only the merge does.
@@ -239,9 +239,10 @@ ids are in `.vercel/project.json` after `vercel pull`; itsutsu and umakuma
 hold the same set under the same names.
 
 **Knowing it landed.** Wait on the run's `deploy` job, one `gh` call a minute,
-never a tighter loop:
+never a tighter loop (`--commit` wants the full 40-character sha; a short one
+matches nothing and reads like "no run"):
 
-    gh run list --workflow vercel-deploy.yml --branch master --commit <sha> --json databaseId -q '.[0].databaseId'
+    gh run list --workflow vercel-deploy.yml --branch master --commit $(git rev-parse HEAD) --json databaseId -q '.[0].databaseId'
     gh run view <id> --json jobs -q '.jobs[] | select(.name=="deploy") | "\(.status) \(.conclusion)"'
 
 When it reads `completed success`, load the site **once** — the workflow has

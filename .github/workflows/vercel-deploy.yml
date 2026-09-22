@@ -12,6 +12,7 @@ on:
       - master
     paths:
       - "sumilabu-dashboard/**"
+      - "!sumilabu-dashboard/**/*.md"
       - ".github/workflows/vercel-deploy.yml"
   workflow_dispatch:
 
