@@ -153,13 +153,29 @@ jobs:
           echo "::error::Deploy failed three times. Read the upload errors above."
           exit 1
 
-      # One request, never a loop: every page here is a server render, so a
-      # smoke check is one paid function call per page.
+      # One request each, never a loop: every page here is a server render, so a
+      # smoke check is one paid function call per address.
+      #
+      # THE SECOND CHECK IS THE ONE THAT MATTERS, and it is here because the
+      # first one on its own passed a deploy that had broken every site on the
+      # board. `/api/openapi.json` is a constant: it proves the function booted
+      # and cannot fail for a database that is unreachable. On 2026-09-22 this
+      # workflow's first release shipped a Prisma client carrying the GitHub
+      # runner's query engine to a function running on Amazon Linux, so every
+      # route that touches the database answered 500 with an empty body — and
+      # every step of the deploy, including this one, was green.
+      #
+      # `/api/health` asks the database the smallest question there is. A check
+      # that cannot fail for the thing that breaks is not a check.
       - name: Smoke check the live site
         run: |
           code=$(curl -sS -o /dev/null -w '%{http_code}' https://app.sumilabu.com/api/openapi.json)
           [ "$code" = "200" ] || { echo "::error::app.sumilabu.com/api/openapi.json answered $code"; exit 1; }
-          echo "app.sumilabu.com answers 200."
+          echo "app.sumilabu.com serves its contract."
+
+          code=$(curl -sS -o /dev/null -w '%{http_code}' https://app.sumilabu.com/api/health)
+          [ "$code" = "200" ] || { echo "::error::app.sumilabu.com/api/health answered $code: this deployment cannot reach its database. If it is 503, read the note above prisma/schema.prisma's binaryTargets first."; exit 1; }
+          echo "app.sumilabu.com can reach its database."
 
       # Keep the live deployment and the one before it, nothing older; see the
       # script for why, and why it removes one address at a time.

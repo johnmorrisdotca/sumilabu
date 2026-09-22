@@ -1,5 +1,34 @@
 generator client {
   provider = "prisma-client-js"
+  /*
+   * THE ENGINE THE SITE ACTUALLY RUNS ON, named because the client is no
+   * longer generated where it runs.
+   *
+   * Prisma ships a native query engine per platform, and `prisma generate`
+   * builds only the one for the machine it runs on unless it is told
+   * otherwise. That was invisible while the dashboard shipped by somebody
+   * running `vercel deploy --prod` from sumilabu-dashboard/: Vercel built the
+   * project itself, so generate ran in Vercel's own container and produced the
+   * engine Vercel runs.
+   *
+   * The deploy workflow builds on a GitHub runner and uploads the result with
+   * `vercel deploy --prebuilt`, so generate now runs on Ubuntu and produces
+   * debian-openssl-3.0.x, while the function runs on Amazon Linux and wants
+   * rhel-openssl-3.0.x. Prisma then throws the moment it is asked for a
+   * connection.
+   *
+   * WHAT THAT LOOKS LIKE, because it cost an afternoon: every route that
+   * touches the database answers 500 with an EMPTY BODY, and every route that
+   * does not is perfectly fine. /api/v1/projects reads its answer from the
+   * token config and kept returning 200, the deploy's own smoke check reads
+   * /api/openapi.json and passed, every CI step was green — and the board was
+   * unreadable for four sites at once.
+   *
+   * `native` stays for developers and for the test run in CI; the second entry
+   * is the one the deployment needs. Both, not one: a list with only rhel in it
+   * breaks every laptop.
+   */
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
