@@ -210,8 +210,18 @@ walks it. The PATCH move outcomes (`illegal`, `held`) had no route test until
 - **Batch the push.** Every push to `master` that touches `sumilabu-dashboard/`
   is one production deployment, counted against the team's 100 a day
   (across every project; the account hit it on 2026-09-15). Three finished
-  commits are one push. A firmware-only push, or one that changes only `.md`
-  files, deploys nothing, by the workflow's `paths` filter.
+  commits are one push. A firmware-only push, or one that only changes
+  `.md` files or `docs/**`, deploys nothing, by the workflow's `paths` filter.
+- **Fewer pushes and fewer Actions minutes is a standing goal, not just a
+  cap to avoid.** John, relayed across every SPXIS project on 2026-09-23:
+  "let's make sure UK, ITS, SumiLabu, WazaDB all think about less pushes and
+  even though some are public, really try to crack down on this metric."
+  Concretely, beyond batching: retry a flaky run with `gh run rerun <id>
+  --failed`, never a new push (a new push is a new deployment; a rerun is
+  free); don't add a second workflow that re-runs `verify`'s checks (`pnpm
+  check`, `pnpm build`) under another name — one workflow, `vercel-deploy.yml`,
+  is both the gate and the release, and a duplicate only burns minutes on
+  work already done.
 - Small work goes straight to `master`. Open a branch and a PR when you want
   Copilot's review first (as on 2026-09-15); a PR's branch pushes deploy
   nothing, only the merge does.
