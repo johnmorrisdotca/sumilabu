@@ -217,6 +217,24 @@ Numbered so a ticket and a test can cite them.
     its words are editable again. A `dropped` row may be revised, since it
     may be reopened.
 
+13. **A `done` row missing its stamp is backfilled, never re-shipped.** A row
+    can reach `done` with no `releasedIn` - a ticket closed by hand before
+    release stamps existed - and `ship` cannot help it: invariant 9 only
+    ships from `open` or `inProgress`, and shipping the same work twice would
+    write a second, wrong version over the first. `POST
+    tickets/{id}/stamp` writes `releasedIn`, `releasedEntry` and `releasedAt`
+    onto a `done` row and nothing else: `status`, `claimedBy` and `movedAt`
+    stay as they are, because this records a fact about a release that
+    already went out rather than declaring a new one (unlike `shipData`,
+    `stampData` carries no `status` or `movedAt`). It refuses 409 `notDone`
+    off any row that is not `done`, and 409 `alreadyStamped` rather than
+    overwrite a `releasedIn` that is already there - a stamp is written once,
+    since a wrong version recorded twice cannot be told apart from a right
+    one afterwards. It takes the same actor and `X-Board-Actor` handling as
+    every other write (invariant 5), and the same `version`/`releasedAt`
+    validation as `ship`, except `releasedAt` is required: a backfill without
+    a real date would write today's onto a row that shipped months ago.
+
 ## Reference shapes
 
 The lease and claim rules, as UmaKuma has them in `src/lib/ticketClaims.ts`.

@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 /**
  * The board contract, as code.
  *
@@ -132,6 +134,29 @@ export function shipData(version: string, entryId: string | null, releasedAt: Da
     releasedAt,
     movedAt: releasedAt,
   };
+}
+
+/**
+ * Invariant 9's own shape, shared by `ship` and `stamp` so the two can never
+ * validate a version or a release instant differently. `z.string().datetime()`
+ * without `{ offset: true }` refuses anything but a trailing `Z` - an offset
+ * like `-07:00` once passed a hand-rolled check and was written silently.
+ */
+export const releaseVersionSchema = z.string().min(1).max(TICKET_LIMITS.releasedIn);
+export const releaseEntrySchema = z.string().min(1).max(TICKET_LIMITS.releasedEntry).nullable().optional();
+export const releasedAtSchema = z.string().datetime();
+
+/**
+ * A `stamp` writes `releasedIn`/`releasedEntry`/`releasedAt` onto a row
+ * that reached `done` before release stamps existed. Unlike `ship`, it is
+ * not a move: `status`, `claimedBy` and `movedAt` are left exactly as they
+ * are, because this records a fact about a release that already went out
+ * rather than declaring a new one. Written once - a row that already carries
+ * a `releasedIn` refuses rather than overwrite, since a wrong version
+ * recorded twice is worse than one left blank.
+ */
+export function stampData(version: string, entryId: string | null, releasedAt: Date) {
+  return { releasedIn: version, releasedEntry: entryId, releasedAt };
 }
 
 /** The one way out of `done`: a stamp that a client's main never saw. */
