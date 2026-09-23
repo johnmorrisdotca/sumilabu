@@ -279,7 +279,8 @@ Production hostnames, all aliases of the one deployment:
 - Legacy firmware telemetry ingest: `https://api.sumilabu.com/api/device-stats`
 - Compatibility app/server telemetry ingest: `https://api.sumilabu.com/api/app-telemetry`
 - API contract: `https://api.sumilabu.com/api/openapi.json`
-- Board and settings: `https://api.sumilabu.com/api/v1/projects/…`
+- Board, settings and reports: `https://api.sumilabu.com/api/v1/projects/…`
+- Health: `https://api.sumilabu.com/api/v1/health`
 
 ## Device config
 
@@ -324,4 +325,23 @@ test runs never touch the real rows. Every write also sends
 Statuses are canonical (`open`, `inProgress`, `done`, `dropped`); kinds
 `feature`, `fix`, `chore`; priority `high`/`normal`/`low`; effort
 `small`/`medium`/`large`, both null until graded. The lease is six hours.
+
+## Reports API (v1)
+
+A member's problem reports, from any site, under the same `projectKey`
+scoping and enforcing `docs/board/REPORTS_CONTRACT.md`. Auth is a third
+token map, `REPORTS_TOKENS_JSON` (same shape as the other two) - except
+filing, which takes the board token instead, so a leaked reports key can
+never create or move a board ticket. `<key>-dev` projects work the same way
+as they do for the board.
+
+| Method | Path | Body | Notes |
+|---|---|---|---|
+| GET | `/api/v1/projects/{key}/reports` | `?status=new,read`, `?limit=`, `?offset=` | reports token; newest first |
+| POST | `/api/v1/projects/{key}/reports` | `{ body, path?, appVersion?, reporterRef, reporterName? }` | reports token; `reporterRef` required (signed-out reporting); 422 with `problems[]` on a cap; 429 `rate_limited` with `scope` and `retryAfterMs` |
+| GET | `/api/v1/projects/{key}/reports/{id}` | | reports token |
+| PATCH | `/api/v1/projects/{key}/reports/{id}` | `{ status?, adminNote? }` | reports token; `status` is `read` or `closed` only - `filed` is not a legal value here; 409 off an illegal move |
+| DELETE | `/api/v1/projects/{key}/reports/{id}` | | reports token; hard delete, for a spurious report |
+| POST | `/api/v1/projects/{key}/reports/{id}/file` | `{ title?, detail?, kind? }` | **board token**, not the reports token; creates a `BoardTicket` and links it (`status = "filed"`, `filedTicketId`) in one transaction; 409 `not_fileable` off `filed`/`closed` |
+| GET | `/api/v1/health` | | any reports token; one `SELECT 1`; `Cache-Control: no-store`; see `REPORTS_CONTRACT.md` for the client-side caching/timeout a caller is expected to do |
 

@@ -216,3 +216,47 @@ model BoardSetting {
   @@id([projectKey, key])
 }
 
+/// A member's problem report, from any site (UmaKuma today; Itsutsu is
+/// building against the same contract).
+///
+/// docs/board/REPORTS_CONTRACT.md is the contract, the way
+/// docs/board/BOARD_RULES.md is for tickets. Reached under the same
+/// `/api/v1/projects/{key}/reports` shape as tickets and settings, but with
+/// its own token map (`REPORTS_TOKENS_JSON`): a leaked reports key can
+/// create, read, list and close a project's reports, but it cannot create or
+/// move a board ticket. Filing a report (`POST reports/{id}/file`) writes
+/// `status = "filed"` together with `filedTicketId`, and needs the board
+/// token, not the reports token - the same separation that already keeps
+/// BOARD_TOKENS_JSON and SETTINGS_TOKENS_JSON apart, applied to a third pair.
+model Report {
+  id         String    @id @default(cuid())
+  /// No default, unlike the telemetry models: a row with no owning project
+  /// is exactly what this must never allow, and every write is already
+  /// authenticated to one project (BoardTicket does the same).
+  projectKey String
+  body       String    @db.VarChar(4000)
+  /// The page the member had open. The client strips everything after `?`
+  /// before sending it - that part can hold a private link.
+  path       String?   @db.VarChar(500)
+  appVersion String?   @db.VarChar(40)
+  /// An opaque id the client mints for the reporter - never a name or an
+  /// email, and never null, so a signed-out visitor can still report.
+  reporterRef  String  @db.VarChar(200)
+  /// What to show a human, if the client has one to offer. Null for a
+  /// signed-out reporter.
+  reporterName String? @db.VarChar(80)
+  /// new -> read -> filed | closed. `filed` is written only by the file
+  /// route, together with filedTicketId; PATCH may move new/read/filed to
+  /// closed, and new to read, and nothing else.
+  status        String    @default("new")
+  filedTicketId String?   @db.VarChar(40)
+  /// An admin's own note, never shown to the reporter.
+  adminNote     String?   @db.VarChar(4000)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([projectKey, status, createdAt(sort: Desc)])
+  @@index([projectKey, reporterRef, createdAt(sort: Desc)])
+  @@index([createdAt(sort: Desc)])
+}
+

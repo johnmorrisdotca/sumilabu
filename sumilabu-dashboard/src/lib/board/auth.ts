@@ -16,21 +16,31 @@ import type { NextRequest } from "next/server";
  * - `SETTINGS_TOKENS_JSON` reads and writes settings. Only the site's
  *   production deployment holds one, because a setting decides who may sign
  *   up, and a key that every checkout has is not the key for that.
+ * - `REPORTS_TOKENS_JSON` creates, lists, reads, patches and deletes a
+ *   project's reports (docs/board/REPORTS_CONTRACT.md) - but not
+ *   `POST reports/{id}/file`, which creates a board ticket and takes the
+ *   board token instead. A leaked reports key can therefore read and close
+ *   reports; it cannot move a board ticket, the same guarantee the board and
+ *   settings maps already give each other.
  *
- * Both are kept apart from PROJECT_TOKENS_JSON so a leaked telemetry key does
- * not also move tickets. A project may also hold a `<key>-dev` entry in each
+ * All three are kept apart from each other and from PROJECT_TOKENS_JSON, so a
+ * leaked key in one never grants another: a leaked telemetry key cannot move
+ * tickets, a leaked reports key cannot file one, a leaked board key cannot
+ * change who may sign up. A project may also hold a `<key>-dev` entry in any
  * map - `umakuma-dev`, `itsutsu-dev` - which is a separate project with its
- * own rows, so a test run never writes to the real board or its settings.
+ * own rows, so a test run never writes to the real board, its settings or its
+ * reports.
  *
  * Every write names its actor in `X-Board-Actor`, which is invariant 5:
  * there is no anonymous move.
  */
-export const TOKEN_SCOPES = { board: "board", settings: "settings" } as const;
+export const TOKEN_SCOPES = { board: "board", settings: "settings", reports: "reports" } as const;
 export type TokenScope = (typeof TOKEN_SCOPES)[keyof typeof TOKEN_SCOPES];
 
 const TOKEN_ENV: Record<TokenScope, string> = {
   board: "BOARD_TOKENS_JSON",
   settings: "SETTINGS_TOKENS_JSON",
+  reports: "REPORTS_TOKENS_JSON",
 };
 
 /** The token a project presents for one scope, from that scope's map. */

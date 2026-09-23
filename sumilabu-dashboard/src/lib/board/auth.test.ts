@@ -11,16 +11,21 @@ describe("tokenFor", () => {
   const env = {
     BOARD_TOKENS_JSON: JSON.stringify({ umakuma: "board-real", "umakuma-dev": "board-dev" }),
     SETTINGS_TOKENS_JSON: JSON.stringify({ umakuma: "settings-real" }),
+    REPORTS_TOKENS_JSON: JSON.stringify({ umakuma: "reports-real" }),
   };
 
   it("reads each scope from its own map", () => {
     expect(tokenFor(TOKEN_SCOPES.board, "umakuma", env)).toBe("board-real");
     expect(tokenFor(TOKEN_SCOPES.settings, "umakuma", env)).toBe("settings-real");
+    expect(tokenFor(TOKEN_SCOPES.reports, "umakuma", env)).toBe("reports-real");
   });
 
-  it("never answers a scope from the other map", () => {
+  it("never answers a scope from another map - a leaked reports key cannot move tickets or settings", () => {
     expect(tokenFor(TOKEN_SCOPES.settings, "umakuma-dev", env)).toBeNull();
     expect(tokenFor(TOKEN_SCOPES.board, "itsutsu", env)).toBeNull();
+    const reportsOnly = { REPORTS_TOKENS_JSON: env.REPORTS_TOKENS_JSON };
+    expect(tokenFor(TOKEN_SCOPES.board, "umakuma", reportsOnly)).toBeNull();
+    expect(tokenFor(TOKEN_SCOPES.settings, "umakuma", reportsOnly)).toBeNull();
   });
 
   it("treats a dev project as its own project", () => {

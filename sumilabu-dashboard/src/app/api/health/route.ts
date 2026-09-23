@@ -31,6 +31,11 @@ export const dynamic = "force-dynamic";
  *
  * One trivial query, asked once per deploy by the workflow's smoke step. It is
  * not for polling, and nothing should put it on a timer.
+ *
+ * Not the route a reporting client asks before showing its form - that
+ * traffic shape (once per dialog a member opens, across every site) wants
+ * `GET /api/v1/health` instead, which is the same question behind a reports
+ * token so this one can stay open and unauthenticated for the deploy step.
  */
 export async function GET() {
   try {

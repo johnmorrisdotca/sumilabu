@@ -69,12 +69,14 @@ workflow runs, so a red push is a red push you could have seen locally.
    | `DEFAULT_PROJECT_KEY` | ingest routes, dashboard | Partition used when a payload omits `project_key`. |
    | `EXPECTED_HEARTBEAT_SECONDS`, `STALE_AFTER_SECONDS` | `lib/heartbeat-thresholds.ts` | Fallback health thresholds for a device that reports no `heartbeat_interval_s`. |
    | `DASHBOARD_UTC_OFFSET_HOURS` | `app/page.tsx` | Clock and timestamps on the dashboard; default `-8`. |
-   | `BOARD_TOKENS_JSON` | `lib/board/auth.ts` | `{ "<projectKey>": "<token>" }` for the ticket routes. Every agent worktree of a site holds its site's entry. |
+   | `BOARD_TOKENS_JSON` | `lib/board/auth.ts` | `{ "<projectKey>": "<token>" }` for the ticket routes, and for `POST reports/{id}/file`. Every agent worktree of a site holds its site's entry. |
    | `SETTINGS_TOKENS_JSON` | `lib/board/auth.ts` | Same shape, settings routes only. A site's production deployment holds it and nothing else does. |
+   | `REPORTS_TOKENS_JSON` | `lib/board/auth.ts` | Same shape, the reports routes (create/list/get/patch/delete) and `GET /api/v1/health` - but not filing, which needs the board token instead. |
 
-   Three token maps, three purposes. Never reuse a value across them: they
-   are kept apart so a leaked telemetry key cannot move tickets, and a leaked
-   board key cannot change who may sign up.
+   Four token maps, four purposes. Never reuse a value across them: they are
+   kept apart so a leaked telemetry key cannot move tickets, a leaked
+   reports key cannot file a ticket or read settings, and a leaked board key
+   cannot change who may sign up.
 3. `pnpm db:push` against the database in `.env.local`.
 4. `pnpm dev`. The board routes answer 401 until `BOARD_TOKENS_JSON` has an
    entry for the project key in the URL; use `itsutsu-dev` / `umakuma-dev`,
@@ -91,12 +93,24 @@ workflow runs, so a red push is a red push you could have seen locally.
   read. A constant, `force-static`, served without a function invocation.
 - `src/app/api/v1/projects` — which project keys have a board token (names,
   never tokens).
-- `src/app/api/v1/projects/[projectKey]/tickets/…`, `…/settings/…` — the board.
-  Route handlers are thin: parse, `requireCaller`, call `lib/board/server.ts`,
-  answer.
+- `src/app/api/v1/projects/[projectKey]/tickets/…`, `…/settings/…`,
+  `…/reports/…` — the board. Route handlers are thin: parse, `requireCaller`,
+  call `lib/board/server.ts` or `lib/reports/server.ts`, answer.
+- `src/app/api/v1/health` — one `SELECT 1`, gated on any reports token; what
+  a reporting client checks before it lets a member type into the form.
 - `src/lib/board/rules.ts` — `docs/board/BOARD_RULES.md` as code; `server.ts`
-  the writes; `auth.ts` the token maps; `http.ts` the shared responses;
-  `memoryPrisma.ts` the in-memory stand-in the route tests run against.
+  the writes; `auth.ts` the token maps (board, settings and reports scopes);
+  `http.ts` the shared responses; `memoryPrisma.ts` the ticket in-memory
+  stand-in the route tests run against; `memoryStore.ts` the generic row
+  store `reports/memoryPrisma.ts` also builds on (board's own double
+  predates it and was left as it was, to avoid touching passing ticket
+  tests for a refactor).
+- `src/lib/reports/rules.ts` — `docs/board/REPORTS_CONTRACT.md` as code;
+  `server.ts` the writes, including `fileReport`'s transaction into
+  `BoardTicket`; `http.ts` the shared responses; `memoryPrisma.ts`, built on
+  `board/memoryStore.ts`, a `report` + `boardTicket` stand-in with a
+  `$transaction` so the file route's atomicity is tested without a
+  database.
 - `src/lib/auto-refresh.ts`, `heartbeat-thresholds.ts`,
   `device-latest-event.ts` — dashboard logic, each with a test beside it.
 - `prisma/schema.prisma`, `prisma/manual-migrations/` — the schema, and the
@@ -139,9 +153,10 @@ walks it. The PATCH move outcomes (`illegal`, `held`) had no route test until
   umakuma's `pnpm task` and `release:take`, their CI, Onibako's deploy script
   and every installed InkyFrame call these routes. Changes are additive:
   `/api/v1/…` stays stable, a breaking change is `/api/v2/…` beside it, and
-  the legacy ingest routes are never removed. A new or changed board route
-  updates the table in `README.md` and `BOARD_RULES.md` in the same commit;
-  a telemetry change updates `api/openapi/route.ts`.
+  the legacy ingest routes are never removed. A new or changed board or
+  reports route updates the table in `README.md` and `BOARD_RULES.md` or
+  `REPORTS_CONTRACT.md` (whichever it belongs to) in the same commit; a
+  telemetry change updates `api/openapi/route.ts`.
 - **Route handler shape:** a Zod schema generous on the wire (caps × 4, so a
   long body is refused as a payload before it is read as a draft), then
   `requireCaller(req, projectKey, needsActor[, scope])`, then one function in
