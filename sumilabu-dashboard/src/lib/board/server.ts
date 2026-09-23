@@ -13,6 +13,7 @@ import {
   moveData,
   moveWhere,
   shipData,
+  stampData,
   textData,
   textProblems,
   unshipData,
@@ -281,6 +282,44 @@ export async function shipTicket(
   const after = await getTicket(projectKey, id);
   if (moved.count === 1 && after) return { ok: true, ticket: after };
   return { ok: false, reason: after?.status === before.status ? "held" : "illegal", ticket: after, heldBy: after?.claimedBy };
+}
+
+export type StampOutcome =
+  | { ok: true; ticket: BoardTicketView }
+  | { ok: false; reason: "missing" | "notDone" | "alreadyStamped"; ticket: BoardTicketView | null };
+
+/**
+ * The one-time backfill for a row that reached `done` before release stamps
+ * existed: it writes `releasedIn`/`releasedEntry`/`releasedAt` and nothing
+ * else. Unlike `shipTicket`, this is never a move - `status`, `claimedBy` and
+ * `movedAt` stay exactly as they are, because the release already happened
+ * and this only records which one it was. A `done` row's `claimedBy` is
+ * already null (invariant 2's `moveData`/`shipData` both clear it on the way
+ * in), so there is no lease to race and no claim condition to carry.
+ *
+ * Refuses a row that is not `done` (`notDone`) and a row that already has a
+ * `releasedIn` (`alreadyStamped`) - a stamp is written once; overwriting one
+ * would let a wrong version be recorded over a right one with nothing to
+ * tell the two apart afterwards.
+ */
+export async function stampTicket(
+  projectKey: string,
+  id: string,
+  stamp: { version: string; entryId: string | null; releasedAt: Date },
+): Promise<StampOutcome> {
+  const before = await prisma.boardTicket.findFirst({ where: { id, projectKey }, select: { status: true, releasedIn: true } });
+  if (!before) return { ok: false, reason: "missing", ticket: null };
+  if (before.status !== "done") return { ok: false, reason: "notDone", ticket: await getTicket(projectKey, id) };
+  if (before.releasedIn != null) return { ok: false, reason: "alreadyStamped", ticket: await getTicket(projectKey, id) };
+
+  const stamped = await prisma.boardTicket.updateMany({
+    where: { id, projectKey, status: "done", releasedIn: null },
+    data: stampData(stamp.version, stamp.entryId, stamp.releasedAt),
+  });
+  const after = await getTicket(projectKey, id);
+  if (stamped.count === 1 && after) return { ok: true, ticket: after };
+  if (!after) return { ok: false, reason: "missing", ticket: null };
+  return { ok: false, reason: after.releasedIn != null ? "alreadyStamped" : "notDone", ticket: after };
 }
 
 /** One row of a client's existing board, brought over as it stands. */

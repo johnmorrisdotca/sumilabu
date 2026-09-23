@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { TOKEN_SCOPES, authorizeBoard, type BoardCaller, type TokenScope } from "./auth";
-import type { MoveOutcome, PatchOutcome } from "./server";
+import type { MoveOutcome, PatchOutcome, StampOutcome } from "./server";
 
 /**
  * 401 for a bad or missing token; 400 for a write with nobody named. The
@@ -49,4 +49,11 @@ export function patchResponse(outcome: PatchOutcome): NextResponse {
   if (outcome.ok) return moveResponse(outcome);
   if (outcome.reason === "invalid") return NextResponse.json({ ok: false, error: outcome.problems[0], problems: outcome.problems }, { status: 422 });
   return moveResponse(outcome);
+}
+
+/** `stamp`'s own shape: never a claim, so no `heldBy` - just why the write did not happen. */
+export function stampResponse(outcome: StampOutcome): NextResponse {
+  if (outcome.ok) return NextResponse.json({ ok: true, ticket: outcome.ticket });
+  if (outcome.reason === "missing") return NextResponse.json({ ok: false, error: "missing" }, { status: 404 });
+  return NextResponse.json({ ok: false, error: outcome.reason, ticket: outcome.ticket }, { status: 409 });
 }

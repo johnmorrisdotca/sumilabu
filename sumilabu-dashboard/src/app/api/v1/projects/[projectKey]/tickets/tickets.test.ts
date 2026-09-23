@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 
 import { GET as getOne, PATCH } from "./[ticketId]/route";
 import { POST as shipRoute } from "./[ticketId]/ship/route";
+import { POST as stampRoute } from "./[ticketId]/stamp/route";
 import { POST as unshipRoute } from "./[ticketId]/unship/route";
 import { POST as bulkRoute } from "./bulk/route";
 import { POST as importRoute } from "./import/route";
@@ -71,6 +72,8 @@ const importRows = async (projectKey: string, tickets: Record<string, unknown>[]
   read(await importRoute(request("POST", `${projectKey}/tickets/import`, { body: { tickets } }), inProject(projectKey)));
 const bulk = async (projectKey: string, updates: Record<string, unknown>[], actor: string | null = "its-builder") =>
   read(await bulkRoute(request("POST", `${projectKey}/tickets/bulk`, { body: { updates }, actor }), inProject(projectKey)));
+const stamp = async (projectKey: string, id: string, body: unknown, actor: string | null = "its-builder") =>
+  read(await stampRoute(request("POST", `${projectKey}/tickets/${id}/stamp`, { body, actor }), onTicket(projectKey, id)));
 
 function row(id: string, extra: Record<string, unknown> = {}) {
   return { id, title: "A ticket brought over", kind: "feature", status: "open", createdAt: "2026-09-01T00:00:00.000Z", movedAt: "2026-09-01T00:00:00.000Z", ...extra };
@@ -321,5 +324,69 @@ describe("bulk-patching tickets (tickets/bulk)", () => {
     expect(await bulk(ITS, [{ id, key: "nope" }])).toMatchObject({ status: 400, json: { error: "key_immutable" } });
     expect((await bulk(ITS, [])).status).toBe(400);
     expect((await bulk(ITS, Array.from({ length: 101 }, () => ({ id, priority: "low" })))).status).toBe(400);
+  });
+});
+
+describe("stamping a done ticket's release (backfill)", () => {
+  it("writes releasedIn/releasedEntry/releasedAt onto a done row without moving it", async () => {
+    await importRows(ITS, [row("its-legacy-1", { status: "done", movedAt: "2026-06-01T12:00:00.000Z" })]);
+    const stamped = await stamp(ITS, "its-legacy-1", { version: "0.150.0", entryId: "0.150.0", releasedAt: "2026-06-01T12:00:00.000Z" });
+    expect(stamped.status).toBe(200);
+    expect(stamped.json.ticket).toMatchObject({
+      status: "done",
+      claimedBy: null,
+      releasedIn: "0.150.0",
+      releasedEntry: "0.150.0",
+      releasedAt: "2026-06-01T12:00:00.000Z",
+      /* movedAt is untouched - a stamp is not a move (invariant 8's reasoning, applied to a fact recorded after the fact). */
+      movedAt: "2026-06-01T12:00:00.000Z",
+    });
+  });
+
+  it("takes an omitted entryId as null", async () => {
+    await importRows(ITS, [row("its-legacy-2", { status: "done" })]);
+    const stamped = await stamp(ITS, "its-legacy-2", { version: "0.151.0", releasedAt: "2026-06-02T00:00:00.000Z" });
+    expect(stamped.json.ticket!.releasedEntry).toBeNull();
+  });
+
+  it("refuses a row that is not done, and writes nothing", async () => {
+    const id = (await create(ITS, { title: "Not yet shipped anywhere" })).json.ticket!.id;
+    expect(await stamp(ITS, id, { version: "0.150.0", releasedAt: "2026-06-01T00:00:00.000Z" })).toMatchObject({ status: 409, json: { error: "notDone" } });
+    expect((await getTicket(ITS, id)).json.ticket!.releasedIn).toBeNull();
+  });
+
+  it("refuses a row already stamped by ship, rather than overwrite it", async () => {
+    const id = (await create(ITS, { title: "Shipped for real" })).json.ticket!.id;
+    await read(await shipRoute(request("POST", `${ITS}/tickets/${id}/ship`, { body: { version: "0.196.0" } }), onTicket(ITS, id)));
+    const refused = await stamp(ITS, id, { version: "0.999.0", releasedAt: "2026-06-01T00:00:00.000Z" });
+    expect(refused).toMatchObject({ status: 409, json: { error: "alreadyStamped" } });
+    expect((await getTicket(ITS, id)).json.ticket!.releasedIn).toBe("0.196.0");
+  });
+
+  it("refuses a second stamp on the same row, rather than overwrite the first", async () => {
+    await importRows(ITS, [row("its-legacy-3", { status: "done" })]);
+    expect((await stamp(ITS, "its-legacy-3", { version: "0.150.0", releasedAt: "2026-06-01T00:00:00.000Z" })).status).toBe(200);
+    const second = await stamp(ITS, "its-legacy-3", { version: "0.151.0", releasedAt: "2026-06-02T00:00:00.000Z" });
+    expect(second).toMatchObject({ status: 409, json: { error: "alreadyStamped" } });
+    expect((await getTicket(ITS, "its-legacy-3")).json.ticket!.releasedIn).toBe("0.150.0");
+  });
+
+  it("needs an actor, and a ticket that exists", async () => {
+    await importRows(ITS, [row("its-legacy-4", { status: "done" })]);
+    expect(await stamp(ITS, "its-legacy-4", { version: "0.150.0", releasedAt: "2026-06-01T00:00:00.000Z" }, null)).toMatchObject({
+      status: 400,
+      json: { error: "actor_required" },
+    });
+    expect((await stamp(ITS, "no-such-ticket", { version: "0.150.0", releasedAt: "2026-06-01T00:00:00.000Z" })).status).toBe(404);
+  });
+
+  it("refuses an offset releasedAt rather than accept it silently, and a version past its cap", async () => {
+    await importRows(ITS, [row("its-legacy-5", { status: "done" })]);
+    const offset = await stamp(ITS, "its-legacy-5", { version: "0.150.0", releasedAt: "2026-06-01T12:00:00-07:00" });
+    expect(offset.status).toBe(400);
+    expect((await getTicket(ITS, "its-legacy-5")).json.ticket!.releasedIn).toBeNull();
+
+    const overCap = await stamp(ITS, "its-legacy-5", { version: "v".repeat(TICKET_LIMITS.releasedIn + 1), releasedAt: "2026-06-01T00:00:00.000Z" });
+    expect(overCap.status).toBe(400);
   });
 });

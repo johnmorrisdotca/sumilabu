@@ -316,6 +316,7 @@ test runs never touch the real rows. Every write also sends
 | POST | `/api/v1/projects/{key}/tickets/{id}/ship` | `{ version, entryId?, releasedAt? }` | release tools only; from `open` or `inProgress` under the claim condition; writes `done` |
 | POST | `/api/v1/projects/{key}/tickets/import` | `{ tickets: [row…] }` | one-time move of a client's board, ids and dates kept; upserts by id; 422 if an id already belongs to another project |
 | POST | `/api/v1/projects/{key}/tickets/{id}/unship` | `{ reason }` | only for a stamp the client's main never saw |
+| POST | `/api/v1/projects/{key}/tickets/{id}/stamp` | `{ version, entryId?, releasedAt }` | backfill only, for a row already `done` with no release recorded; never moves the row; 409 `notDone` off any other status, 409 `alreadyStamped` rather than overwrite a `releasedIn` that is already there; `releasedAt` is required, unlike `ship`'s |
 | GET | `/api/v1/projects/{key}/settings` | | settings token; `{ settings: { key: value }, entries: [{ key, value, setBy, updatedAt }] }` |
 | GET/PUT | `/api/v1/projects/{key}/settings/{key}` | `{ value }` | settings token; key `[a-z0-9_.-]{1,80}`, value ≤ 4000; returns `{ key, value, setBy, updatedAt }` |
 | DELETE | `/api/v1/projects/{key}/settings/{key}` | | settings token; back to the client's default; `{ deleted }` says whether a row was there |
