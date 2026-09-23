@@ -44,6 +44,7 @@ public — no secret ever goes in a file here, an example or a test.
 | What the database in `DIRECT_URL` lacks vs `schema.prisma` (SQL; empty = in sync) | `pnpm db:drift` |
 | Prisma Studio | `pnpm db:studio` |
 | Remove superseded Vercel deployments (`--dry-run` to list) | `pnpm deploy:prune` |
+| Server function sizes against their limits, after a `vercel build` (`--record` to rewrite the baseline) | `pnpm functions:size` |
 
 Run `pnpm check` before every commit. It is the same three gates the deploy
 workflow runs, so a red push is a red push you could have seen locally.
@@ -104,6 +105,9 @@ workflow runs, so a red push is a red push you could have seen locally.
   and umakuma repositories; a change here is a change there in the same pass.
 - `scripts/prune-deployments.sh` — the deployment cleanup, run by the deploy
   workflow and by `pnpm deploy:prune`.
+- `scripts/check-function-sizes.mjs`, `scripts/function-sizes.baseline.json`,
+  `src/lib/function-size-gate.mjs` — the function-size gate, its recorded
+  sizes and its rules (see Function size, below).
 - `env/.env.example` — the environment template.
 
 # Testing
@@ -220,8 +224,8 @@ walks it. The PATCH move outcomes (`illegal`, `held`) had no route test until
 **Pushing to `master` is the release.** `.github/workflows/vercel-deploy.yml`
 runs on every push to `master` that touches `sumilabu-dashboard/**` (and on
 `workflow_dispatch`): `verify` (`pnpm check`, `pnpm build`) then `deploy`
-(`vercel pull` → push schema → `vercel build --prod` → `vercel deploy
---prebuilt --prod` → one smoke request → prune deployments). The Vercel
+(`vercel pull` → push schema → `vercel build --prod` → function sizes →
+`vercel deploy --prebuilt --prod` → one smoke request → prune deployments). The Vercel
 project has **no Git integration, on purpose**: a Git integration deploys
 every push of every branch and every firmware commit, each one a deployment
 against the shared daily cap, and keeps every one of them. Before 2026-09-22
@@ -285,6 +289,50 @@ Use it when GitHub is down, not to skip the gates.
 
 **Domains:** `sumilabu.com`, `app.sumilabu.com` and `api.sumilabu.com` are
 aliases of the same production deployment; `vercel alias ls` shows which.
+
+# Function size
+
+Every server function counts against the Functions Storage the whole Vercel
+account shares, multiplied by every deployment kept, and Vercel refuses a
+function over 250 MB only after the whole build has been uploaded. So the
+deploy job checks sizes right after `vercel build --prod`, before the upload,
+with `scripts/check-function-sizes.mjs` (stat only, about a tenth of a second).
+
+- **No function over 120 MB, and none more than 20% over its recorded size**
+  (and more than 5 MB over it, below). John, 2026-09-23: "no more than 20% sounds reasonable." The sizes are in
+  `scripts/function-sizes.baseline.json`, each with a sample of the routes it
+  holds, because Vercel names a bundle after its alphabetically first route
+  and a new route can rename it; the gate matches by routes, not by name. A
+  function the baseline does not know has the 120 MB ceiling alone. The rules
+  are `src/lib/function-size-gate.mjs` and its test; umakuma holds the same.
+- **Growth fails only when it is both more than 20% and more than 5 MB** over
+  the record. Every function here is small enough that 20% is under 5 MB,
+  and the two smallest have under half a megabyte of room at 20% (2.1 MB has
+  0.4 MB), which ordinary build noise can use up; a real creep on a big function is far past the floor (90 MB at 20%
+  is 18 MB). So today the two 21 MB functions may reach about 26 MB and the
+  small ones about 7.
+- **A deliberate change in size is recorded in the same commit as the
+  change**, with `pnpm functions:size --record` after a local build, so the
+  jump is in the diff a reviewer reads. Never record afterwards to turn a red
+  deploy green: find what grew first, in `.next/server/**/*.nft.json`.
+- **Local build, no secrets:** write `.vercel/project.json` as
+  `{"projectId":"local","orgId":"local","settings":{"framework":"nextjs","nodeVersion":"24.x"}}`,
+  run `vercel build --yes` in this folder, then `pnpm functions:size`. A Mac's
+  build measures the same as the CI runner's, within a fraction of a MB.
+  `.vercel/` is gitignored and lint-ignored. Delete that `project.json`
+  before any real `vercel pull` or deploy from this folder.
+- **Prisma ships one engine.** `outputFileTracingExcludes` in `next.config.ts`
+  keeps only `runtime/library.js` and the `rhel-openssl-3.0.x` query engine
+  Vercel runs. Without it every database route carried about 80 MB of engines
+  for other machines: 102 MB a function, now 21. A Prisma upgrade that moves
+  those files shows up here as growth; widen the excludes rather than
+  recording it.
+- **A file read off disk names its folder in a string.** Next's tracer follows
+  `join(process.cwd(), "data/x.json")` and cannot follow
+  `join(process.cwd(), file)`, so it packs the whole project to be safe; in
+  umakuma one page reached 278 MB that way. `src/lib/server-file-tracing.test.ts`
+  fails on a join to a variable or a read rooted at the whole of `src` or
+  `public`.
 
 # Sibling projects, and what breaks them
 

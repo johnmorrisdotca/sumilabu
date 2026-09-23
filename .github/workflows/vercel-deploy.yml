@@ -132,6 +132,16 @@ jobs:
       - name: Build project artifacts
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
+      # Refuse an oversized function here, before the upload. Vercel refuses a
+      # function over 250 MB only after the whole build is uploaded, and every
+      # function counts against the Functions Storage the account shares. Two
+      # limits (src/lib/function-size-gate.mjs): 120 MB, and no more than 20%
+      # and 5 MB over the size scripts/function-sizes.baseline.json records for
+      # it (the floor keeps a 2 MB function's 0.4 MB of room from being noise).
+      # Reads the build output with stat alone; about a tenth of a second.
+      - name: Check server function sizes
+        run: node scripts/check-function-sizes.mjs
+
       # The upload is the one network call with no other safety net, and
       # `cancel-in-progress` above is what makes a retry safe: a superseded run
       # is killed before its retry could re-alias production to older code. A

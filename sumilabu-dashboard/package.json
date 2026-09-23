@@ -18,7 +18,8 @@
     "db:push": "prisma db push",
     "db:drift": "prisma migrate diff --from-url \"$DIRECT_URL\" --to-schema-datamodel prisma/schema.prisma --script",
     "db:studio": "prisma studio",
-    "deploy:prune": "bash scripts/prune-deployments.sh"
+    "deploy:prune": "bash scripts/prune-deployments.sh",
+    "functions:size": "node scripts/check-function-sizes.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

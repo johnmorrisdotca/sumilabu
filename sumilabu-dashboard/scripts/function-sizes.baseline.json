@@ -1,0 +1,44 @@
+{
+  "functions": [
+    {
+      "name": "api/app-telemetry",
+      "mb": 21,
+      "sample": [
+        "api/app-telemetry",
+        "api/device-stats",
+        "api/health",
+        "api/v1/projects",
+        "api/v1/projects/[projectKey]/settings",
+        "api/v1/projects/[projectKey]/settings/[key]",
+        "api/v1/projects/[projectKey]/tickets",
+        "api/v1/projects/[projectKey]/tickets/[ticketId]",
+        "api/v1/projects/[projectKey]/tickets/[ticketId]/ship",
+        "api/v1/projects/[projectKey]/tickets/[ticketId]/stamp"
+      ]
+    },
+    {
+      "name": "index",
+      "mb": 20.3,
+      "sample": [
+        "index"
+      ]
+    },
+    {
+      "name": "api/openapi.json.rsc",
+      "mb": 2.5,
+      "sample": [
+        "api/openapi",
+        "api/openapi.json",
+        "favicon.ico"
+      ]
+    },
+    {
+      "name": "_global-error.rsc",
+      "mb": 2.1,
+      "sample": [
+        "_global-error",
+        "_not-found"
+      ]
+    }
+  ]
+}

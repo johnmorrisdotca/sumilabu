@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // `vercel build`'s output, left in place when measuring function sizes.
+    ".vercel/**",
   ]),
 ]);
 
