@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 
 import { GET as getOne, PATCH, DELETE as del } from "./[id]/route";
 import { POST as fileRoute } from "./[id]/file/route";
+import { POST as importRoute } from "./import/route";
 import { GET as list, POST as createRoute } from "./route";
 
 /*
@@ -30,6 +31,7 @@ type Body = {
   error?: string;
   problems?: string[];
   scope?: string;
+  imported?: number;
   report?: ReportView;
   reports?: ReportView[];
   ticketId?: string;
@@ -66,6 +68,8 @@ const remove = async (projectKey: string, id: string, actor: string | null = "ad
   read(await del(request("DELETE", `${projectKey}/reports/${id}`, { actor }), onReport(projectKey, id)));
 const file = async (projectKey: string, id: string, body: Record<string, unknown> = {}, actor: string | null = "admin-alex") =>
   read(await fileRoute(request("POST", `${projectKey}/reports/${id}/file`, { body, actor, token: BOARD_TOKEN }), onReport(projectKey, id)));
+const importRows = async (projectKey: string, reports: Record<string, unknown>[], actor: string | null = "migration") =>
+  read(await importRoute(request("POST", `${projectKey}/reports/import`, { body: { reports }, actor }), inProject(projectKey)));
 
 const draft = { body: "The map does not load on a phone.", reporterRef: "member-1" };
 
@@ -202,6 +206,51 @@ describe("filing a report", () => {
     const filed = await file(UK, made.id, { title: "Map broken on phones", kind: "fix" });
     const ticket = await prisma.boardTicket.findFirst({ where: { id: filed.json.ticketId! } });
     expect((ticket as { title: string }).title).toBe("Map broken on phones");
+  });
+});
+
+describe("importing a client's existing reports table", () => {
+  const row = (id: string, extra: Record<string, unknown> = {}) => ({
+    id,
+    body: "A report brought over from the old table.",
+    reporterRef: "old-member-1",
+    status: "new",
+    createdAt: "2026-09-01T00:00:00.000Z",
+    ...extra,
+  });
+
+  it("keeps the id and createdAt, and answers how many landed", async () => {
+    const outcome = await importRows(UK, [row("legacy-report-1"), row("legacy-report-2", { status: "closed" })]);
+    expect(outcome.status).toBe(200);
+    expect(outcome.json.imported).toBe(2);
+    const first = await getReport(UK, "legacy-report-1");
+    expect(first.json.report!.createdAt).toBe("2026-09-01T00:00:00.000Z");
+    const second = await getReport(UK, "legacy-report-2");
+    expect(second.json.report!.status).toBe("closed");
+  });
+
+  it("is safe to re-run: upserts by id rather than duplicating", async () => {
+    await importRows(UK, [row("legacy-report-3")]);
+    const again = await importRows(UK, [row("legacy-report-3", { status: "read" })]);
+    expect(again.status).toBe(200);
+    expect((await listReports(UK)).json.reports!.filter((r) => r.id === "legacy-report-3")).toHaveLength(1);
+    expect((await getReport(UK, "legacy-report-3")).json.report!.status).toBe("read");
+  });
+
+  it("carries filedTicketId across without creating a new board ticket", async () => {
+    await importRows(UK, [row("legacy-report-4", { status: "filed", filedTicketId: "old-ticket-9" })]);
+    expect((await getReport(UK, "legacy-report-4")).json.report!.filedTicketId).toBe("old-ticket-9");
+    expect(await prisma.boardTicket.count({ where: { projectKey: UK } })).toBe(0);
+  });
+
+  it("refuses the whole batch, 422, on a row that fails the draft caps, and writes nothing", async () => {
+    const refused = await importRows(UK, [row("legacy-report-5"), row("legacy-report-6", { body: "" })]);
+    expect(refused.status).toBe(422);
+    expect((await getReport(UK, "legacy-report-5")).status).toBe(404);
+  });
+
+  it("400s an import with no actor", async () => {
+    expect((await importRows(UK, [row("legacy-report-7")], null)).status).toBe(400);
   });
 });
 

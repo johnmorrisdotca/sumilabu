@@ -343,5 +343,6 @@ as they do for the board.
 | PATCH | `/api/v1/projects/{key}/reports/{id}` | `{ status?, adminNote? }` | reports token; `status` is `read` or `closed` only - `filed` is not a legal value here; 409 off an illegal move |
 | DELETE | `/api/v1/projects/{key}/reports/{id}` | | reports token; hard delete, for a spurious report |
 | POST | `/api/v1/projects/{key}/reports/{id}/file` | `{ title?, detail?, kind? }` | **board token**, not the reports token; creates a `BoardTicket` and links it (`status = "filed"`, `filedTicketId`) in one transaction; 409 `not_fileable` off `filed`/`closed` |
+| POST | `/api/v1/projects/{key}/reports/import` | `{ reports: [row…] }` | reports token; one-time move of a client's own reports table, ids and `createdAt` kept; upserts by id; 422 if an id already belongs to another project |
 | GET | `/api/v1/health` | | any reports token; one `SELECT 1`; `Cache-Control: no-store`; see `REPORTS_CONTRACT.md` for the client-side caching/timeout a caller is expected to do |
 

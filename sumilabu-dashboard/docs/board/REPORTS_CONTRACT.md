@@ -68,6 +68,17 @@ read, list, patch and delete a project's own reports, but never write to the
 board. A site's admin surface, which already holds a board token for its own
 ticket actions, is what calls this route.
 
+## Import
+
+`POST reports/import` is the one-time move of a client's own reports table
+into this service - the same shape `tickets/import` already is, and the
+reports token, since a migration writes reports rather than board tickets.
+Each row names its own `id`, `status` (including `filed`, with its
+`filedTicketId`, carried across without creating a second board ticket) and
+`createdAt`; upserts by id, so a run that fails half way is re-run rather
+than reconciled, and an id already owned by a different project refuses the
+whole batch, 422, before anything is written.
+
 ## Rate limiting
 
 Counted against the `Report` table itself, not a second table or an

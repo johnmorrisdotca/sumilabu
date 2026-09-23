@@ -211,3 +211,68 @@ export async function fileReport(projectKey: string, id: string, overrides: File
     throw error;
   }
 }
+
+/** One row of a client's existing reports table, brought over as it stands. */
+export type ReportImportRow = {
+  id: string;
+  body: string;
+  path?: string | null;
+  appVersion?: string | null;
+  reporterRef: string;
+  reporterName?: string | null;
+  status: ReportStatus;
+  filedTicketId?: string | null;
+  adminNote?: string | null;
+  createdAt: Date;
+};
+
+/**
+ * The one-time move of a client's own reports table into this service,
+ * keeping ids and `createdAt` - a client that stores `filedTicketId` locally
+ * (UmaKuma's `ProblemReport.filedAs`) keeps citing the same id afterwards.
+ * Upserts by id, so a run that failed half way is re-run rather than
+ * reconciled; `updatedAt` is not carried across (the board's own import does
+ * the same with `BoardTicket.updatedAt`) since nothing reads it as history,
+ * only as "was this row touched since I last looked."
+ *
+ * An id already owned by a different project refuses the whole batch by
+ * name, before anything is written - ids are global, and an upsert would
+ * otherwise hand that project's row to this one.
+ */
+export async function importReports(
+  projectKey: string,
+  rows: readonly ReportImportRow[],
+): Promise<{ ok: true; imported: number } | { ok: false; problems: string[] }> {
+  const problems: string[] = [];
+  for (const row of rows) {
+    for (const problem of draftProblems({ body: row.body, reporterRef: row.reporterRef, path: row.path, appVersion: row.appVersion, reporterName: row.reporterName })) {
+      problems.push(`${row.id}: ${problem}`);
+    }
+    problems.push(...adminNoteProblems(row.adminNote).map((problem) => `${row.id}: ${problem}`));
+  }
+  const owned = await prisma.report.findMany({
+    where: { id: { in: rows.map((row) => row.id) }, projectKey: { not: projectKey } },
+    select: { id: true, projectKey: true },
+  });
+  problems.push(...owned.map((row) => `${row.id}: already belongs to project ${row.projectKey}.`));
+  if (problems.length > 0) return { ok: false, problems };
+
+  let imported = 0;
+  for (const row of rows) {
+    const data = {
+      projectKey,
+      body: row.body.trim(),
+      path: row.path ?? null,
+      appVersion: row.appVersion ?? null,
+      reporterRef: row.reporterRef,
+      reporterName: row.reporterName ?? null,
+      status: row.status,
+      filedTicketId: row.filedTicketId ?? null,
+      adminNote: row.adminNote ?? null,
+      createdAt: row.createdAt,
+    };
+    await prisma.report.upsert({ where: { id: row.id }, create: { id: row.id, ...data }, update: data });
+    imported += 1;
+  }
+  return { ok: true, imported };
+}
