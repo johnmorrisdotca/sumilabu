@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 
 import { GET as getOne, PATCH, DELETE as del } from "./[id]/route";
 import { POST as fileRoute } from "./[id]/file/route";
+import { GET as imageRoute } from "./[id]/image/route";
 import { POST as importRoute } from "./import/route";
 import { GET as list, POST as createRoute } from "./route";
 
@@ -31,6 +32,7 @@ type Body = {
   error?: string;
   problems?: string[];
   scope?: string;
+  limit?: string;
   imported?: number;
   report?: ReportView;
   reports?: ReportView[];
@@ -73,11 +75,23 @@ const importRows = async (projectKey: string, reports: Record<string, unknown>[]
 
 const draft = { body: "The map does not load on a phone.", reporterRef: "member-1" };
 
+const image = async (projectKey: string, id: string, token = REPORTS_TOKEN) =>
+  imageRoute(request("GET", `${projectKey}/reports/${id}/image`, { token }), onReport(projectKey, id));
+
+/** A PNG by its signature, padded to `size` bytes, as the base64 a site sends. */
+function png(size = 2048): string {
+  const out = Buffer.alloc(size);
+  Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(out);
+  return out.toString("base64");
+}
+const MIB = 1024 * 1024;
+
 beforeEach(async () => {
   vi.stubEnv("REPORTS_TOKENS_JSON", JSON.stringify({ [UK]: REPORTS_TOKEN }));
   vi.stubEnv("BOARD_TOKENS_JSON", JSON.stringify({ [UK]: BOARD_TOKEN }));
   await prisma.report.deleteMany({ where: { projectKey: UK } });
   await prisma.boardTicket.deleteMany({ where: { projectKey: UK } });
+  await prisma.report.deleteMany({ where: { projectKey: "itsutsu-dev" } });
 });
 
 describe("creating a report", () => {
@@ -265,5 +279,91 @@ describe("deleting a report", () => {
   it("400s a DELETE with no actor", async () => {
     const made = (await create(UK, draft)).json.report!;
     expect((await remove(UK, made.id, null)).status).toBe(400);
+  });
+});
+
+describe("a screenshot on a report", () => {
+  it("is stored with the report and listed only as hasImage", async () => {
+    const made = await create(UK, { ...draft, image: png() });
+    expect(made.status).toBe(201);
+    expect(made.json.report!.hasImage).toBe(true);
+    expect(made.json.report).not.toHaveProperty("imageBytes");
+    expect(made.json.report).not.toHaveProperty("image");
+
+    const plain = (await create(UK, { ...draft, reporterRef: "member-2" })).json.report!;
+    expect(plain.hasImage).toBe(false);
+
+    const listed = (await listReports(UK)).json.reports!;
+    expect(listed.map((r) => r.hasImage)).toEqual([false, true]);
+    expect((await getReport(UK, made.json.report!.id)).json.report!.hasImage).toBe(true);
+  });
+
+  it("serves the bytes with the type read from them, to the reports or the board token", async () => {
+    const sent = png(4096);
+    const made = (await create(UK, { ...draft, image: sent })).json.report!;
+
+    const viaReports = await image(UK, made.id);
+    expect(viaReports.status).toBe(200);
+    expect(viaReports.headers.get("content-type")).toBe("image/png");
+    expect(viaReports.headers.get("cache-control")).toBe("private, no-store");
+    expect(viaReports.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(Buffer.from(await viaReports.arrayBuffer()).toString("base64")).toBe(sent);
+
+    expect((await image(UK, made.id, BOARD_TOKEN)).status).toBe(200);
+  });
+
+  it("401s any other token, and 404s a report with no image or in another project", async () => {
+    vi.stubEnv("REPORTS_TOKENS_JSON", JSON.stringify({ [UK]: REPORTS_TOKEN, "itsutsu-dev": "its-reports-token" }));
+    const made = (await create(UK, { ...draft, image: png() })).json.report!;
+    expect((await image(UK, made.id, "wrong")).status).toBe(401);
+    expect((await image(UK, made.id, "its-reports-token")).status).toBe(401);
+    expect((await image("itsutsu-dev", made.id, "its-reports-token")).status).toBe(404);
+
+    const plain = (await create(UK, { ...draft, reporterRef: "member-2" })).json.report!;
+    expect((await image(UK, plain.id)).status).toBe(404);
+  });
+
+  it("refuses a file that is not a JPEG, PNG or WebP, whatever it claims, and writes nothing", async () => {
+    const svg = Buffer.from("<svg xmlns='http://www.w3.org/2000/svg'></svg>").toString("base64");
+    const refused = await create(UK, { ...draft, image: svg });
+    expect(refused.status).toBe(422);
+    expect(refused.json.problems).toEqual(["An image must be a JPEG, PNG or WebP file."]);
+    expect((await listReports(UK)).json.reports).toEqual([]);
+    expect(await prisma.reportImage.count()).toBe(0);
+  });
+
+  it("refuses an image over 1 MiB in words, and a far larger body as a payload", async () => {
+    expect((await create(UK, { ...draft, image: png(MIB + 1) })).status).toBe(422);
+    expect((await create(UK, { ...draft, image: png(MIB) })).status).toBe(201);
+    expect((await create(UK, { ...draft, reporterRef: "member-3", image: png(2 * MIB + 3) })).status).toBe(400);
+  });
+
+  it("holds one reporter to 3 MiB of images in the window, and still takes their text", async () => {
+    for (let i = 0; i < 3; i += 1) expect((await create(UK, { ...draft, reporterRef: "shots-1", image: png(MIB) })).status).toBe(201);
+    const fourth = await create(UK, { ...draft, reporterRef: "shots-1", image: png(1024) });
+    expect(fourth.status).toBe(429);
+    expect(fourth.json).toMatchObject({ ok: false, error: "rate_limited", scope: "reporter", limit: "image_bytes" });
+    expect((await create(UK, { ...draft, reporterRef: "shots-1" })).status).toBe(201);
+    expect((await create(UK, { ...draft, reporterRef: "shots-2", image: png(MIB) })).status).toBe(201);
+  });
+
+  it("holds a project to 25 MiB of images an hour across reporters", async () => {
+    for (let i = 0; i < 25; i += 1) expect((await create(UK, { ...draft, reporterRef: `crowd-${i}`, image: png(MIB) })).status).toBe(201);
+    const over = await create(UK, { ...draft, reporterRef: "crowd-last", image: png(1024) });
+    expect(over.status).toBe(429);
+    expect(over.json).toMatchObject({ scope: "project", limit: "image_bytes" });
+  });
+
+  it("names the report count as the limit when that is what was hit", async () => {
+    for (let i = 0; i < 5; i += 1) await create(UK, { ...draft, reporterRef: "chatty" });
+    expect((await create(UK, { ...draft, reporterRef: "chatty" })).json.limit).toBe("reports");
+  });
+
+  it("goes when its report is deleted", async () => {
+    const made = (await create(UK, { ...draft, image: png() })).json.report!;
+    expect(await prisma.reportImage.count()).toBe(1);
+    await remove(UK, made.id);
+    expect(await prisma.reportImage.count()).toBe(0);
+    expect((await image(UK, made.id)).status).toBe(404);
   });
 });

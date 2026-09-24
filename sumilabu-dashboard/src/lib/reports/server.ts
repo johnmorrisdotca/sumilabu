@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { draftProblems as ticketDraftProblems, type TicketKind } from "@/lib/board/rules";
 
+import { REPORT_IMAGE_BUDGETS, decodeReportImage, type ReportImageType } from "./image";
 import {
   FILEABLE_FROM,
   REPORT_RATE_LIMITS,
@@ -8,6 +9,7 @@ import {
   canPatchMove,
   draftProblems,
   isReportStatus,
+  type RateLimitKind,
   type RateLimitScope,
   type ReportDraft,
   type ReportPatchTarget,
@@ -25,19 +27,33 @@ export type ReportView = {
   status: ReportStatus;
   filedTicketId: string | null;
   adminNote: string | null;
+  /** Whether a screenshot is attached; the bytes are only ever read from `GET reports/{id}/image`. */
+  hasImage: boolean;
   createdAt: string;
   updatedAt: string;
 };
 
 type Row = {
   id: string; projectKey: string; body: string; path: string | null; appVersion: string | null; reporterRef: string;
-  reporterName: string | null; status: string; filedTicketId: string | null; adminNote: string | null; createdAt: Date; updatedAt: Date;
+  reporterName: string | null; status: string; filedTicketId: string | null; adminNote: string | null; imageBytes?: number | null;
+  createdAt: Date; updatedAt: Date;
 };
 
+/* Field by field rather than a spread, so a column added to Report is not
+   published by accident - `imageBytes` becomes `hasImage` and nothing more. */
 function view(row: Row): ReportView {
   return {
-    ...row,
+    id: row.id,
+    projectKey: row.projectKey,
+    body: row.body,
+    path: row.path,
+    appVersion: row.appVersion,
+    reporterRef: row.reporterRef,
+    reporterName: row.reporterName,
     status: isReportStatus(row.status) ? row.status : "new",
+    filedTicketId: row.filedTicketId,
+    adminNote: row.adminNote,
+    hasImage: row.imageBytes != null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -67,17 +83,44 @@ export async function getReport(projectKey: string, id: string): Promise<ReportV
  * refused report is never written; the reporter's own count is the tighter
  * limit in practice, but a project can also be hammered by many reporters.
  */
-export async function rateLimited(projectKey: string, reporterRef: string): Promise<{ limited: false } | { limited: true; scope: RateLimitScope; retryAfterMs: number }> {
+export type RateLimit = { limited: false } | { limited: true; scope: RateLimitScope; limit: RateLimitKind; retryAfterMs: number };
+
+/** Image bytes already sent in the window, from `Report.imageBytes` - never from the images themselves. */
+async function imageBytesSince(where: Record<string, unknown>): Promise<number> {
+  const rows = await prisma.report.findMany({ where: { ...where, imageBytes: { not: null } }, select: { imageBytes: true } });
+  return (rows as { imageBytes: number | null }[]).reduce((sum, row) => sum + (row.imageBytes ?? 0), 0);
+}
+
+export async function rateLimited(projectKey: string, reporterRef: string, imageBytes = 0): Promise<RateLimit> {
   const now = Date.now();
   const reporterSince = new Date(now - REPORT_RATE_LIMITS.perReporter.windowMs);
   const reporterCount = await prisma.report.count({ where: { projectKey, reporterRef, createdAt: { gt: reporterSince } } });
   if (reporterCount >= REPORT_RATE_LIMITS.perReporter.max) {
-    return { limited: true, scope: "reporter", retryAfterMs: REPORT_RATE_LIMITS.perReporter.windowMs };
+    return { limited: true, scope: "reporter", limit: "reports", retryAfterMs: REPORT_RATE_LIMITS.perReporter.windowMs };
   }
   const projectSince = new Date(now - REPORT_RATE_LIMITS.perProject.windowMs);
   const projectCount = await prisma.report.count({ where: { projectKey, createdAt: { gt: projectSince } } });
   if (projectCount >= REPORT_RATE_LIMITS.perProject.max) {
-    return { limited: true, scope: "project", retryAfterMs: REPORT_RATE_LIMITS.perProject.windowMs };
+    return { limited: true, scope: "project", limit: "reports", retryAfterMs: REPORT_RATE_LIMITS.perProject.windowMs };
+  }
+  if (imageBytes > 0) return imageBudgetExceeded(projectKey, reporterRef, imageBytes, now);
+  return { limited: false };
+}
+
+/**
+ * The byte budget an image is held to on top of the report count
+ * (`REPORT_IMAGE_BUDGETS`). Asked only when the create carries an image, so a
+ * text-only report costs no extra query.
+ */
+async function imageBudgetExceeded(projectKey: string, reporterRef: string, imageBytes: number, now: number): Promise<RateLimit> {
+  const { perReporter, perProject } = REPORT_IMAGE_BUDGETS;
+  const reporterBytes = await imageBytesSince({ projectKey, reporterRef, createdAt: { gt: new Date(now - perReporter.windowMs) } });
+  if (reporterBytes + imageBytes > perReporter.maxBytes) {
+    return { limited: true, scope: "reporter", limit: "image_bytes", retryAfterMs: perReporter.windowMs };
+  }
+  const projectBytes = await imageBytesSince({ projectKey, createdAt: { gt: new Date(now - perProject.windowMs) } });
+  if (projectBytes + imageBytes > perProject.maxBytes) {
+    return { limited: true, scope: "project", limit: "image_bytes", retryAfterMs: perProject.windowMs };
   }
   return { limited: false };
 }
@@ -85,24 +128,56 @@ export async function rateLimited(projectKey: string, reporterRef: string): Prom
 export type CreateOutcome =
   | { ok: true; report: ReportView }
   | { ok: false; reason: "invalid"; problems: string[] }
-  | { ok: false; reason: "rate_limited"; scope: RateLimitScope; retryAfterMs: number };
+  | { ok: false; reason: "rate_limited"; scope: RateLimitScope; limit: RateLimitKind; retryAfterMs: number };
 
-export async function createReport(projectKey: string, draft: ReportDraft): Promise<CreateOutcome> {
+/**
+ * `image`, when given, is plain base64. Its type is read from its bytes and
+ * its size checked before anything else is asked, and the report and the
+ * image are written in one transaction - a report never claims a screenshot
+ * that did not land, and an image never outlives a create that failed.
+ */
+export async function createReport(projectKey: string, draft: ReportDraft, image?: string | null): Promise<CreateOutcome> {
   const problems = draftProblems(draft);
+  const decoded = image ? decodeReportImage(image) : null;
+  if (decoded && !decoded.ok) problems.push(decoded.problem);
   if (problems.length > 0) return { ok: false, reason: "invalid", problems };
-  const limit = await rateLimited(projectKey, draft.reporterRef.trim());
-  if (limit.limited) return { ok: false, reason: "rate_limited", scope: limit.scope, retryAfterMs: limit.retryAfterMs };
-  const row = await prisma.report.create({
-    data: {
-      projectKey,
-      body: draft.body.trim(),
-      path: draft.path?.trim() || null,
-      appVersion: draft.appVersion?.trim() || null,
-      reporterRef: draft.reporterRef.trim(),
-      reporterName: draft.reporterName?.trim() || null,
-    },
-  });
+  const attached = decoded?.ok ? decoded : null;
+
+  const limit = await rateLimited(projectKey, draft.reporterRef.trim(), attached?.bytes.length ?? 0);
+  if (limit.limited) return { ok: false, reason: "rate_limited", scope: limit.scope, limit: limit.limit, retryAfterMs: limit.retryAfterMs };
+  const data = {
+    projectKey,
+    body: draft.body.trim(),
+    path: draft.path?.trim() || null,
+    appVersion: draft.appVersion?.trim() || null,
+    reporterRef: draft.reporterRef.trim(),
+    reporterName: draft.reporterName?.trim() || null,
+    imageBytes: attached ? attached.bytes.length : null,
+  };
+  const row = attached
+    ? await prisma.$transaction(async (tx) => {
+        const created = await tx.report.create({ data });
+        await tx.reportImage.create({ data: { reportId: created.id, contentType: attached.contentType, bytes: new Uint8Array(attached.bytes) } });
+        return created;
+      })
+    : await prisma.report.create({ data });
   return { ok: true, report: view(row as Row) };
+}
+
+export type StoredImage = { contentType: ReportImageType; bytes: Buffer };
+
+/**
+ * A report's screenshot, only through the report's own project: the report
+ * is found by `id` and `projectKey` first, so a token for one project cannot
+ * read another's image by guessing an id.
+ */
+export async function getReportImage(projectKey: string, id: string): Promise<StoredImage | null> {
+  const owner = await prisma.report.findFirst({ where: { id, projectKey }, select: { id: true } });
+  if (!owner) return null;
+  const image = await prisma.reportImage.findFirst({ where: { reportId: id } });
+  if (!image) return null;
+  const row = image as { contentType: string; bytes: Uint8Array };
+  return { contentType: row.contentType as ReportImageType, bytes: Buffer.from(row.bytes) };
 }
 
 export type ReportPatch = { status?: ReportPatchTarget; adminNote?: string | null };

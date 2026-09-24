@@ -252,6 +252,11 @@ model Report {
   filedTicketId String?   @db.VarChar(40)
   /// An admin's own note, never shown to the reporter.
   adminNote     String?   @db.VarChar(4000)
+  /// Size of the attached screenshot in bytes, null for none. Kept on the
+  /// report so a list can say "has a screenshot" and the image byte budget
+  /// can be summed without ever reading ReportImage's bytes.
+  imageBytes    Int?
+  image         ReportImage?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -260,3 +265,15 @@ model Report {
   @@index([createdAt(sort: Desc)])
 }
 
+/// The one screenshot a Report may carry (REPORTS_CONTRACT.md, "Screenshots").
+/// A table of its own, not a column on Report, so listing reports never
+/// loads image bytes; deleted with its report by the foreign key.
+model ReportImage {
+  reportId    String   @id
+  report      Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  /// image/jpeg, image/png or image/webp - read from the bytes' magic
+  /// number on the way in, never taken from the client.
+  contentType String   @db.VarChar(20)
+  bytes       Bytes
+  createdAt   DateTime @default(now())
+}

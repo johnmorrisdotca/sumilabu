@@ -7,7 +7,7 @@ export function createResponse(outcome: CreateOutcome): NextResponse {
   if (outcome.ok) return NextResponse.json({ ok: true, report: outcome.report }, { status: 201 });
   if (outcome.reason === "rate_limited") {
     return NextResponse.json(
-      { ok: false, error: "rate_limited", scope: outcome.scope, retryAfterMs: outcome.retryAfterMs },
+      { ok: false, error: "rate_limited", scope: outcome.scope, limit: outcome.limit, retryAfterMs: outcome.retryAfterMs },
       { status: 429, headers: { "Retry-After": String(Math.ceil(outcome.retryAfterMs / 1000)) } },
     );
   }

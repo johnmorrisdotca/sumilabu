@@ -21,6 +21,7 @@ change a setting, and a leaked board or settings key does not read reports.
 | `status` | `new`, `read`, `filed`, `closed`. See "Moves" below. |
 | `filedTicketId` | Set only by `POST reports/{id}/file`, together with `status = "filed"`. |
 | `adminNote` | At most 4,000 characters. An admin's own note; never shown to the reporter. |
+| `hasImage` | Read-only. Whether a screenshot is attached; see "Screenshots" below. The bytes are never in a report, a list or a create's answer. |
 | `createdAt`, `updatedAt` | |
 
 ## Reporter identity
@@ -34,6 +35,65 @@ nothing else. **A site must never send personal data in `reporterRef` or
 reader could decode. `reporterName` is the one field allowed to identify
 someone, and only because it is optional and exists purely so an admin has a
 name to read; a client that has no name to offer sends null.
+
+## Screenshots
+
+A report may carry **one** screenshot, sent with the create and never
+added, replaced or removed afterwards (deleting the report deletes it).
+
+**Sending.** `image` on `POST reports`, in the same JSON body as the text:
+the file's bytes as plain base64 - no `data:` prefix, no type, no file name.
+
+    { "body": "…", "reporterRef": "…", "path": "/maps", "image": "UklGRl…" }
+
+JSON rather than a multipart body because both clients already send JSON
+through their own servers: a site's route takes the browser's JSON, checks
+its own rules, and forwards one `fetch` with the same body - no multipart
+parser on either side, and no second request that could land without the
+first. Base64 costs a third more on the wire, which the 1 MiB cap keeps well
+inside Vercel's 4.5 MB request limit.
+
+**What is accepted**, checked on this server whatever the client says:
+
+| Rule | Refusal |
+|---|---|
+| JPEG, PNG or WebP, read from the file's first bytes (magic number). A type or extension the client claims is never asked. | 422 `An image must be a JPEG, PNG or WebP file.` |
+| At most 1 MiB (1,048,576 bytes) decoded. | 422 in words; a body over twice that is 400 `invalid_payload` before it is read. |
+| Valid base64 (the alphabet and length are checked before decoding, so garbage is refused rather than half-decoded). | 422 `An image must be sent as base64.` |
+
+A client should shrink the image in the browser before sending it -
+re-encode to WebP or JPEG at a readable width - so a phone screenshot is a
+few hundred KB, not the cap. The images are stored in this service's own
+Postgres (`ReportImage`, one row per report, deleted with it by its foreign
+key) on a free plan every project shares; no blob storage, nothing paid.
+
+**The byte budget.** On top of the report counts under "Rate limiting", the
+image bytes a create would add are summed against the window before
+anything is written:
+
+| Scope | Image bytes |
+|---|---|
+| Per `reporterRef` | 3 MiB per 10 minutes |
+| Per `projectKey` | 25 MiB per hour |
+
+Over either, the create is refused whole - 429 `rate_limited` with
+`limit: "image_bytes"` - and nothing is written; the text is not kept
+without its picture. The same reporter can still send a report with no
+image straight away. A client that sees `image_bytes` should say the
+screenshot could not be sent and offer to send the words alone.
+
+**Reading.** `hasImage` on every report. The bytes come only from
+`GET reports/{id}/image`, which takes the owning project's **reports token
+or board token** (a site's admin surface holds one or the other) and
+answers the bytes with the stored `Content-Type`, `X-Content-Type-Options:
+nosniff` and `Cache-Control: private, no-store`, or 404 when the report has
+no image or is not this project's. The route is never public: a site's own
+server proxies it to a signed-in admin, and a browser never calls it.
+
+**Who may attach one** is the site's decision, enforced on the site's
+server before it forwards: UmaKuma refuses an image from a member under 13,
+the same way it refuses them a photo avatar. The service cannot know a
+reporter's age and does not try.
 
 ## Moves
 
@@ -92,7 +152,9 @@ writes to. No Redis, anywhere, ever (a standing rule on every site here).
 
 A create over either limit is refused before anything is written: 429
 `{ ok: false, error: "rate_limited", scope: "reporter" | "project",
-retryAfterMs }`, with a `Retry-After` header in seconds.
+limit: "reports" | "image_bytes", retryAfterMs }`, with a `Retry-After`
+header in seconds. `limit` says which was hit: the report count, or the
+image byte budget under "Screenshots".
 
 ## Health, and what a client does with it
 
@@ -125,7 +187,8 @@ cannot take it, and so Itsutsu's port matches UmaKuma's:
 A third token map, alongside `BOARD_TOKENS_JSON` and `SETTINGS_TOKENS_JSON`:
 `REPORTS_TOKENS_JSON`, same `{ "<projectKey>": "<token>" }` shape. It
 authorizes every reports route except `POST reports/{id}/file`, which takes
-the board token instead (see "Filing" above). Every project may also hold a
+the board token instead (see "Filing" above). `GET reports/{id}/image` takes
+either the reports or the board token of the owning project. Every project may also hold a
 `<key>-dev` entry, the same as the other two maps, so a test run never
 touches a real project's reports.
 

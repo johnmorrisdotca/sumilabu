@@ -86,3 +86,6 @@ export const REPORT_RATE_LIMITS = {
 } as const;
 
 export type RateLimitScope = "reporter" | "project";
+
+/** Which limit a refused create ran into: the report count, or the image byte budget (`image.ts`). */
+export type RateLimitKind = "reports" | "image_bytes";

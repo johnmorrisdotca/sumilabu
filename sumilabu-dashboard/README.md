@@ -338,8 +338,9 @@ as they do for the board.
 | Method | Path | Body | Notes |
 |---|---|---|---|
 | GET | `/api/v1/projects/{key}/reports` | `?status=new,read`, `?limit=`, `?offset=` | reports token; newest first |
-| POST | `/api/v1/projects/{key}/reports` | `{ body, path?, appVersion?, reporterRef, reporterName? }` | reports token; `reporterRef` required (signed-out reporting); 422 with `problems[]` on a cap; 429 `rate_limited` with `scope` and `retryAfterMs` |
-| GET | `/api/v1/projects/{key}/reports/{id}` | | reports token |
+| POST | `/api/v1/projects/{key}/reports` | `{ body, path?, appVersion?, reporterRef, reporterName?, image? }` | reports token; `reporterRef` required (signed-out reporting); `image` is one optional screenshot, plain base64, JPEG/PNG/WebP by its bytes, at most 1 MiB; 422 with `problems[]` on a cap; 429 `rate_limited` with `scope`, `limit` (`reports` or `image_bytes`) and `retryAfterMs` |
+| GET | `/api/v1/projects/{key}/reports/{id}` | | reports token; a report says `hasImage`, never the bytes |
+| GET | `/api/v1/projects/{key}/reports/{id}/image` | | the project's reports **or** board token; the screenshot's bytes with its stored `Content-Type`, `Cache-Control: private, no-store`; 404 when there is none |
 | PATCH | `/api/v1/projects/{key}/reports/{id}` | `{ status?, adminNote? }` | reports token; `status` is `read` or `closed` only - `filed` is not a legal value here; 409 off an illegal move |
 | DELETE | `/api/v1/projects/{key}/reports/{id}` | | reports token; hard delete, for a spurious report |
 | POST | `/api/v1/projects/{key}/reports/{id}/file` | `{ title?, detail?, kind? }` | **board token**, not the reports token; creates a `BoardTicket` and links it (`status = "filed"`, `filedTicketId`) in one transaction; 409 `not_fileable` off `filed`/`closed` |

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { TOKEN_SCOPES } from "@/lib/board/auth";
 import { isResponse, readJson, requireCaller } from "@/lib/board/http";
 import { createResponse } from "@/lib/reports/http";
+import { REPORT_IMAGE_MAX_BYTES, base64Length } from "@/lib/reports/image";
 import { REPORT_LIMITS, REPORT_STATUSES, isReportStatus, type ReportStatus } from "@/lib/reports/rules";
 import { createReport, listReports } from "@/lib/reports/server";
 
@@ -44,6 +45,10 @@ const createSchema = z.object({
   appVersion: z.string().max(REPORT_LIMITS.appVersion * 4).nullable().optional(),
   reporterRef: z.string().max(REPORT_LIMITS.reporterRef * 4),
   reporterName: z.string().max(REPORT_LIMITS.reporterName * 4).nullable().optional(),
+  /* Twice the cap rather than four times: an image a little over 1 MB is
+     refused in words (422), one far over it as a payload (400), and the
+     body stays inside Vercel's 4.5 MB request limit either way. */
+  image: z.string().max(base64Length(REPORT_IMAGE_MAX_BYTES * 2)).nullable().optional(),
 });
 
 /**
@@ -51,6 +56,11 @@ const createSchema = z.object({
  * every create, an opaque id the client mints, never an email or an IP.
  * Rate-limited per reporter and per project before anything is written
  * (`createReport`); a refusal is 429 with the scope and a Retry-After.
+ *
+ * `image` is one optional screenshot, plain base64 in the same JSON body
+ * (REPORTS_CONTRACT.md, "Screenshots"): its type is read from its bytes, its
+ * size capped at 1 MiB, and it is held to a byte budget per reporter and per
+ * project on top of the report count.
  */
 export async function POST(req: NextRequest, ctx: Ctx) {
   const { projectKey } = await ctx.params;
@@ -58,6 +68,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
   if (isResponse(caller)) return caller;
   const parsed = createSchema.safeParse(await readJson(req));
   if (!parsed.success) return NextResponse.json({ ok: false, error: "invalid_payload", details: parsed.error.issues }, { status: 400 });
-  const outcome = await createReport(projectKey, parsed.data);
+  const { image, ...draft } = parsed.data;
+  const outcome = await createReport(projectKey, draft, image);
   return createResponse(outcome);
 }
