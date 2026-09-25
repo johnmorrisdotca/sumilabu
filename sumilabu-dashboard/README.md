@@ -45,7 +45,7 @@ pnpm db:push
 pnpm dev
 ```
 
-Open `http://localhost:3000`.
+Open `http://localhost:6500` (Sumilabu's local port block is 6500–6599; override with `WEB_PORT`).
 
 5. Before committing:
 

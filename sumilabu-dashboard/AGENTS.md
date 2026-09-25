@@ -29,12 +29,17 @@ public — no secret ever goes in a file here, an example or a test.
 - Vercel team `spxis-projects-0d6306b4`, project `sumilabu-dashboard`, Hobby
   plan shared with itsutsu, umakuma, wazadb and ridemuseum — its limits are
   account-wide, and this project's waste is everybody's.
+- Sumilabu's local port block is **6500–6599** (`~/.claude/CLAUDE.md`, "Local
+  ports"): 6500 is the dev server, a worktree takes the next free port up
+  from 6501. Local Postgres containers are numbered separately in that same
+  file and Sumilabu has none yet — check there for the next free one, rather
+  than assuming a number here, before adding one.
 
 # Scripts
 
 | Task | Command |
 |---|---|
-| Dev server (`http://localhost:3000`) | `pnpm dev` |
+| Dev server (`http://localhost:6500`, override with `WEB_PORT`) | `pnpm dev` |
 | Typecheck | `pnpm typecheck` |
 | Lint | `pnpm lint` |
 | Unit and route tests | `pnpm test` |

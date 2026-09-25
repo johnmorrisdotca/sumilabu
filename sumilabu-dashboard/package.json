@@ -7,9 +7,9 @@
     "node": "24.x"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p ${WEB_PORT:-6500}",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p ${WEB_PORT:-6500}",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
