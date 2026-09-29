@@ -7,7 +7,8 @@ Buttons, left to right:
 
 The clock face redraws when the minute changes. Five minutes before a
 meeting starts, the coin sound plays, the LEDs flash, and the meetings face
-shows for a minute before the clock returns. Everything is configured in
+shows for a minute before the clock returns. Vancouver is UTC-7 all year
+since British Columbia dropped clock changes in March 2026. Everything is configured in
 settings.toml (see settings.toml.example).
 """
 
@@ -34,9 +35,9 @@ def setting(name, default):
 
 LOCAL = City(
     setting("LOCAL_CITY_NAME", "Vancouver"),
-    int(setting("LOCAL_UTC_OFFSET", -8)),
-    setting("LOCAL_TZ_LABELS", "PST/PDT"),
-    setting("LOCAL_DST_RULE", "us"),
+    int(setting("LOCAL_UTC_OFFSET", -7)),
+    setting("LOCAL_TZ_LABELS", "PST"),
+    setting("LOCAL_DST_RULE", "none"),
 )
 REMOTE = City(
     setting("REMOTE_CITY_NAME", "Tokyo"),

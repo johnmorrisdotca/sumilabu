@@ -1,8 +1,10 @@
 """Wall-clock time for two cities, from the board's RTC set by NTP.
 
-The RTC holds UTC. Each city is a fixed standard offset plus, for the local
-city, the US daylight-saving rule, so the Vancouver clock is right all year
-without anybody editing an offset in March and November. Tokyo has no DST.
+The RTC holds UTC. Each city is a fixed offset, plus the US daylight rule
+for a city that still changes its clocks. Neither of ours does: Tokyo never
+did, and British Columbia went to permanent UTC-7 on 2026-03-09 (tz database
+2026b), so Vancouver is "none" too. The rule stays for a Seattle or a
+New York.
 """
 
 import time

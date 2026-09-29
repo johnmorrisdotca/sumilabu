@@ -7,11 +7,14 @@ CIRCUITPY_WIFI_PASSWORD = ""
 
 DEVICE_ID = "magtag-01"
 
-# Standard-time offset from UTC, and the daylight rule ("us" or "none").
+# Offset from UTC, and the daylight rule ("us" for a city that still changes
+# its clocks, "none" otherwise). British Columbia is permanent -7 since
+# 2026-03-09 (tz database 2026b), so Vancouver is "none"; PST is the label
+# the rest of the fleet shows for it.
 LOCAL_CITY_NAME = "Vancouver"
-LOCAL_UTC_OFFSET = -8
-LOCAL_TZ_LABELS = "PST/PDT"
-LOCAL_DST_RULE = "us"
+LOCAL_UTC_OFFSET = -7
+LOCAL_TZ_LABELS = "PST"
+LOCAL_DST_RULE = "none"
 
 REMOTE_CITY_NAME = "Tokyo"
 REMOTE_UTC_OFFSET = 9

@@ -20,8 +20,10 @@ drivers.
 ## What it does
 
 - **A** Vancouver clock, **B** Tokyo clock. HH:MM in Roboto, the date, the
-  zone label, and the next meeting in the corner. Vancouver follows the US
-  daylight rule by itself (`LOCAL_DST_RULE = "us"`); Tokyo has none.
+  zone label, and the next meeting in the corner. Both are fixed offsets:
+  British Columbia has been permanent UTC-7 since 2026-03-09, so there is no
+  November edit any more; `LOCAL_DST_RULE = "us"` exists for a city that
+  still changes.
 - **C** the meetings face: the next four, in the shown city's time. Pressing
   it re-reads the calendar, at most once a minute.
 - **D** the next NeoPixel palette (sakura, mint, sunset, ocean, lavender,
