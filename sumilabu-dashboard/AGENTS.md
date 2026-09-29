@@ -77,6 +77,7 @@ workflow runs, so a red push is a red push you could have seen locally.
    | `BOARD_TOKENS_JSON` | `lib/board/auth.ts` | `{ "<projectKey>": "<token>" }` for the ticket routes, and for `POST reports/{id}/file`. Every agent worktree of a site holds its site's entry. |
    | `SETTINGS_TOKENS_JSON` | `lib/board/auth.ts` | Same shape, settings routes only. A site's production deployment holds it and nothing else does. |
    | `REPORTS_TOKENS_JSON` | `lib/board/auth.ts` | Same shape, the reports routes (create/list/get/patch/delete) and `GET /api/v1/health` - but not filing, which needs the board token instead. |
+   | `CALENDAR_ICS_URL`, `CALENDAR_TOKEN` | `api/v1/calendar/upcoming` | A published iCal feed and the one bearer token the MagTag presents for it. Read through the data cache every 15 minutes; never touches Neon. |
 
    Four token maps, four purposes. Never reuse a value across them: they are
    kept apart so a leaked telemetry key cannot move tickets, a leaked
@@ -103,6 +104,9 @@ workflow runs, so a red push is a red push you could have seen locally.
   call `lib/board/server.ts` or `lib/reports/server.ts`, answer.
 - `src/app/api/v1/health` — one `SELECT 1`, gated on any reports token; what
   a reporting client checks before it lets a member type into the form.
+- `src/app/api/v1/calendar/upcoming` — the next meetings from a published
+  iCal feed, for the MagTag (`firmware/magtag/`); `lib/calendar/ics.ts` is
+  the parser, with the recurrence subset a work calendar uses, and its test.
 - `src/lib/board/rules.ts` — `docs/board/BOARD_RULES.md` as code; `server.ts`
   the writes; `auth.ts` the token maps (board, settings and reports scopes);
   `http.ts` the shared responses; `memoryPrisma.ts` the ticket in-memory
