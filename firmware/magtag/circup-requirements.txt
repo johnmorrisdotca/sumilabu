@@ -1,0 +1,6 @@
+adafruit_ntp
+adafruit_requests
+adafruit_connection_manager
+neopixel
+adafruit_bitmap_font
+adafruit_display_text

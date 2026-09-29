@@ -14,3 +14,12 @@ firmware/secrets.py
 
 # Keep example templates commit-able
 !**/.env.example
+
+# MagTag Wi-Fi and calendar settings, written to the board by deploy_magtag.sh
+firmware/magtag/settings.toml
+
+# Board images: re-downloadable (uf2/) or this machine's own backups (factory/), megabytes each
+firmware/uf2/*.uf2
+firmware/uf2/*.bin
+firmware/magtag/factory/*.uf2
+firmware/magtag/factory/*.bin

@@ -1,0 +1,28 @@
+# Copy to firmware/magtag/settings.toml (ignored) and fill in. deploy_magtag.sh
+# writes it to the board. CircuitPython reads these with os.getenv: strings
+# and integers only, which is why brightness is a percent.
+
+CIRCUITPY_WIFI_SSID = ""
+CIRCUITPY_WIFI_PASSWORD = ""
+
+DEVICE_ID = "magtag-01"
+
+# Standard-time offset from UTC, and the daylight rule ("us" or "none").
+LOCAL_CITY_NAME = "Vancouver"
+LOCAL_UTC_OFFSET = -8
+LOCAL_TZ_LABELS = "PST/PDT"
+LOCAL_DST_RULE = "us"
+
+REMOTE_CITY_NAME = "Tokyo"
+REMOTE_UTC_OFFSET = 9
+REMOTE_TZ_LABELS = "JST"
+REMOTE_DST_RULE = "none"
+
+# The Sumilabu calendar route. Leave MEETINGS_URL empty until it exists.
+MEETINGS_URL = ""
+MEETINGS_TOKEN = ""
+MEETINGS_INTERVAL_SECONDS = 900
+MEETING_WARN_SECONDS = 300
+
+LED_BRIGHTNESS_PERCENT = 8
+LED_PALETTE = 0

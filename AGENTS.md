@@ -5,7 +5,7 @@ Two things live here, with different tools and different deploy paths:
 | Folder | What | Deploys by | Guide |
 |---|---|---|---|
 | `sumilabu-dashboard/` | Next.js + Neon site: telemetry ingest and dashboard (`app.sumilabu.com`), and the shared tickets board and settings store itsutsu and umakuma use (`api.sumilabu.com`) | a push to `master` touching `sumilabu-dashboard/**` — GitHub Actions runs the Vercel CLI (`.github/workflows/vercel-deploy.yml`) | `sumilabu-dashboard/AGENTS.md` — **read it before touching the site** |
-| `firmware/` | MicroPython for the InkyFrame 7.3 / 5.7 clocks, the Pico Unicorn Pack and Pico Display 2 | you, over USB, with the scripts below | `README.md` (this folder) |
+| `firmware/` | MicroPython for the InkyFrame 7.3 / 5.7 clocks, the Pico Unicorn Pack and Pico Display 2; CircuitPython for the MagTag (`firmware/magtag/`) | you, over USB, with the scripts below | `README.md` (this folder) |
 
 The repository is public. Secrets live in `firmware/secrets.py` (ignored),
 `sumilabu-dashboard/.env.local` (ignored), Vercel's environment and the
@@ -32,6 +32,7 @@ repository's Actions secrets — never in a tracked file.
   | `./deploy_pico_display2.sh [--port …]` | `pico_display2` | Pico Display Pack 2 |
   | `./deploy_safe.sh` | your `secrets.py` as it is | rebuilds bitmaps, deploys, probes, resets |
   | `./deploy_recover_gate.sh` | — | recovery path when a board will not boot the app |
+| `./deploy_magtag.sh` | `firmware/magtag/settings.toml` | Adafruit MagTag (CircuitPython, not MicroPython): copies to the `CIRCUITPY` drive and verifies from the board's side; `firmware/magtag/README.md` |
 
   The profiles are registered in `firmware/deploy/profile_registry.py`; the
   scripts call `firmware/tools/deploy_profile.py --profile <name>`.
