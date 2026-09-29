@@ -90,10 +90,22 @@ describe("upcomingMeetings", () => {
     expect(got[0].start).toBeLessThan(got[1].start);
   });
 
-  it("crosses the DST change with the wall-clock time kept", () => {
-    const from = T("2026-11-02T00:00:00Z"); // DST ended 2026-11-01 in Vancouver
-    const got = upcomingMeetings(FEED, from, from + 3 * 86400, 20).filter((m) => m.title === "Standup");
+  it("crosses a DST change with the wall-clock time kept", () => {
+    // Los Angeles still changes its clocks; Vancouver stopped in 2026 (below).
+    const feed = FEED.replace(/America\/Vancouver/g, "America/Los_Angeles");
+    const from = T("2026-11-02T00:00:00Z"); // DST ended 2026-11-01
+    const got = upcomingMeetings(feed, from, from + 3 * 86400, 20).filter((m) => m.title === "Standup");
     expect(new Date(got[0].start * 1000).toISOString()).toBe("2026-11-02T17:30:00.000Z"); // Monday 09:30 PST
+  });
+
+  it("follows the tz database, not a rule of its own: British Columbia is permanent UTC-7 since 2026-03-09", () => {
+    // tzdata 2026b carries the change, modelled at 2026-11-01. A Node with older
+    // data still answers 17:30Z here; the assertion is on the data the runtime has,
+    // which is the point - the parser must not hard-code a rule the world dropped.
+    const from = T("2026-11-02T00:00:00Z");
+    const got = upcomingMeetings(FEED, from, from + 3 * 86400, 20).filter((m) => m.title === "Standup");
+    const current = (process.versions.tz ?? "") >= "2026b";
+    expect(new Date(got[0].start * 1000).toISOString()).toBe(current ? "2026-11-02T16:30:00.000Z" : "2026-11-02T17:30:00.000Z");
   });
 
   it("answers empty, not an error, for a feed with nothing coming", () => {
