@@ -18,8 +18,11 @@ import {
 
 const HOUR_MS = 60 * MINUTE_MS;
 const DAY_MS = 24 * HOUR_MS;
+/* The scheduler's counts below are worked at the shortest interval offered,
+   where the idle stop and the cadence interact most; the default has its own case. */
+const SHORTEST_MS = 5 * MINUTE_MS;
 
-function tab({ intervalMs = DEFAULT_REFRESH_MS, visible = true } = {}) {
+function tab({ intervalMs = SHORTEST_MS, visible = true } = {}) {
   const page = { visible, renders: 0, state: null as RefreshState | null };
   const scheduler = createRefreshScheduler({
     intervalMs,
@@ -65,9 +68,10 @@ afterEach(() => {
 });
 
 describe("the choices", () => {
-  it("offers nothing between Off and five minutes, and defaults to five", () => {
-    expect(DEFAULT_REFRESH_MS).toBe(5 * MINUTE_MS);
-    expect(REFRESH_OPTIONS_MS.filter((ms) => ms !== 0).every((ms) => ms >= 5 * MINUTE_MS)).toBe(true);
+  it("offers nothing between Off and five minutes, and defaults to thirty", () => {
+    expect(DEFAULT_REFRESH_MS).toBe(30 * MINUTE_MS);
+    expect(REFRESH_OPTIONS_MS).toContain(DEFAULT_REFRESH_MS);
+    expect(REFRESH_OPTIONS_MS.filter((ms) => ms !== 0).every((ms) => ms >= SHORTEST_MS)).toBe(true);
     expect(REFRESH_OPTIONS_MS).toContain(0);
   });
 
@@ -128,6 +132,12 @@ describe("renders per tab", () => {
     const { page, scheduler } = tab({ intervalMs: 30 * MINUTE_MS });
     keepActive(scheduler.wake, HOUR_MS, 2 * MINUTE_MS);
     expect(page.renders).toBe(2);
+  });
+
+  it("after: at the default, a visible tab nobody touches renders nothing all day", () => {
+    const { page } = tab({ intervalMs: DEFAULT_REFRESH_MS });
+    vi.advanceTimersByTime(DAY_MS);
+    expect(page.renders).toBe(0);
   });
 });
 

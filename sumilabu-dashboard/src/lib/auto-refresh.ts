@@ -22,7 +22,10 @@ export const MINUTE_MS = 60_000;
 /** 0 is Off. Nothing between Off and five minutes, on purpose. */
 export const REFRESH_OPTIONS_MS = [0, 5 * MINUTE_MS, 10 * MINUTE_MS, 15 * MINUTE_MS, 30 * MINUTE_MS] as const;
 
-export const DEFAULT_REFRESH_MS = 5 * MINUTE_MS;
+/* Thirty, not five (John, 2026-09-28): five minutes is also Neon's scale-to-zero
+   wait, so a tab in use at five kept the database awake for as long as anybody
+   had the dashboard open. */
+export const DEFAULT_REFRESH_MS = 30 * MINUTE_MS;
 
 /** A timed refresh only happens while somebody has touched the page within this long. */
 export const IDLE_STOP_MS = 10 * MINUTE_MS;

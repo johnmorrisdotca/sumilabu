@@ -181,7 +181,8 @@ walks it. The PATCH move outcomes (`illegal`, `held`) had no route test until
   how often, and for how many open tabs, rows or devices:
   - no client polling under about 15 s; never from a hidden tab (revalidate
     on focus); stop when nobody has done anything for a while —
-    `lib/auto-refresh.ts` is the reference, 5 minutes and idle-aware;
+    `lib/auto-refresh.ts` is the reference, 30 minutes by default (nothing
+    under 5, which is also Neon's scale-to-zero wait) and idle-aware;
   - no per-row reads in a list, no reading whole event tables per render
     (`device-latest-event.ts` exists because `page.tsx` once did);
   - static or cached where nothing changes (`openapi` is `force-static`;
