@@ -184,7 +184,11 @@ walks it. The PATCH move outcomes (`illegal`, `held`) had no route test until
     `lib/auto-refresh.ts` is the reference, 5 minutes and idle-aware;
   - no per-row reads in a list, no reading whole event tables per render
     (`device-latest-event.ts` exists because `page.tsx` once did);
-  - static or cached where nothing changes (`openapi` is `force-static`);
+  - static or cached where nothing changes (`openapi` is `force-static`;
+    settings reads come from Next's data cache, tagged per project and
+    cleared by that project's PUT/DELETE, because on 2026-09-28 they were
+    most of the calls keeping Neon awake — a write that bypasses
+    `lib/board/server.ts` is not seen for up to a day);
   - a firmware heartbeat is a server call and a stored row, so the interval
     is never under 15 minutes (the firmware raises anything lower).
 - **A comment says why, not what,** and names the incident and date when

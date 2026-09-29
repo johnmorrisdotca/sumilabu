@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import { revalidateTag, unstable_cache } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
 
@@ -467,14 +468,40 @@ function settingView(row: { key: string; value: string; setBy: string | null; up
   return { key: row.key, value: row.value, setBy: row.setBy, updatedAt: row.updatedAt.toISOString() };
 }
 
-export async function listSettings(projectKey: string): Promise<SettingView[]> {
-  const rows = await prisma.boardSetting.findMany({ where: { projectKey }, select: SETTING_SELECT, orderBy: { key: "asc" } });
-  return rows.map(settingView);
+/*
+ * Settings reads come from other sites' servers, and on 2026-09-28 they were
+ * 2.3K of the site's 2.8K calls in 12 h, each one waking the Neon database
+ * (awake 77% of September). Reads are answered from Next's data cache, tagged
+ * per project; a write clears the tag at once, so a read reaches Postgres only
+ * after a setting changed. The day-long revalidate bounds how stale a row
+ * edited outside these routes (Prisma Studio, SQL) can be.
+ */
+const SETTINGS_CACHE_SECONDS = 24 * 60 * 60;
+
+const settingsTag = (projectKey: string) => `board-settings:${projectKey}`;
+
+function cachedSettings<T>(keyParts: string[], projectKey: string, read: () => Promise<T>): Promise<T> {
+  return unstable_cache(read, keyParts, { tags: [settingsTag(projectKey)], revalidate: SETTINGS_CACHE_SECONDS })();
 }
 
+/** `expire: 0`, not "max": the next read after a write must see it, not one stale answer first. */
+function forgetSettings(projectKey: string): void {
+  revalidateTag(settingsTag(projectKey), { expire: 0 });
+}
+
+export async function listSettings(projectKey: string): Promise<SettingView[]> {
+  return cachedSettings(["board-settings-list", projectKey], projectKey, async () => {
+    const rows = await prisma.boardSetting.findMany({ where: { projectKey }, select: SETTING_SELECT, orderBy: { key: "asc" } });
+    return rows.map(settingView);
+  });
+}
+
+/** A missing key is cached too: "not set" is the most common answer, and it must not wake the database either. */
 export async function getSetting(projectKey: string, key: string): Promise<SettingView | null> {
-  const row = await prisma.boardSetting.findUnique({ where: { projectKey_key: { projectKey, key } }, select: SETTING_SELECT });
-  return row ? settingView(row) : null;
+  return cachedSettings(["board-setting", projectKey, key], projectKey, async () => {
+    const row = await prisma.boardSetting.findUnique({ where: { projectKey_key: { projectKey, key } }, select: SETTING_SELECT });
+    return row ? settingView(row) : null;
+  });
 }
 
 export async function setSetting(projectKey: string, key: string, value: string, actor: string): Promise<SettingView> {
@@ -484,11 +511,13 @@ export async function setSetting(projectKey: string, key: string, value: string,
     update: { value, setBy: actor },
     select: SETTING_SELECT,
   });
+  forgetSettings(projectKey);
   return settingView(row);
 }
 
 /** True when a row was there to remove; a missing row is already the default. */
 export async function deleteSetting(projectKey: string, key: string): Promise<boolean> {
   const removed = await prisma.boardSetting.deleteMany({ where: { projectKey, key } });
+  if (removed.count > 0) forgetSettings(projectKey);
   return removed.count === 1;
 }
