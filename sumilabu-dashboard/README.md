@@ -243,7 +243,7 @@ curl -sS https://app.sumilabu.com/api/app-telemetry \
 
 ## Production
 
-**A push to `master` that touches this folder is the release.**
+**A push to `main` that touches this folder is the release.**
 `.github/workflows/vercel-deploy.yml` runs the gates (`pnpm check`,
 `pnpm build`), pushes the schema to Neon, builds and deploys with the Vercel
 CLI, makes one smoke request, and removes every deployment but the live one

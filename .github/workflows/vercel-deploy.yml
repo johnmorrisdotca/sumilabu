@@ -1,6 +1,6 @@
 name: Deploy dashboard to Vercel
 
-# A push to master that touches the dashboard is a production release. Nothing
+# A push to main that touches the dashboard is a production release. Nothing
 # else deploys it: the Vercel project has no Git integration (deliberately, so
 # firmware commits, doc edits and branch pushes never spend one of the team's
 # 100 deployments a day), and the CLI runs here, the same way itsutsu and
@@ -9,7 +9,7 @@ name: Deploy dashboard to Vercel
 on:
   push:
     branches:
-      - master
+      - main
     paths:
       - "sumilabu-dashboard/**"
       - "!sumilabu-dashboard/**/*.md"

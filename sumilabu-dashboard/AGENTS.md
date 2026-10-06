@@ -223,9 +223,9 @@ walks it. The PATCH move outcomes (`illegal`, `held`) had no route test until
 
 # Committing and pushing
 
-- **The branch is `master`.** Fetch and `git pull --ff-only` before starting;
+- **The branch is `main`.** Fetch and `git pull --ff-only` before starting;
   on 2026-09-22 a session spent its first twenty minutes concluding the
-  ticket API did not exist because local `master` was six commits behind.
+  ticket API did not exist because the local branch was six commits behind.
 - **Stage by name.** The repository root carries in-progress firmware files
   and `.DS_Store`; a `git add -A` sweeps them into whatever you are landing.
 - **Commit messages:** `type(scope): summary` — `feat`, `fix`, `perf`,
@@ -236,7 +236,7 @@ walks it. The PATCH move outcomes (`illegal`, `held`) had no route test until
   tool's own attribution reminder.
 - **One feature, one commit, with its tests.** A batched commit cannot be
   reverted without taking a working feature down with the broken one.
-- **Batch the push.** Every push to `master` that touches `sumilabu-dashboard/`
+- **Batch the push.** Every push to `main` that touches `sumilabu-dashboard/`
   is one production deployment, counted against the team's 100 a day
   (across every project; the account hit it on 2026-09-15). Three finished
   commits are one push. A firmware-only push, or one that only changes
@@ -251,7 +251,7 @@ walks it. The PATCH move outcomes (`illegal`, `held`) had no route test until
   check`, `pnpm build`) under another name — one workflow, `vercel-deploy.yml`,
   is both the gate and the release, and a duplicate only burns minutes on
   work already done.
-- Small work goes straight to `master`. Open a branch and a PR when you want
+- Small work goes straight to `main`. Open a branch and a PR when you want
   Copilot's review first (as on 2026-09-15); a PR's branch pushes deploy
   nothing, only the merge does.
 - Several sessions may have this repository open. Work in a worktree of your
@@ -260,8 +260,8 @@ walks it. The PATCH move outcomes (`illegal`, `held`) had no route test until
 
 # Releasing to production
 
-**Pushing to `master` is the release.** `.github/workflows/vercel-deploy.yml`
-runs on every push to `master` that touches `sumilabu-dashboard/**` (and on
+**Pushing to `main` is the release.** `.github/workflows/vercel-deploy.yml`
+runs on every push to `main` that touches `sumilabu-dashboard/**` (and on
 `workflow_dispatch`): `verify` (`pnpm check`, `pnpm build`) then `deploy`
 (`vercel pull` → push schema → `vercel build --prod` → function sizes →
 `vercel deploy --prebuilt --prod` → one smoke request → prune deployments). The Vercel
@@ -285,7 +285,7 @@ hold the same set under the same names.
 never a tighter loop (`--commit` wants the full 40-character sha; a short one
 matches nothing and reads like "no run"):
 
-    gh run list --workflow vercel-deploy.yml --branch master --commit $(git rev-parse HEAD) --json databaseId -q '.[0].databaseId'
+    gh run list --workflow vercel-deploy.yml --branch main --commit $(git rev-parse HEAD) --json databaseId -q '.[0].databaseId'
     gh run view <id> --json jobs -q '.jobs[] | select(.name=="deploy") | "\(.status) \(.conclusion)"'
 
 When it reads `completed success`, load the site **once** — the workflow has
@@ -293,7 +293,7 @@ already made its one smoke request. There is no version number on the site
 (`package.json` stays `0.1.0`); the live commit is the `headSha` of the last
 successful run:
 
-    gh run list --workflow vercel-deploy.yml --branch master --status success --limit 1 --json headSha,createdAt
+    gh run list --workflow vercel-deploy.yml --branch main --status success --limit 1 --json headSha,createdAt
 
 **Never load the site in a loop.** Every page is a server render — one load
 is real CPU and data on a metered account.
@@ -308,7 +308,7 @@ ignores the new column.
 `--token`): `pnpm dlx vercel@latest rollback` in this folder returns the
 domains to the deployment before the live one — which is exactly why the
 prune keeps one previous. `vercel promote <url>` moves them to any deployment
-that still exists. Then fix forward on `master`; a rollback is not a release.
+that still exists. Then fix forward on `main`; a rollback is not a release.
 
 **Deployments kept: the live one and the one before it, nothing older.** The
 workflow's last step runs `scripts/prune-deployments.sh`, one URL per

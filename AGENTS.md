@@ -4,7 +4,7 @@ Two things live here, with different tools and different deploy paths:
 
 | Folder | What | Deploys by | Guide |
 |---|---|---|---|
-| `sumilabu-dashboard/` | Next.js + Neon site: telemetry ingest and dashboard (`app.sumilabu.com`), and the shared tickets board and settings store itsutsu and umakuma use (`api.sumilabu.com`) | a push to `master` touching `sumilabu-dashboard/**` — GitHub Actions runs the Vercel CLI (`.github/workflows/vercel-deploy.yml`) | `sumilabu-dashboard/AGENTS.md` — **read it before touching the site** |
+| `sumilabu-dashboard/` | Next.js + Neon site: telemetry ingest and dashboard (`app.sumilabu.com`), and the shared tickets board and settings store itsutsu and umakuma use (`api.sumilabu.com`) | a push to `main` touching `sumilabu-dashboard/**` — GitHub Actions runs the Vercel CLI (`.github/workflows/vercel-deploy.yml`) | `sumilabu-dashboard/AGENTS.md` — **read it before touching the site** |
 | `firmware/` | MicroPython for the InkyFrame 7.3 / 5.7 clocks, the Pico Unicorn Pack and Pico Display 2; CircuitPython for the MagTag (`firmware/magtag/`) | you, over USB, with the scripts below | `README.md` (this folder) |
 
 The repository is public. Secrets live in `firmware/secrets.py` (ignored),
@@ -43,7 +43,7 @@ repository's Actions secrets — never in a tracked file.
 
 ## Working in this repository
 
-- The branch is `master`. `git pull --ff-only` first; stage files by name,
+- The branch is `main`. `git pull --ff-only` first; stage files by name,
   never `git add -A` — the root usually carries in-progress hardware files.
 - Commit messages: `type(scope): summary` (`feat`, `fix`, `perf`, `chore`,
   `docs`; scopes `board`, `dashboard`, `firmware`, `ui`, `ci`), a body that
