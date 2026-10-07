@@ -1,5 +1,11 @@
 # SumiLabu monorepo
 
+**Changing or deploying the site? Read "Making a change and shipping it" at
+the top of `sumilabu-dashboard/AGENTS.md` first and follow it step by step.**
+A push to `main` that touches `sumilabu-dashboard/**` is a production deploy,
+and `api.sumilabu.com` is the ticket board UmaKuma and Itsutsu release
+through.
+
 Two things live here, with different tools and different deploy paths:
 
 | Folder | What | Deploys by | Guide |
@@ -43,8 +49,13 @@ repository's Actions secrets — never in a tracked file.
 
 ## Working in this repository
 
-- The branch is `main`. `git pull --ff-only` first; stage files by name,
-  never `git add -A` — the root usually carries in-progress hardware files.
+- The branch is `main`. Work in your own worktree
+  (`git worktree add ../sumilabu-worktrees/<name> -b work/<name> origin/main`),
+  never in the main checkout and never with `git stash`. Stage files by
+  name, never `git add -A` — the root usually carries in-progress hardware
+  files.
+- Never open a pull request without John's permission. Never commit a
+  secret: the repository is public.
 - Commit messages: `type(scope): summary` (`feat`, `fix`, `perf`, `chore`,
   `docs`; scopes `board`, `dashboard`, `firmware`, `ui`, `ci`), a body that
   says why, and **no trailers of any kind** — no `Co-Authored-By`, nothing

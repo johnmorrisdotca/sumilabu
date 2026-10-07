@@ -2,8 +2,11 @@
 
 This repository contains:
 
-- `firmware/`: MicroPython firmware for InkyFrame 7.3 / 5.7 and Pico Unicorn Pack (device clock/telemetry app)
-- `sumilabu-dashboard/`: Next.js + Neon telemetry API/dashboard (Vercel)
+- `firmware/`: MicroPython firmware for InkyFrame 7.3 / 5.7, Pico Unicorn Pack and Pico Display 2, and CircuitPython for the MagTag (`firmware/magtag/README.md`)
+- `sumilabu-dashboard/`: Next.js + Neon telemetry API/dashboard and the shared ticket board (`app.sumilabu.com`, `api.sumilabu.com`; Vercel, deployed by GitHub Actions on a push to `main`)
+
+Agents and anyone changing the site: read `AGENTS.md`, then "Making a change
+and shipping it" in `sumilabu-dashboard/AGENTS.md`.
 
 The firmware app supports per-device profiles using `secrets.py`:
 
@@ -161,6 +164,5 @@ Recommended backend shape for your GUI:
 
 ## Next step ideas
 
-- Pull upcoming meetings from a small JSON feed.
 - Add overlap-time suggestions between PST and JST.
 - Add a button-triggered immediate refresh.

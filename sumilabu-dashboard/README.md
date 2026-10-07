@@ -31,9 +31,11 @@ cp env/.env.example .env.local
 - `PROJECT_TOKENS_JSON` (optional per-project token map)
 - `EXPECTED_HEARTBEAT_SECONDS`, `STALE_AFTER_SECONDS` (optional)
 - `DASHBOARD_UTC_OFFSET_HOURS` (optional, default `-8`)
-- `BOARD_TOKENS_JSON`, `SETTINGS_TOKENS_JSON` (the board; see below)
+- `BOARD_TOKENS_JSON`, `SETTINGS_TOKENS_JSON`, `REPORTS_TOKENS_JSON` (the board; see below)
+- `CALENDAR_ICS_URL`, `CALENDAR_TOKEN` (optional, the MagTag's calendar)
 
-3. Push Prisma schema:
+3. Push Prisma schema to a throwaway database (Prisma's CLI reads `.env`, not
+   `.env.local`; never production, which the deploy workflow alone changes):
 
 ```bash
 pnpm db:push
@@ -47,7 +49,8 @@ pnpm dev
 
 Open `http://localhost:6500` (Sumilabu's local port block is 6500–6599; override with `WEB_PORT`).
 
-5. Before committing:
+5. Before committing (and see "Making a change and shipping it" in
+   `AGENTS.md` before any push to `main`, which deploys):
 
 ```bash
 pnpm check
@@ -249,14 +252,17 @@ curl -sS https://app.sumilabu.com/api/app-telemetry \
 CLI, makes one smoke request, and removes every deployment but the live one
 and the one before it. The Vercel project (`sumilabu-dashboard`, team
 `spxis-projects-0d6306b4`) has no Git integration on purpose — see
-`AGENTS.md`, "Releasing to production", for the secrets it needs, how to
-know a deploy landed, the daily cap, rollback and the manual fallback.
+`AGENTS.md`: "Making a change and shipping it" is the step-by-step, and
+"Releasing to production" has the secrets it needs, how to know a deploy
+landed, the daily cap and rollback. Never deploy by hand.
 
 Environment, set in Vercel Project Settings (the database URLs as Sensitive):
 
 - `DATABASE_URL`, `DIRECT_URL`
 - `INGEST_API_TOKEN`, `PROJECT_TOKENS_JSON`, `DEFAULT_PROJECT_KEY`
-- `BOARD_TOKENS_JSON`, `SETTINGS_TOKENS_JSON`
+- `BOARD_TOKENS_JSON`, `SETTINGS_TOKENS_JSON`, `REPORTS_TOKENS_JSON`
+- `TELEMETRY_DROP_EVENTS` (optional; see `AGENTS.md`)
+- `CALENDAR_ICS_URL`, `CALENDAR_TOKEN` (the MagTag's meetings)
 - `EXPECTED_HEARTBEAT_SECONDS` (optional, default `1800`)
 - `STALE_AFTER_SECONDS` (optional, default `5400`)
 - `DASHBOARD_UTC_OFFSET_HOURS` (optional, default `-8`)

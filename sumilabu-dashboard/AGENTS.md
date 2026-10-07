@@ -4,6 +4,125 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
+# Making a change and shipping it (read this first)
+
+**A push to `main` that touches `sumilabu-dashboard/**` IS the production
+deploy.** There is no staging and no review step after the push. GitHub
+Actions (`.github/workflows/vercel-deploy.yml`) checks, pushes the schema,
+builds and deploys with the Vercel CLI. The Vercel project is not connected
+to GitHub, on purpose. The repository is **public**.
+
+`api.sumilabu.com` is the ticket board and settings store for **UmaKuma and
+Itsutsu**: their `pnpm task`, `release:take` and admin pages call it. If you
+break a board route, you break their releases too.
+
+Run every step in order. Do not skip one because the change "is small".
+
+1. **Make your own worktree.** Never edit `/Users/john/Projects/sumilabu`
+   itself, and never share a worktree with another agent.
+
+       git -C /Users/john/Projects/sumilabu fetch origin
+       git -C /Users/john/Projects/sumilabu worktree add ../sumilabu-worktrees/<name> -b work/<name> origin/main
+       cd /Users/john/Projects/sumilabu-worktrees/<name>/sumilabu-dashboard
+       pnpm install
+
+   A dev server, if you need one: `WEB_PORT=<6501-6599, free> pnpm dev`
+   (check with `lsof -iTCP:<port> -sTCP:LISTEN`). Sumilabu owns 6500–6599.
+2. **Build the change with its tests**, beside the code
+   (`src/**/*.test.ts`; see Testing below). A board or reports route change
+   also updates `README.md` and `docs/board/BOARD_RULES.md` or
+   `REPORTS_CONTRACT.md` in the same commit. A board contract change also
+   needs the copies in UmaKuma and Itsutsu, and you tell those sessions
+   before you push.
+3. **Run the gate.** Both must exit 0 (read the exit code, not the output):
+
+       pnpm check
+       DATABASE_URL=postgresql://build:build@localhost:5432/build \
+       DIRECT_URL=postgresql://build:build@localhost:5432/build pnpm build
+
+   The placeholder URLs are what CI uses; the build never opens a database.
+   Stop any `pnpm dev` in the same folder first, or the build corrupts
+   `.next`.
+4. **Schema change only** (`prisma/schema.prisma` changed). Additive only: a
+   nullable or defaulted column, a new table or index. Never rename or drop.
+   1. Save the SQL as `prisma/manual-migrations/YYYYMMDD_name.sql`.
+   2. **Back up production first**, outside the repository (a dump in the
+      repo could be committed to a public repository):
+
+          mkdir -p ~/Backups/sumilabu
+          pg_dump "$(neonctl connection-string --project-id square-snow-29043019)" \
+            -Fc -f ~/Backups/sumilabu/sumilabu-$(date -u +%Y%m%dT%H%M%SZ).dump
+          ls -l ~/Backups/sumilabu   # the new file is there and not empty
+
+      If the backup fails, stop and tell John.
+   3. Do **not** run `pnpm db:push` against production. The workflow pushes
+      the schema when your commit lands (step 7), before the new code goes
+      live. A change that would lose data fails that step, and then John
+      decides; you do not add `--accept-data-loss`.
+5. **Commit**, staging files by name (never `git add -A`):
+
+       git add <file> <file>
+       git -c user.name="John Morris" -c user.email=john@spxis.com commit
+
+   Message: `type(scope): summary`, subject at most 50 characters (`feat`,
+   `fix`, `perf`, `chore`, `docs`; scopes `board`, `dashboard`, `firmware`,
+   `ui`, `ci`). The body says why. **No trailers**: no `Co-Authored-By`, no
+   "Generated with", nothing that names an AI. One feature per commit.
+6. **Rebase on the latest `main`** and re-run step 3 if anything came in:
+
+       git fetch origin && git rebase origin/main
+
+7. **Push to `main`. This deploys.** Only with a green gate, and only when
+   you were asked to ship. Batch: several finished commits go in one push
+   (every push is one of the account's 100 deployments a day).
+
+       git push origin HEAD:main
+
+   A push that changes only `*.md`, `sumilabu-dashboard/docs/**` or
+   `firmware/**` starts no deploy.
+8. **Watch the `deploy` job, one `gh` call a minute, never faster** (use the
+   full 40-character sha):
+
+       gh run list --workflow vercel-deploy.yml --branch main --commit $(git rev-parse HEAD) --json databaseId -q '.[0].databaseId'
+       gh run view <id> --json jobs -q '.jobs[] | select(.name=="deploy") | "\(.status) \(.conclusion)"'
+
+   - `completed success`: go to step 9.
+   - `completed failure`: `gh run view <id> --log-failed`, fix it, and push
+     the fix. A flaky step, or a refusal for the daily cap
+     (`api-deployments-free-per-day`), is retried with
+     `gh run rerun <id> --failed`, never with a new push.
+   - `cancelled`: a newer push superseded it. Check
+     `git merge-base --is-ancestor <your sha> origin/main` and follow that
+     newer run instead.
+9. **Check the live site once.** One request each, no loop:
+
+       curl -sS -o /dev/null -w '%{http_code}\n' https://api.sumilabu.com/api/openapi.json
+
+   plus one request to the page or route you changed. The workflow already
+   checked `/api/health`.
+10. **Clean up:**
+
+        cd /Users/john/Projects/sumilabu
+        git worktree remove ../sumilabu-worktrees/<name>
+        git branch -D work/<name>
+
+**Never:**
+
+- push to `main` without a green step 3;
+- run `vercel deploy` yourself, and never `vercel deploy --prebuilt` from a
+  Mac (it packs the Mac's native binaries; only the workflow's Linux runner
+  uses `--prebuilt`). The workflow is the only way to production;
+- commit a secret, a `.env` file, a token or a database dump: this
+  repository is public;
+- change the production schema without a backup taken first (step 4), or
+  run `pnpm db:push` against production yourself;
+- open a pull request without John's permission;
+- change a board, settings or reports route, status word or error code
+  without telling the UmaKuma and Itsutsu sessions first;
+- `git stash` (every worktree shares one stash list): commit WIP to your
+  own branch instead;
+- load the live site in a loop, or poll anything faster than once a minute.
+
 # What this is
 
 One Vercel app and one Neon database that every SPXIS site reports into and
@@ -45,8 +164,8 @@ public — no secret ever goes in a file here, an example or a test.
 | Unit and route tests | `pnpm test` |
 | **All gates** (what CI runs before it builds) | `pnpm check` |
 | Production build | `pnpm build` |
-| Apply `schema.prisma` to the database in `.env.local` | `pnpm db:push` |
-| What the database in `DIRECT_URL` lacks vs `schema.prisma` (SQL; empty = in sync) | `pnpm db:drift` |
+| Apply `schema.prisma` to the database in `.env` (Prisma's CLI reads `.env`, never `.env.local`) | `pnpm db:push` |
+| What the database in `DIRECT_URL` lacks vs `schema.prisma` (SQL; empty = in sync). Read-only; the URL must be exported in the shell (`set -a; . ./.env; set +a`) | `pnpm db:drift` |
 | Prisma Studio | `pnpm db:studio` |
 | Remove superseded Vercel deployments (`--dry-run` to list) | `pnpm deploy:prune` |
 | Server function sizes against their limits, after a `vercel build` (`--record` to rewrite the baseline) | `pnpm functions:size` |
@@ -62,9 +181,15 @@ workflow runs, so a red push is a red push you could have seen locally.
    the code; a fresh clone or a worktree that skipped install looks exactly
    like this (2026-09-22).
 2. `cp env/.env.example .env.local` and fill it. `env/.env.example` is the
-   only tracked template; `.env` and `.env.local` are ignored, and `.env`
-   silently overrides a `DATABASE_URL` given inline to Prisma, so know which
-   file you are editing.
+   only tracked template; `.env` and `.env.local` are ignored. Next reads
+   `.env.local`; **Prisma's CLI (`db:push`, `db:studio`) reads `.env` only**,
+   and `.env` silently overrides a `DATABASE_URL` given inline to Prisma, so
+   know which file you are editing. **The main checkout's `.env` and
+   `.env.local` point at the production database** (the Neon project
+   `sumilabu` has one branch, `production`). `pnpm check` and the build need
+   no database at all, so a worktree needs neither file unless you run the
+   dev server; copy them in only when you must, and never run `pnpm db:push`
+   with them.
 
    | Variable | Read by | Meaning |
    |---|---|---|
@@ -84,7 +209,8 @@ workflow runs, so a red push is a red push you could have seen locally.
    kept apart so a leaked telemetry key cannot move tickets, a leaked
    reports key cannot file a ticket or read settings, and a leaked board key
    cannot change who may sign up.
-3. `pnpm db:push` against the database in `.env.local`.
+3. `pnpm db:push` against a throwaway database in `.env` (a local Postgres
+   or a Neon branch you made), never production.
 4. `pnpm dev`. The board routes answer 401 until `BOARD_TOKENS_JSON` has an
    entry for the project key in the URL; use `itsutsu-dev` / `umakuma-dev`,
    the projects that exist so nothing local ever touches a real board.
@@ -225,6 +351,10 @@ walks it. The PATCH move outcomes (`illegal`, `held`) had no route test until
   is additive — a nullable or defaulted column, a new index — so the running
   deployment keeps serving while the next one uploads, and the push runs
   before the code that reads the column is live.
+- **Back up production before a commit that changes the schema reaches
+  `main`** (`pg_dump` to `~/Backups/sumilabu/`, outside the repository: the
+  command is in step 4 at the top of this file). The workflow takes no
+  backup of its own.
 - Keep the SQL the push ran in `prisma/manual-migrations/YYYYMMDD_name.sql`,
   as the two there do, so a reviewer sees the statements and production can
   be checked against them.
@@ -270,9 +400,10 @@ walks it. The PATCH move outcomes (`illegal`, `held`) had no route test until
   check`, `pnpm build`) under another name — one workflow, `vercel-deploy.yml`,
   is both the gate and the release, and a duplicate only burns minutes on
   work already done.
-- Small work goes straight to `main`. Open a branch and a PR when you want
-  Copilot's review first (as on 2026-09-15); a PR's branch pushes deploy
-  nothing, only the merge does.
+- Work is committed in a worktree branch and pushed straight to `main`
+  (`git push origin HEAD:main`). **Never open a pull request without John's
+  permission** (John, 2026-09-25), by hand or from a workflow. A branch push
+  deploys nothing; only `main` does.
 - Several sessions may have this repository open. Work in a worktree of your
   own (`git worktree add ../sumilabu-worktrees/<name> -b work/<name>`), run
   `pnpm install` inside it, and never share one between agents.
@@ -288,8 +419,8 @@ project has **no Git integration, on purpose**: a Git integration deploys
 every push of every branch and every firmware commit, each one a deployment
 against the shared daily cap, and keeps every one of them. Before 2026-09-22
 there was no workflow either, and production was deployed by hand with
-`vercel deploy --prod` from this folder; that is still the manual fallback,
-below.
+`vercel deploy --prod` from this folder. That is no longer done: see "No
+manual deploys", below.
 
 **Secrets the workflow needs** (Settings → Secrets and variables → Actions):
 `VERCEL_TOKEN` (a token made at vercel.com/account/tokens, scoped to the
@@ -337,13 +468,14 @@ to see the list, and `pnpm deploy:prune` after a manual deploy. **Never
 `vercel remove sumilabu-dashboard`** (the project name) and never several URLs
 in one call: both hung for ten minutes on 2026-09-15.
 
-**Manual fallback**, from a machine with `vercel login` done and this folder
-as the working directory (the project has no Root Directory setting, so the
-directory the CLI runs in is the project root):
-
-    pnpm check && pnpm dlx vercel@latest deploy --prod --archive=tgz && pnpm deploy:prune
-
-Use it when GitHub is down, not to skip the gates.
+**No manual deploys.** Never run `vercel deploy` from a laptop, and never
+`vercel deploy --prebuilt` from a Mac: a build made on a Mac packs that
+machine's native binaries rather than the Linux ones Vercel runs (it has
+broken UmaKuma deploys, and a wrong Prisma engine took every database route
+here down on 2026-09-22 — see the note above `binaryTargets` in
+`prisma/schema.prisma`). A manual deploy also skips the schema push, the
+size gate and the prune. If GitHub Actions is down, wait, or ask John. A
+rollback (above) is the only production change made from a laptop.
 
 **Domains:** `sumilabu.com`, `app.sumilabu.com` and `api.sumilabu.com` are
 aliases of the same production deployment; `vercel alias ls` shows which.
