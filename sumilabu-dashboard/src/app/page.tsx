@@ -5,9 +5,8 @@ import { AutoRefreshControl } from "@/components/auto-refresh-control";
 import { HeartbeatRadar } from "@/components/heartbeat-radar";
 import { RecentEventsTable } from "@/components/recent-events-table";
 import { WidgetCanvas } from "@/components/widget-canvas";
-import { latestEventByDevice } from "@/lib/device-latest-event";
+import { EMPTY_PROJECT_DATA, getProjectData, getProjectLists } from "@/lib/dashboard-data";
 import { globalHeartbeat, heartbeatThresholds, isFresh, type HeartbeatThresholds } from "@/lib/heartbeat-thresholds";
-import { prisma } from "@/lib/prisma";
 import { formatDateTimeAtOffset, formatHourMinuteAtOffset } from "@/lib/timezone";
 import { LiveClock } from "@/components/live-clock";
 
@@ -463,97 +462,33 @@ type PageProps = {
   searchParams?: Promise<{ project?: string }>;
 };
 
-/* Only the columns the page draws. `raw`, and the app events' JSON columns,
-   used to be read for every row loaded and were never shown. */
-const RECENT_EVENT_SELECT = {
-  id: true,
-  projectKey: true,
-  deviceId: true,
-  event: true,
-  mode: true,
-  memFree: true,
-  sync: true,
-  receivedAt: true,
-} as const;
-
-const APP_EVENT_SELECT = {
-  id: true,
-  projectKey: true,
-  sourceType: true,
-  appId: true,
-  environment: true,
-  host: true,
-  service: true,
-  event: true,
-  status: true,
-  severity: true,
-  message: true,
-  durationMs: true,
-  metricName: true,
-  metricValue: true,
-  metricUnit: true,
-  receivedAt: true,
-} as const;
-
 export default async function Home({ searchParams }: PageProps) {
   const params = (await searchParams) || {};
   const selectedProject = sanitizeProjectParam(params.project);
   const localTimezoneLabel = `UTC${DASHBOARD_UTC_OFFSET_HOURS >= 0 ? "+" : ""}${DASHBOARD_UTC_OFFSET_HOURS}`;
 
-  /* Every event is written beside its device or source, under the same
-     project key (api/device-stats/route.ts, lib/app-telemetry-ingest.ts), so
-     those two small tables already name every project the event tables could.
-     Asking the event tables read every row they hold on every render: Prisma
-     applies `distinct` in memory, so that SQL had no DISTINCT and no LIMIT. */
-  const [deviceProjects, appSourceProjects] = await Promise.all([
-    prisma.device.findMany({
-      select: { projectKey: true },
-      distinct: ["projectKey"],
-      orderBy: { projectKey: "asc" },
-    }),
-    prisma.appTelemetrySource.findMany({
-      select: { projectKey: true },
-      distinct: ["projectKey"],
-      orderBy: { projectKey: "asc" },
-    }),
-  ]);
-
-  const availableProjects = uniqSorted([
+  /* Read through the data cache (lib/dashboard-data.ts): a load while nothing
+     has arrived since the last one is answered without waking Neon. Every event
+     is written beside its device or source under the same project key, so the
+     two small project lists already name every project the event tables could. */
+  const { deviceProjects, appSourceProjects } = await getProjectLists();
+  const knownProjects = uniqSorted([
     canonicalProjectKey(process.env.DEFAULT_PROJECT_KEY || "default"),
     ...KNOWN_PRODUCT_KEYS,
     ...configuredProjectKeys(),
-    ...(selectedProject ? [selectedProject] : []),
-    ...deviceProjects.map((project) => canonicalProjectKey(project.projectKey)),
-    ...appSourceProjects.map((project) => canonicalProjectKey(project.projectKey)),
+    ...deviceProjects.map(canonicalProjectKey),
+    ...appSourceProjects.map(canonicalProjectKey),
   ]);
+  const availableProjects = uniqSorted([...knownProjects, ...(selectedProject ? [selectedProject] : [])]);
 
-  const projectFilter = selectedProject ? { projectKey: { in: projectKeyMatches(selectedProject) } } : {};
+  /* A project nobody has reported under has no rows, so a made-up
+     `?project=` is answered empty without a query. */
+  const selectedIsKnown = selectedProject === null || knownProjects.includes(selectedProject);
+  const { deviceRows, projectEvents, appSources, appEvents, latestEvents: latestEventEntries } = selectedIsKnown
+    ? await getProjectData(selectedProject ? projectKeyMatches(selectedProject) : null)
+    : EMPTY_PROJECT_DATA;
 
-  const [deviceRows, projectEvents, appSources, appEvents] = await Promise.all([
-    prisma.device.findMany({
-      where: projectFilter,
-      orderBy: { lastSeenAt: "desc" },
-    }),
-    prisma.deviceEvent.findMany({
-      where: projectFilter,
-      orderBy: { receivedAt: "desc" },
-      take: 5000,
-      select: RECENT_EVENT_SELECT,
-    }),
-    prisma.appTelemetrySource.findMany({
-      where: projectFilter,
-      orderBy: { lastSeenAt: "desc" },
-      take: 24,
-    }),
-    prisma.appTelemetryEvent.findMany({
-      where: projectFilter,
-      orderBy: { receivedAt: "desc" },
-      take: 24,
-      select: APP_EVENT_SELECT,
-    }),
-  ]);
-
-  const latestEvents = await latestEventByDevice(deviceRows.map((device) => device.id));
+  const latestEvents = new Map(latestEventEntries);
   const devices: DeviceCard[] = deviceRows.map((device) => {
     const latest = latestEvents.get(device.id);
     return { ...device, events: latest ? [latest] : [] };

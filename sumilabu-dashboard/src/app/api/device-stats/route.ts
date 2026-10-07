@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import { forgetDashboardData } from "@/lib/dashboard-data";
 import { reportedIntervalSeconds } from "@/lib/heartbeat-thresholds";
 import { isAuthorizedIngest } from "@/lib/ingest-auth";
 import { prisma } from "@/lib/prisma";
@@ -106,6 +107,8 @@ export async function POST(req: NextRequest) {
       },
     },
   });
+
+  forgetDashboardData();
 
   return NextResponse.json({ ok: true });
 }

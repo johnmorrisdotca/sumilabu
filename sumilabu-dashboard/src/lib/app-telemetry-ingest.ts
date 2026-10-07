@@ -1,7 +1,9 @@
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
+import { forgetDashboardData } from "@/lib/dashboard-data";
 import { prisma } from "@/lib/prisma";
+import { isDroppedEvent } from "@/lib/telemetry-drop";
 
 export const SOURCE_TYPES = ["app", "server", "job", "deploy", "device", "service"] as const;
 
@@ -94,6 +96,11 @@ export async function ingestTelemetryEvent(payload: CanonicalTelemetryEventPaylo
   const now = new Date();
   const occurredAt = parseOccurredAt(payload.occurred_at);
 
+  /* Acknowledged, not stored: no query, so no wake (lib/telemetry-drop.ts). */
+  if (isDroppedEvent(projectKey, payload.event)) {
+    return { projectKey, sourceType, sourceId: payload.source_id, environment, dropped: true as const };
+  }
+
   const source = await prisma.appTelemetrySource.upsert({
     where: {
       projectKey_sourceType_appId_environment: {
@@ -162,10 +169,13 @@ export async function ingestTelemetryEvent(payload: CanonicalTelemetryEventPaylo
     },
   });
 
+  forgetDashboardData();
+
   return {
     projectKey,
     sourceType,
     sourceId: payload.source_id,
     environment,
+    dropped: false as const,
   };
 }

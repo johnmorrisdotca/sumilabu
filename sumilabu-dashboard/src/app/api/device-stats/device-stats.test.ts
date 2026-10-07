@@ -10,6 +10,7 @@ import { POST } from "./route";
  */
 const { upsert, create } = vi.hoisted(() => ({ upsert: vi.fn(), create: vi.fn() }));
 
+vi.mock("next/cache", () => ({ revalidateTag: vi.fn(), unstable_cache: (fn: unknown) => fn }));
 vi.mock("@/lib/prisma", () => ({ prisma: { device: { upsert }, deviceEvent: { create } } }));
 
 type UpsertArgs = {

@@ -77,6 +77,7 @@ workflow runs, so a red push is a red push you could have seen locally.
    | `BOARD_TOKENS_JSON` | `lib/board/auth.ts` | `{ "<projectKey>": "<token>" }` for the ticket routes, and for `POST reports/{id}/file`. Every agent worktree of a site holds its site's entry. |
    | `SETTINGS_TOKENS_JSON` | `lib/board/auth.ts` | Same shape, settings routes only. A site's production deployment holds it and nothing else does. |
    | `REPORTS_TOKENS_JSON` | `lib/board/auth.ts` | Same shape, the reports routes (create/list/get/patch/delete) and `GET /api/v1/health` - but not filing, which needs the board token instead. |
+   | `TELEMETRY_DROP_EVENTS` | `lib/telemetry-drop.ts` | Events acknowledged with `{ ok: true, dropped: true }` and not stored: comma list of `event` or `project:event`; `none` stores all. Unset means UmaKuma's `api_route`, `study_review_history` and `reading_signoffs_get_perf`. |
    | `CALENDAR_ICS_URL`, `CALENDAR_TOKEN` | `api/v1/calendar/upcoming` | A published iCal feed and the one bearer token the MagTag presents for it. Read through the data cache every 15 minutes; never touches Neon. |
 
    Four token maps, four purposes. Never reuse a value across them: they are
@@ -91,7 +92,13 @@ workflow runs, so a red push is a red push you could have seen locally.
 # Repo map
 
 - `src/app/page.tsx` — the dashboard. `force-dynamic`: every load is a server
-  render and a paid function call.
+  render and a paid function call, but its database reads come from
+  `lib/dashboard-data.ts` (Next's data cache, one tag, cleared by every
+  telemetry write), so a load when nothing has arrived does not wake Neon.
+  A made-up `?project=` is answered empty with no query.
+- `scripts/prune-telemetry.mjs` (`pnpm db:prune-telemetry`) — retention:
+  AppTelemetryEvent 14 days, DeviceEvent 30. A dry run unless `--apply`;
+  it never touches the board, reports, devices or sources.
 - `src/app/api/device-stats`, `api/app-telemetry`, `api/v1/telemetry/events` —
   ingest. The first two are what installed firmware and older apps call; they
   stay as they are.
@@ -194,6 +201,18 @@ walks it. The PATCH move outcomes (`illegal`, `held`) had no route test until
     cleared by that project's PUT/DELETE, because on 2026-09-28 they were
     most of the calls keeping Neon awake — a write that bypasses
     `lib/board/server.ts` is not seen for up to a day);
+  - **Neon is on the Free plan (2026-10-07): 0.5 GB and about 100 compute
+    hours a month**, and compute is awake time: every query wakes it for five
+    minutes. On 2026-10-07 a crawler's `GET /` every ~20 minutes (six queries
+    each) kept it awake all month and 215,000 telemetry rows filled the
+    storage. So nothing on a timer may reach Postgres unless something
+    changed: the dashboard reads through the data cache, noisy telemetry is
+    dropped before the database (`TELEMETRY_DROP_EVENTS`), and old events are
+    pruned. A new reader of Postgres that a bot or a device can hit unprompted
+    is a review finding. `GET /api/health` is the deploy's own smoke check,
+    once per deploy, never a monitor target. The board's own callers (`pnpm
+    task`, release tools, sites' settings reads) wake it legitimately and only
+    when somebody is working.
   - a firmware heartbeat is a server call and a stored row, so the interval
     is never under 15 minutes (the firmware raises anything lower).
 - **A comment says why, not what,** and names the incident and date when
