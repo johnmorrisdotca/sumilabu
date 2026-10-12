@@ -351,6 +351,38 @@ only grades needs nobody named. A `key` on any entry is refused, 400
 `key_immutable`, the same as a single PATCH (invariant 11). `patchTicket` in
 `server.ts` is the one function behind both routes, so the two never drift.
 
+### Ticket images
+
+A ticket may carry up to **four** screenshots, so a request that arrived as a
+picture keeps its picture. `POST tickets/{id}/images` attaches one:
+`{ "image": "<base64>" }`, plain base64 with no `data:` prefix, as a report's
+screenshot is sent (`REPORTS_CONTRACT.md`, "Screenshots"). It is a write and
+names its actor (invariant 5), and answers 201 `{ image }` - the image's
+`id`, `ticketId`, `contentType`, `byteSize`, `addedBy` and `createdAt`, never
+its bytes. `GET tickets/{id}/images` lists those, oldest first;
+`GET tickets/{id}/images/{imageId}` is the bytes, with the stored
+`Content-Type`, `nosniff` and `Cache-Control: private, no-store`. Every one
+takes the project's board token; none is public; an image is found by its
+id, its ticket and its project together, so another project's token gets 404.
+
+The bytes are stored in this service's Postgres (`BoardTicketImage`), on the
+free plan every project shares, so the limits are storage decisions:
+
+| Rule | Refusal |
+|---|---|
+| JPEG, PNG or WebP, read from the first bytes | 422 `An image must be a JPEG, PNG or WebP file.` |
+| At most 512 KB (524,288 bytes) decoded | 422 in words; a body over twice that is 400 `invalid_payload` |
+| At most four images a ticket | 422 `A ticket holds at most 4 images.` |
+| At most 50 MB of ticket images a project | 422 in words |
+| Not on a `done` ticket: its pictures are part of the words invariant 12 freezes | 409 `done` |
+
+A client shrinks the image before sending it - WebP or JPEG, about 1600px
+wide - so a screenshot is 100-250 KB, not the cap. **A ticket done or dropped
+for 30 days loses its images**, deleted the next time anybody in the project
+attaches one: work a person started, never a timer. Deleting a ticket
+deletes its images by the foreign key. Images are not part of a ticket's
+view or a list, so neither grows by a byte.
+
 ## Settings
 
 A project's settings are `key -> value`, both strings: key matches

@@ -59,20 +59,27 @@ export type DecodedImage = { ok: true; bytes: Buffer; contentType: ReportImageTy
 
 const BASE64 = /^[A-Za-z0-9+/]*={0,2}$/;
 
+/** 1048576 -> "1 MB", 524288 -> "512 KB": the cap in the words a refusal uses. */
+function sizeLabel(bytes: number): string {
+  return bytes >= 1024 * 1024 ? `${Math.round(bytes / (1024 * 1024))} MB` : `${Math.round(bytes / 1024)} KB`;
+}
+
 /**
- * The image a create carries, as plain base64 (no `data:` prefix). Node's
+ * The image a create carries, as plain base64 (no `data:` prefix), at most
+ * `maxBytes` decoded (a report's 1 MiB unless the caller says otherwise; a
+ * ticket image passes its own, smaller cap). Node's
  * decoder skips characters it does not know rather than refusing them, so
  * the alphabet is checked first: a body that is not base64 is refused, not
  * quietly decoded into something else.
  */
-export function decodeReportImage(base64: string): DecodedImage {
+export function decodeReportImage(base64: string, maxBytes: number = REPORT_IMAGE_MAX_BYTES): DecodedImage {
   const text = base64.trim();
   if (text.length === 0 || text.length % 4 !== 0 || !BASE64.test(text)) {
     return { ok: false, problem: "An image must be sent as base64." };
   }
   const bytes = Buffer.from(text, "base64");
-  if (bytes.length > REPORT_IMAGE_MAX_BYTES) {
-    return { ok: false, problem: `An image is at most ${REPORT_IMAGE_MAX_BYTES.toLocaleString("en-US")} bytes (1 MB).` };
+  if (bytes.length > maxBytes) {
+    return { ok: false, problem: `An image is at most ${maxBytes.toLocaleString("en-US")} bytes (${sizeLabel(maxBytes)}).` };
   }
   const contentType = sniffImageType(bytes);
   if (!contentType) return { ok: false, problem: "An image must be a JPEG, PNG or WebP file." };

@@ -1,5 +1,7 @@
 import { Prisma } from "@prisma/client";
 
+import { createRowStore } from "./memoryStore";
+
 /**
  * An in-memory stand-in for `prisma.boardTicket`, so the ticket routes can be
  * tested without a database. It answers only the calls and `where` shapes
@@ -118,5 +120,9 @@ export function memoryPrisma() {
     },
   };
 
-  return { boardTicket };
+  /* Ticket images (images.ts). The foreign key's cascade is not mirrored:
+     nothing the routes do deletes a ticket. */
+  const boardTicketImage = createRowStore({ defaults: { addedBy: null }, idPrefix: "image" });
+
+  return { boardTicket, boardTicketImage };
 }

@@ -195,12 +195,37 @@ model BoardTicket {
   /// Changes only on a status move. Grading is not movement.
   movedAt    DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
+  images     BoardTicketImage[]
 
   /// Postgres treats nulls as distinct, so any number of unkeyed rows coexist.
   @@unique([projectKey, key])
   @@index([projectKey, status, movedAt(sort: Desc)])
   @@index([projectKey, claimedBy])
   @@index([projectKey, createdAt(sort: Desc)])
+}
+
+/// A screenshot attached to a ticket (BOARD_RULES.md, "Ticket images"). A
+/// table of its own so listing tickets never loads image bytes; deleted with
+/// its ticket by the foreign key, and pruned 30 days after the ticket is done
+/// or dropped. Stored in Postgres rather than blob storage: no paid add-on,
+/// held to a per-project byte budget on the free plan every project shares.
+model BoardTicketImage {
+  id          String      @id @default(cuid())
+  ticketId    String
+  ticket      BoardTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  /// Copied from the ticket, so the project's byte budget is one read of
+  /// this table's sizes.
+  projectKey  String
+  /// image/jpeg, image/png or image/webp - read from the bytes' magic
+  /// number on the way in, never taken from the client.
+  contentType String      @db.VarChar(20)
+  byteSize    Int
+  bytes       Bytes
+  addedBy     String?     @db.VarChar(80)
+  createdAt   DateTime    @default(now())
+
+  @@index([ticketId, createdAt])
+  @@index([projectKey])
 }
 
 /// A key/value setting for one project - signup mode, a feature flag.
