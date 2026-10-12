@@ -49,10 +49,15 @@ Run every step in order. Do not skip one because the change "is small".
    2. **Back up production first**, outside the repository (a dump in the
       repo could be committed to a public repository):
 
-          mkdir -p ~/Backups/sumilabu
-          pg_dump "$(neonctl connection-string --project-id square-snow-29043019)" \
-            -Fc -f ~/Backups/sumilabu/sumilabu-$(date -u +%Y%m%dT%H%M%SZ).dump
-          ls -l ~/Backups/sumilabu   # the new file is there and not empty
+          mkdir -p ~/Projects/backups/sumilabu
+          pg_dump "$(neonctl connection-string --project-id square-snow-29043019 --org-id org-old-wave-97887412)" \
+            -Fc -f ~/Projects/backups/sumilabu/$(date +%Y-%m-%d)-before-<what>.dump
+          ls -l ~/Projects/backups/sumilabu   # the new file is there and not empty
+
+      Every SPXIS project keeps its backups in `~/Projects/backups/<project>/`,
+      named date first, outside every checkout (John, 2026-10-08). Without
+      `--org-id`, `neonctl` stops to ask which organization and the dump
+      gets nothing.
 
       If the backup fails, stop and tell John.
    3. Do **not** run `pnpm db:push` against production. The workflow pushes
@@ -352,7 +357,7 @@ walks it. The PATCH move outcomes (`illegal`, `held`) had no route test until
   deployment keeps serving while the next one uploads, and the push runs
   before the code that reads the column is live.
 - **Back up production before a commit that changes the schema reaches
-  `main`** (`pg_dump` to `~/Backups/sumilabu/`, outside the repository: the
+  `main`** (`pg_dump` to `~/Projects/backups/sumilabu/`, outside the repository: the
   command is in step 4 at the top of this file). The workflow takes no
   backup of its own.
 - Keep the SQL the push ran in `prisma/manual-migrations/YYYYMMDD_name.sql`,
