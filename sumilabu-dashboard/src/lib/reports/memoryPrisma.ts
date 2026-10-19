@@ -11,10 +11,10 @@
  * the same cases against Postgres.
  */
 
-import { createRowStore, uniqueViolation, type Row } from "../board/memoryStore";
+import { createCounterStore, createRowStore, createTransactionLock, uniqueViolation, type Row } from "../board/memoryStore";
 
 const REPORT_DEFAULTS: Row = { status: "new", path: null, appVersion: null, reporterName: null, filedTicketId: null, adminNote: null, imageBytes: null };
-const TICKET_DEFAULTS: Row = { key: null, detail: null, area: null, kind: "feature", status: "open", askedBy: null };
+const TICKET_DEFAULTS: Row = { key: null, seq: null, detail: null, area: null, kind: "feature", status: "open", askedBy: null };
 
 export function memoryPrisma() {
   const reportStore = createRowStore({
@@ -31,10 +31,16 @@ export function memoryPrisma() {
     idPrefix: "ticket",
     assertUnique(candidate, rows, self) {
       for (const row of rows) {
-        if (row !== self && row.id === candidate.id) throw uniqueViolation(["id"]);
+        if (row === self) continue;
+        if (row.id === candidate.id) throw uniqueViolation(["id"]);
+        if (candidate.seq != null && row.projectKey === candidate.projectKey && row.seq === candidate.seq) {
+          throw uniqueViolation(["projectKey", "seq"]);
+        }
       }
     },
   });
+  const counterStore = createCounterStore();
+  const serialize = createTransactionLock();
 
   const imageStore = createRowStore({
     defaults: {},
@@ -58,12 +64,18 @@ export function memoryPrisma() {
     },
   };
 
-  type Tx = { report: typeof report; reportImage: typeof imageStore; boardTicket: typeof ticketStore };
+  type Tx = {
+    report: typeof report;
+    reportImage: typeof imageStore;
+    boardTicket: typeof ticketStore;
+    boardTicketCounter: typeof counterStore;
+  };
 
   return {
     report,
     reportImage: imageStore,
     boardTicket: ticketStore,
+    boardTicketCounter: counterStore,
     /**
      * Just enough of Prisma's interactive transaction to exercise
      * `fileReport` and `createReport`: run the callback against the same
@@ -71,17 +83,21 @@ export function memoryPrisma() {
      * undoing every statement in a transaction that does not commit.
      */
     async $transaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T> {
-      const reportSnapshot = reportStore._snapshot();
-      const imageSnapshot = imageStore._snapshot();
-      const ticketSnapshot = ticketStore._snapshot();
-      try {
-        return await fn({ report, reportImage: imageStore, boardTicket: ticketStore });
-      } catch (error) {
-        reportStore._restore(reportSnapshot);
-        imageStore._restore(imageSnapshot);
-        ticketStore._restore(ticketSnapshot);
-        throw error;
-      }
+      return serialize(async () => {
+        const reportSnapshot = reportStore._snapshot();
+        const imageSnapshot = imageStore._snapshot();
+        const ticketSnapshot = ticketStore._snapshot();
+        const counterSnapshot = counterStore._snapshot();
+        try {
+          return await fn({ report, reportImage: imageStore, boardTicket: ticketStore, boardTicketCounter: counterStore });
+        } catch (error) {
+          reportStore._restore(reportSnapshot);
+          imageStore._restore(imageSnapshot);
+          ticketStore._restore(ticketSnapshot);
+          counterStore._restore(counterSnapshot);
+          throw error;
+        }
+      });
     },
   };
 }

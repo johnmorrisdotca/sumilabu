@@ -74,7 +74,8 @@ export function createRowStore(options: { defaults: Row; idPrefix: string; asser
   }
 
   function write(row: Row, data: Row) {
-    const next = { ...row, ...defined(data), updatedAt: new Date() };
+    const next = { ...row, ...defined(data) };
+    if (!(data.updatedAt instanceof Date)) next.updatedAt = new Date();
     assertUnique(next, row);
     Object.assign(row, next);
   }
@@ -85,8 +86,9 @@ export function createRowStore(options: { defaults: Row; idPrefix: string; asser
     _restore: (snapshot: readonly Row[]) => {
       rows = [...snapshot];
     },
-    async findMany({ where, select, orderBy }: { where?: Where; select?: Select; orderBy?: { createdAt?: "asc" | "desc" } } = {}) {
-      const dir = orderBy?.createdAt === "asc" ? 1 : -1;
+    async findMany({ where, select, orderBy }: { where?: Where; select?: Select; orderBy?: { createdAt?: "asc" | "desc" } | readonly { createdAt?: "asc" | "desc"; id?: "asc" }[] } = {}) {
+      const term = Array.isArray(orderBy) ? orderBy.find((t) => t.createdAt) : (orderBy as { createdAt?: string } | undefined);
+      const dir = term?.createdAt === "asc" ? 1 : -1;
       return rows
         .filter((row) => matches(row, where))
         .sort((a, b) => {
@@ -98,6 +100,16 @@ export function createRowStore(options: { defaults: Row; idPrefix: string; asser
     async findFirst({ where, select }: { where?: Where; select?: Select } = {}) {
       const row = rows.find((candidate) => matches(candidate, where));
       return row ? pick(row, select) : null;
+    },
+    async aggregate({ where }: { where?: Where; _max: { seq: true } }) {
+      const seqs = rows.filter((row) => matches(row, where)).map((row) => row.seq).filter((seq): seq is number => typeof seq === "number");
+      return { _max: { seq: seqs.length > 0 ? Math.max(...seqs) : null } };
+    },
+    async update({ where, data }: { where: { id: string }; data: Row }) {
+      const row = rows.find((candidate) => candidate.id === where.id);
+      if (!row) throw new Error("memory store: no such row");
+      write(row, data);
+      return { ...row };
     },
     async count({ where }: { where?: Where } = {}) {
       return rows.filter((row) => matches(row, where)).length;
@@ -121,6 +133,56 @@ export function createRowStore(options: { defaults: Row; idPrefix: string; asser
       rows = rows.filter((row) => !matches(row, where));
       return { count: before - rows.length };
     },
+  };
+}
+
+/**
+ * `prisma.boardTicketCounter` (seq.ts): one row per project, found by
+ * `projectKey`. `last: { increment: n }` is the one update shape the code makes.
+ */
+export function createCounterStore() {
+  let rows = new Map<string, Row>();
+  const apply = (row: Row, data: Row) => {
+    const last = data.last as number | { increment: number } | undefined;
+    if (typeof last === "number") row.last = last;
+    else if (last && typeof last === "object") row.last = (row.last as number) + last.increment;
+    row.updatedAt = new Date();
+  };
+  return {
+    _snapshot: () => new Map([...rows].map(([key, row]) => [key, { ...row }])),
+    _restore: (snapshot: Map<string, Row>) => {
+      rows = new Map([...snapshot].map(([key, row]) => [key, { ...row }]));
+    },
+    async upsert({ where, create, update }: { where: { projectKey: string }; create: Row; update: Row }) {
+      const row = rows.get(where.projectKey);
+      if (row) apply(row, update);
+      else rows.set(where.projectKey, { updatedAt: new Date(), ...create });
+      return { ...rows.get(where.projectKey)! };
+    },
+    async update({ where, data }: { where: { projectKey: string }; data: Row }) {
+      const row = rows.get(where.projectKey);
+      if (!row) throw new Error("memory counter: no such row");
+      apply(row, data);
+      return { ...row };
+    },
+    async findUnique({ where }: { where: { projectKey: string } }) {
+      const row = rows.get(where.projectKey);
+      return row ? { ...row } : null;
+    },
+  };
+}
+
+/**
+ * Postgres queues transactions on the row they both write; a single-threaded
+ * stand-in must do the same or two interleaved transactions read the same
+ * counter. One at a time, in the order they ask.
+ */
+export function createTransactionLock() {
+  let tail: Promise<unknown> = Promise.resolve();
+  return function serialize<T>(run: () => Promise<T>): Promise<T> {
+    const result = tail.then(run);
+    tail = result.catch(() => undefined);
+    return result;
   };
 }
 

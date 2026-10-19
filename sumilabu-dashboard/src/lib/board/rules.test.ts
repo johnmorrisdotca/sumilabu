@@ -12,18 +12,22 @@ import {
   TICKET_PRIORITIES,
   TICKET_STATUSES,
   SETTING_LIMITS,
+  TICKET_PREFIXES,
   byQuickWin,
   canMove,
   draftProblems,
   foreignIdProblems,
+  formatShortId,
   heldNow,
   isSettingKey,
   keyProblems,
   moveData,
   moveWhere,
+  parseShortId,
   shipData,
   textData,
   textProblems,
+  ticketPrefix,
 } from "./rules";
 
 /**
@@ -188,5 +192,36 @@ describe("keys and revisions", () => {
     expect(textData({ area: "  " }, "its-builder", now)).toEqual({ area: null, editedBy: "its-builder", editedAt: now });
     expect(textData({ askedBy: "  a player  " }, "its-builder", now)).toEqual({ askedBy: "a player", editedBy: "its-builder", editedAt: now });
     expect(textData({ kind: "fix" }, "its-builder", now)).toEqual({ kind: "fix", editedBy: "its-builder", editedAt: now });
+  });
+});
+
+/* Invariant 14: a short id is the project's prefix and its number. */
+describe("short ids", () => {
+  it("is SPX for spx-stats and the key in capitals for everyone else", () => {
+    expect(ticketPrefix("spx-stats")).toBe("SPX");
+    expect(ticketPrefix("itsutsu")).toBe("ITSUTSU");
+    expect(ticketPrefix("umakuma-dev")).toBe("UMAKUMA-DEV");
+    expect(formatShortId("spx-stats", 142)).toBe("SPX-142");
+    expect(formatShortId("spx-stats", null)).toBeNull();
+    expect(formatShortId("spx-stats", 0)).toBeNull();
+  });
+
+  it("keeps named prefixes apart from each other and from every project key's default", () => {
+    const named = Object.entries(TICKET_PREFIXES);
+    expect(new Set(named.map(([, prefix]) => prefix)).size).toBe(named.length);
+    for (const [key, prefix] of named) {
+      expect(prefix).toMatch(/^[A-Z0-9]+(-[A-Z0-9]+)*$/);
+      for (const [otherKey] of named) if (otherKey !== key) expect(ticketPrefix(otherKey)).not.toBe(prefix);
+    }
+  });
+
+  it("reads SPX-142 in either case and nothing that only looks like one", () => {
+    expect(parseShortId("spx-stats", "SPX-142")).toBe(142);
+    expect(parseShortId("spx-stats", "spx-142")).toBe(142);
+    expect(parseShortId("spx-stats", " Spx-1 ")).toBe(1);
+    expect(parseShortId("itsutsu", "ITSUTSU-7")).toBe(7);
+    for (const bad of ["SPX-0", "SPX-007", "SPX-+1", "SPX-1.5", "SPX-", "SPX", "SPX-1234567890", "SPX--1", "cmvcbvbj60058jj06wc00lq2a", "ITSUTSU-7", "SPX-STATS-7"]) {
+      expect(parseShortId("spx-stats", bad), bad).toBeNull();
+    }
   });
 });

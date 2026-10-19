@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 
-import { createRowStore } from "./memoryStore";
+import { createCounterStore, createRowStore, createTransactionLock } from "./memoryStore";
 
 /**
  * An in-memory stand-in for `prisma.boardTicket`, so the ticket routes can be
@@ -20,7 +20,7 @@ type Where = Record<string, unknown>;
 type Select = Record<string, boolean>;
 
 const DEFAULTS: TicketRow = {
-  projectKey: "default", key: null, detail: null, area: null, kind: "feature", status: "open", priority: null, effort: null,
+  projectKey: "default", key: null, seq: null, detail: null, area: null, kind: "feature", status: "open", priority: null, effort: null,
   askedBy: null, claimedBy: null, claimedAt: null, releasedIn: null, releasedEntry: null, releasedAt: null, editedBy: null, editedAt: null,
 };
 
@@ -71,29 +71,49 @@ export function memoryPrisma() {
       if (candidate.key != null && row.projectKey === candidate.projectKey && row.key === candidate.key) {
         throw uniqueViolation(["projectKey", "key"]);
       }
+      if (candidate.seq != null && row.projectKey === candidate.projectKey && row.seq === candidate.seq) {
+        throw uniqueViolation(["projectKey", "seq"]);
+      }
     }
   }
 
   function create(data: TicketRow): TicketRow {
     const now = new Date();
-    const row: TicketRow = { ...DEFAULTS, id: `memory-${++made}`, createdAt: now, movedAt: now, ...defined(data), updatedAt: now };
+    const row: TicketRow = { ...DEFAULTS, id: `memory-${++made}`, createdAt: now, movedAt: now, updatedAt: now, ...defined(data) };
     assertUnique(row);
     rows.push(row);
     return { ...row };
   }
 
   function write(row: TicketRow, data: TicketRow) {
-    const next = { ...row, ...defined(data), updatedAt: new Date() };
+    const next = { ...row, ...defined(data) };
+    if (!(data.updatedAt instanceof Date)) next.updatedAt = new Date();
     assertUnique(next, row);
     Object.assign(row, next);
   }
 
   const boardTicket = {
-    async findMany({ where, select }: { where?: Where; select?: Select; orderBy?: unknown } = {}) {
+    async findMany({ where, select, orderBy }: { where?: Where; select?: Select; orderBy?: unknown } = {}) {
+      /* `createdAt asc, id asc` is the backfill's order (seq.ts); anything else is the board's `movedAt desc`. */
+      const byCreation = Array.isArray(orderBy) && orderBy.some((term) => (term as Where).createdAt === "asc");
       return rows
         .filter((row) => matches(row, where))
-        .sort((a, b) => (b.movedAt as Date).getTime() - (a.movedAt as Date).getTime())
+        .sort((a, b) =>
+          byCreation
+            ? (a.createdAt as Date).getTime() - (b.createdAt as Date).getTime() || String(a.id).localeCompare(String(b.id))
+            : (b.movedAt as Date).getTime() - (a.movedAt as Date).getTime(),
+        )
         .map((row) => pick(row, select));
+    },
+    async aggregate({ where }: { where?: Where; _max: { seq: true } }) {
+      const seqs = rows.filter((row) => matches(row, where)).map((row) => row.seq).filter((seq): seq is number => typeof seq === "number");
+      return { _max: { seq: seqs.length > 0 ? Math.max(...seqs) : null } };
+    },
+    async update({ where, data }: { where: { id: string }; data: TicketRow }) {
+      const row = rows.find((candidate) => candidate.id === where.id);
+      if (!row) throw new Error("memory ticket: no such row");
+      write(row, data);
+      return { ...row };
     },
     async findFirst({ where, select }: { where?: Where; select?: Select } = {}) {
       const row = rows.find((candidate) => matches(candidate, where));
@@ -124,5 +144,30 @@ export function memoryPrisma() {
      nothing the routes do deletes a ticket. */
   const boardTicketImage = createRowStore({ defaults: { addedBy: null }, idPrefix: "image" });
 
-  return { boardTicket, boardTicketImage };
+  /* The per-project counter (seq.ts) and the interactive transaction around it. */
+  const boardTicketCounter = createCounterStore();
+  const serialize = createTransactionLock();
+
+  type Tx = { boardTicket: typeof boardTicket; boardTicketCounter: typeof boardTicketCounter; boardTicketImage: typeof boardTicketImage };
+
+  return {
+    boardTicket,
+    boardTicketImage,
+    boardTicketCounter,
+    /** Transactions run one at a time and roll back whole on a throw, as Postgres's row lock and rollback do. */
+    $transaction<T>(fn: ((tx: Tx) => Promise<T>) | readonly unknown[]): Promise<T> {
+      if (typeof fn !== "function") throw new Error("memory $transaction: pass a callback");
+      return serialize(async () => {
+        const tickets = [...rows];
+        const counters = boardTicketCounter._snapshot();
+        try {
+          return await fn({ boardTicket, boardTicketCounter, boardTicketImage });
+        } catch (error) {
+          rows = tickets;
+          boardTicketCounter._restore(counters);
+          throw error;
+        }
+      });
+    },
+  };
 }

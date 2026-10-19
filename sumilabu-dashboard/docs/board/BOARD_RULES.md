@@ -235,6 +235,47 @@ Numbered so a ticket and a test can cite them.
     validation as `ship`, except `releasedAt` is required: a backfill without
     a real date would write today's onto a row that shipped months ago.
 
+14. **A ticket has a short id, and keeps its cuid.** Every ticket carries
+    `seq`, its number in its project, and the API returns `shortId`, the
+    project's prefix and that number: `SPX-142`. The cuid stays the `id`,
+    forever: it is in commit messages, docs and memory notes, and no route
+    stops taking it. Both fields are additive; a client that has never heard
+    of them keeps working.
+
+    - **Prefix.** The project key in capitals (`itsutsu` is `ITSUTSU-3`),
+      unless `TICKET_PREFIXES` in `rules.ts` names another: `spx-stats` is
+      `SPX`. The prefix is worked out, not stored, so it is never a second
+      thing to keep in step; named prefixes are unit-tested to differ from
+      one another and from every other named project's default.
+    - **Numbers** start at 1 per project, in creation order, and are never
+      reused or changed: not for a `dropped` ticket, and not for a deleted
+      newest one, because `BoardTicketCounter` holds the last number used
+      rather than reading `max(seq)`. A unique index on `(projectKey, seq)`
+      is the second wall. Taking a number locks the project's counter row
+      inside the create's own transaction, so two creates cannot draw the
+      same one, and a refused create (a taken key) gives its number back.
+    - **Every route that takes a ticket id** (`tickets/{id}` and its `ship`,
+      `stamp`, `unship` and `images` routes, and each `id` in `tickets/bulk`)
+      takes the short id in either case (`SPX-142`, `spx-142`) or the cuid.
+      A short id is read only when its prefix is the path's own project and
+      its number is one to nine digits with no leading zero. A number with
+      another project's prefix names nothing here: 404 `missing`, never a
+      lookup in the wrong project. Anything else, including a client's own
+      imported id that happens to look like one, is an id as it always was.
+      `tickets/{id}` still never takes a `key` (invariant 11).
+    - **Backfill.** Rows that predate the column have a null `seq`. The first
+      time any board route lists, reads or creates in a project, or
+      resolves a short id there, every unnumbered row is numbered in
+      `createdAt` order with the id as the tie-break, ahead of anything new,
+      in one transaction. It is idempotent (a numbered row is never touched,
+      `updatedAt` stays), so a rerun, or two requests racing, number
+      nothing twice. `import` numbers the rows it brings over the same way.
+      `prisma/manual-migrations/20261019_board_ticket_short_ids.sql` holds
+      the schema and the same numbering as SQL, for a person who wants to
+      run it once first.
+    - **Reports.** A ticket a report is filed into is numbered like any
+      other.
+
 ## Reference shapes
 
 The lease and claim rules, as UmaKuma has them in `src/lib/ticketClaims.ts`.

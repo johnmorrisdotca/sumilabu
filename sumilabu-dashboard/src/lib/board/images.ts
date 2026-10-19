@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { decodeReportImage, type ReportImageType } from "@/lib/reports/image";
 
 import { TEXT_EDITABLE_FROM } from "./rules";
+import { resolveTicketId } from "./seq";
 
 /**
  * Screenshots attached to a ticket (BOARD_RULES.md, "Ticket images"). The
@@ -51,7 +52,8 @@ function view(row: MetaRow): TicketImageView {
 }
 
 /** A ticket's images, oldest first, or null when the ticket is not this project's. */
-export async function listTicketImages(projectKey: string, ticketId: string): Promise<TicketImageView[] | null> {
+export async function listTicketImages(projectKey: string, idOrShortId: string): Promise<TicketImageView[] | null> {
+  const ticketId = await resolveTicketId(projectKey, idOrShortId);
   const ticket = await prisma.boardTicket.findFirst({ where: { id: ticketId, projectKey }, select: { id: true } });
   if (!ticket) return null;
   const rows = await prisma.boardTicketImage.findMany({ where: { ticketId, projectKey }, select: META, orderBy: { createdAt: "asc" } });
@@ -64,7 +66,8 @@ export type StoredTicketImage = { contentType: ReportImageType; bytes: Buffer };
  * One image's bytes, found by its id, its ticket and its project together, so
  * a token for one project cannot read another's by guessing an id.
  */
-export async function getTicketImage(projectKey: string, ticketId: string, imageId: string): Promise<StoredTicketImage | null> {
+export async function getTicketImage(projectKey: string, idOrShortId: string, imageId: string): Promise<StoredTicketImage | null> {
+  const ticketId = await resolveTicketId(projectKey, idOrShortId);
   const row = await prisma.boardTicketImage.findFirst({ where: { id: imageId, ticketId, projectKey } });
   if (!row) return null;
   const image = row as { contentType: string; bytes: Uint8Array };
@@ -108,7 +111,8 @@ export type AttachOutcome =
  * a soft storage line, not a state the rest of the board relies on, so it is
  * not worth a lock.
  */
-export async function attachTicketImage(projectKey: string, ticketId: string, base64: string, actor: string): Promise<AttachOutcome> {
+export async function attachTicketImage(projectKey: string, idOrShortId: string, base64: string, actor: string): Promise<AttachOutcome> {
+  const ticketId = await resolveTicketId(projectKey, idOrShortId);
   const decoded = decodeReportImage(base64, TICKET_IMAGE_LIMITS.maxBytes);
   if (!decoded.ok) return { ok: false, reason: "invalid", problems: [decoded.problem] };
 

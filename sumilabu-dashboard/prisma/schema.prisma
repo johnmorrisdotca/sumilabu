@@ -165,6 +165,11 @@ model BoardTicket {
   /// slug, unique within the project, written once at create or import and
   /// never changed. Null for a client that cites the id, as UmaKuma does.
   key        String?   @db.VarChar(80)
+  /// The ticket's number within its project, for a short id like SPX-142
+  /// (BOARD_RULES.md invariant 14). Assigned once, in creation order, and
+  /// never changed or reused; the cuid stays the id. Null only until the
+  /// first backfill has numbered a row that predates this column.
+  seq        Int?
   title      String    @db.VarChar(120)
   detail     String?   @db.VarChar(4000)
   /// Per project; a project with no areas leaves it null.
@@ -199,9 +204,21 @@ model BoardTicket {
 
   /// Postgres treats nulls as distinct, so any number of unkeyed rows coexist.
   @@unique([projectKey, key])
+  /// Nulls are distinct here too, so unnumbered rows coexist until backfilled.
+  @@unique([projectKey, seq])
   @@index([projectKey, status, movedAt(sort: Desc)])
   @@index([projectKey, claimedBy])
   @@index([projectKey, createdAt(sort: Desc)])
+}
+
+/// The last number a project's tickets have used (invariant 14). A row of
+/// its own, not max(seq): a number is never handed out twice, even if the
+/// newest ticket were ever deleted, and taking the next one locks this row,
+/// so two creates in one project cannot draw the same number.
+model BoardTicketCounter {
+  projectKey String   @id
+  last       Int      @default(0)
+  updatedAt  DateTime @updatedAt
 }
 
 /// A screenshot attached to a ticket (BOARD_RULES.md, "Ticket images"). A

@@ -9,6 +9,7 @@ import {
   canMove,
   draftProblems,
   foreignIdProblems,
+  formatShortId,
   heldNow,
   isTicketStatus,
   moveData,
@@ -24,6 +25,7 @@ import {
   type TicketPriority,
   type TicketStatus,
 } from "./rules";
+import { SEQ_TX_OPTIONS, backfillSeqs, nextSeq, resolveTicketId, settledRow } from "./seq";
 
 /** A ticket as the API returns it: the row, plus the one derived fact every reader needs. */
 export type BoardTicketView = {
@@ -31,6 +33,10 @@ export type BoardTicketView = {
   projectKey: string;
   /** Invariant 11. Null for a ticket its client cites by id. */
   key: string | null;
+  /** Invariant 14. The ticket's number in its project; null only for a row nothing has numbered yet. */
+  seq: number | null;
+  /** Invariant 14. `SPX-142`: the project's prefix and `seq`. Every route also takes it in place of `id`. */
+  shortId: string | null;
   title: string;
   detail: string | null;
   area: string | null;
@@ -54,7 +60,7 @@ export type BoardTicketView = {
 };
 
 type Row = {
-  id: string; projectKey: string; key: string | null; title: string; detail: string | null; area: string | null; kind: string;
+  id: string; projectKey: string; key: string | null; seq: number | null; title: string; detail: string | null; area: string | null; kind: string;
   status: string; priority: string | null; effort: string | null; askedBy: string | null; claimedBy: string | null;
   claimedAt: Date | null; releasedIn: string | null; releasedEntry: string | null; releasedAt: Date | null;
   editedBy: string | null; editedAt: Date | null; createdAt: Date; movedAt: Date;
@@ -63,6 +69,8 @@ type Row = {
 function view(row: Row, now = new Date()): BoardTicketView {
   return {
     ...row,
+    seq: row.seq ?? null,
+    shortId: formatShortId(row.projectKey, row.seq),
     status: isTicketStatus(row.status) ? row.status : "open",
     priority: (row.priority as TicketPriority | null) ?? null,
     effort: (row.effort as TicketEffort | null) ?? null,
@@ -91,23 +99,34 @@ export async function listTickets(
   filter: { statuses?: readonly TicketStatus[]; unfinished?: boolean } = {},
 ): Promise<BoardTicketView[]> {
   const statuses = filter.unfinished ? (["open", "inProgress"] as TicketStatus[]) : filter.statuses;
-  const rows = await prisma.boardTicket.findMany({
-    where: { projectKey, ...(statuses && statuses.length > 0 ? { status: { in: [...statuses] } } : {}) },
-    orderBy: [{ movedAt: "desc" }],
-  });
+  const read = () =>
+    prisma.boardTicket.findMany({
+      where: { projectKey, ...(statuses && statuses.length > 0 ? { status: { in: [...statuses] } } : {}) },
+      orderBy: [{ movedAt: "desc" }],
+    });
+  let rows = await read();
+  /* Invariant 14: the first read after the column exists numbers the project, once. */
+  if (rows.some((row) => row.seq == null)) {
+    await backfillSeqs(projectKey);
+    rows = await read();
+  }
   const now = new Date();
   return rows.map((row) => view(row, now));
 }
 
-export async function getTicket(projectKey: string, id: string): Promise<BoardTicketView | null> {
-  const row = await prisma.boardTicket.findFirst({ where: { id, projectKey } });
-  return row ? view(row) : null;
+/** `id` is the cuid or the short id (invariant 14); a short id of another project finds nothing. */
+export async function getTicket(projectKey: string, idOrShortId: string): Promise<BoardTicketView | null> {
+  const id = await resolveTicketId(projectKey, idOrShortId);
+  const find = () => prisma.boardTicket.findFirst({ where: { id, projectKey } });
+  const row = await find();
+  return row ? view(await settledRow(projectKey, row, find)) : null;
 }
 
 /** Invariant 11. A client resolves a key to an id here, and addresses every write by the id. */
 export async function getTicketByKey(projectKey: string, key: string): Promise<BoardTicketView | null> {
-  const row = await prisma.boardTicket.findFirst({ where: { projectKey, key } });
-  return row ? view(row) : null;
+  const find = () => prisma.boardTicket.findFirst({ where: { projectKey, key } });
+  const row = await find();
+  return row ? view(await settledRow(projectKey, row, find)) : null;
 }
 
 export type TicketDraft = {
@@ -128,17 +147,22 @@ export async function createTicket(projectKey: string, draft: TicketDraft): Prom
   const problems = draftProblems(draft);
   if (problems.length > 0) return { ok: false, reason: "invalid", problems };
   try {
-    const row = await prisma.boardTicket.create({
-      data: {
-        projectKey,
-        key: draft.key ?? null,
-        title: draft.title.trim(),
-        detail: draft.detail?.trim() || null,
-        area: draft.area?.trim() || null,
-        kind: draft.kind,
-        askedBy: draft.askedBy?.trim() || null,
-      },
-    });
+    /* Invariant 14: the number is drawn in the create's own transaction, so a refused key gives it back. */
+    const row = await prisma.$transaction(async (tx) => {
+      const seq = await nextSeq(tx, projectKey);
+      return tx.boardTicket.create({
+        data: {
+          projectKey,
+          seq,
+          key: draft.key ?? null,
+          title: draft.title.trim(),
+          detail: draft.detail?.trim() || null,
+          area: draft.area?.trim() || null,
+          kind: draft.kind,
+          askedBy: draft.askedBy?.trim() || null,
+        },
+      });
+    }, SEQ_TX_OPTIONS);
     return { ok: true, ticket: view(row) };
   } catch (error) {
     if (!draft.key || !keyTaken(error)) throw error;
@@ -168,11 +192,12 @@ export type TicketText = { title?: string; detail?: string | null; area?: string
  */
 export async function moveTicket(
   projectKey: string,
-  id: string,
+  idOrShortId: string,
   to: TicketMoveTarget,
   actor: string,
   text?: TicketText,
 ): Promise<MoveOutcome> {
+  const id = await resolveTicketId(projectKey, idOrShortId);
   const now = new Date();
   const before = await prisma.boardTicket.findFirst({ where: { id, projectKey }, select: { status: true } });
   if (!before || !isTicketStatus(before.status)) return { ok: false, reason: "missing", ticket: null };
@@ -194,7 +219,8 @@ export async function moveTicket(
  * `done`. It is not a move, so it carries no claim condition and `movedAt`
  * stays (invariant 8); the re-read only says why nothing was written.
  */
-export async function reviseTicket(projectKey: string, id: string, text: TicketText, actor: string): Promise<MoveOutcome> {
+export async function reviseTicket(projectKey: string, idOrShortId: string, text: TicketText, actor: string): Promise<MoveOutcome> {
+  const id = await resolveTicketId(projectKey, idOrShortId);
   const revised = await prisma.boardTicket.updateMany({
     where: { id, projectKey, status: { in: [...TEXT_EDITABLE_FROM] } },
     data: textData(text, actor, new Date()),
@@ -208,7 +234,8 @@ export async function reviseTicket(projectKey: string, id: string, text: TicketT
 export type TicketGrade = { priority?: TicketPriority | null; effort?: TicketEffort | null };
 
 /** Invariant 8: grading is not movement, so `movedAt` stays. */
-export async function gradeTicket(projectKey: string, id: string, grade: TicketGrade): Promise<BoardTicketView | null> {
+export async function gradeTicket(projectKey: string, idOrShortId: string, grade: TicketGrade): Promise<BoardTicketView | null> {
+  const id = await resolveTicketId(projectKey, idOrShortId);
   const data: { priority?: string | null; effort?: string | null } = {};
   if (grade.priority !== undefined) data.priority = grade.priority;
   if (grade.effort !== undefined) data.effort = grade.effort;
@@ -242,7 +269,9 @@ function patchText(patch: TicketPatch): TicketText | null {
  * move or revision still writes no grade. `actor` is unused when the patch
  * neither moves nor revises anything (a grade alone needs nobody named).
  */
-export async function patchTicket(projectKey: string, id: string, patch: TicketPatch, actor: string): Promise<PatchOutcome> {
+export async function patchTicket(projectKey: string, idOrShortId: string, patch: TicketPatch, actor: string): Promise<PatchOutcome> {
+  /* Resolved once here; the move, revision and grade below then see the cuid and look nothing up. */
+  const id = await resolveTicketId(projectKey, idOrShortId);
   const text = patchText(patch);
   if (text) {
     const problems = textProblems(text);
@@ -267,10 +296,11 @@ export async function patchTicket(projectKey: string, id: string, patch: TicketP
  */
 export async function shipTicket(
   projectKey: string,
-  id: string,
+  idOrShortId: string,
   ship: { version: string; entryId: string | null; releasedAt: Date },
   actor: string,
 ): Promise<MoveOutcome> {
+  const id = await resolveTicketId(projectKey, idOrShortId);
   const before = await prisma.boardTicket.findFirst({ where: { id, projectKey }, select: { status: true } });
   if (!before || !isTicketStatus(before.status)) return { ok: false, reason: "missing", ticket: null };
   if (!(SHIPPABLE_FROM as readonly string[]).includes(before.status)) {
@@ -305,9 +335,10 @@ export type StampOutcome =
  */
 export async function stampTicket(
   projectKey: string,
-  id: string,
+  idOrShortId: string,
   stamp: { version: string; entryId: string | null; releasedAt: Date },
 ): Promise<StampOutcome> {
+  const id = await resolveTicketId(projectKey, idOrShortId);
   const before = await prisma.boardTicket.findFirst({ where: { id, projectKey }, select: { status: true, releasedIn: true } });
   if (!before) return { ok: false, reason: "missing", ticket: null };
   if (before.status !== "done") return { ok: false, reason: "notDone", ticket: await getTicket(projectKey, id) };
@@ -440,6 +471,8 @@ export async function importTickets(
     }
     imported += 1;
   }
+  /* Invariant 14: rows the import created are numbered now, in creation order, after the ones already numbered. */
+  await backfillSeqs(projectKey);
   return { ok: true, imported };
 }
 
@@ -448,7 +481,8 @@ export async function importTickets(
  * version is not there. The service cannot check that; it records who said
  * so and why.
  */
-export async function unshipTicket(projectKey: string, id: string): Promise<MoveOutcome> {
+export async function unshipTicket(projectKey: string, idOrShortId: string): Promise<MoveOutcome> {
+  const id = await resolveTicketId(projectKey, idOrShortId);
   const now = new Date();
   const moved = await prisma.boardTicket.updateMany({ where: { id, projectKey, status: "done" }, data: unshipData(now) });
   const after = await getTicket(projectKey, id);

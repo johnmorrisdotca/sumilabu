@@ -318,7 +318,7 @@ test runs never touch the real rows. Every write also sends
 | GET | `/api/v1/projects` | | any project's board token; `{ projects: ["itsutsu", "umakuma", …] }` — names only, no write access implied |
 | GET | `/api/v1/projects/{key}/tickets` | `?status=open,inProgress`, `?unfinished=1`, or `?key=<slug>` alone | with `heldNow` computed; unfinished includes lapsed holds; `?key=` answers as `tickets/{id}` does |
 | POST | `/api/v1/projects/{key}/tickets` | `{ title, detail?, area?, kind?, askedBy?, key? }` | 422 with `problems[]` on a cap; 409 `key_taken` |
-| GET | `/api/v1/projects/{key}/tickets/{id}` | | |
+| GET | `/api/v1/projects/{key}/tickets/{id}` | | `{id}` is the cuid or the short id (`SPX-142`, any case), on this route and every `{id}` route below; every ticket carries `seq` and `shortId` beside `id` (BOARD_RULES.md invariant 14) |
 | PATCH | `/api/v1/projects/{key}/tickets/{id}` | `{ status?, priority?, effort?, title?, detail?, area?, askedBy?, kind? }` | `status` is `open`, `inProgress` or `dropped`; words checked, then move (carrying the words), then grade; 422 on a cap, 409 `{ error: "illegal" \| "held" \| "done", heldBy }`; a body naming `key` is 400 `key_immutable` |
 | POST | `/api/v1/projects/{key}/tickets/bulk` | `{ updates: [{ id, …same fields as PATCH }] }` (≤ 100) | each row independently, as its own PATCH; `{ results: [{ id, ok, ticket \| error }] }` — no rollback across rows |
 | POST | `/api/v1/projects/{key}/tickets/{id}/ship` | `{ version, entryId?, releasedAt? }` | release tools only; from `open` or `inProgress` under the claim condition; writes `done` |

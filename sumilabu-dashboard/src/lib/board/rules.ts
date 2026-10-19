@@ -62,6 +62,46 @@ export function keyProblems(key: string): string[] {
   return [];
 }
 
+/**
+ * Invariant 14. A ticket's short id is its project's prefix, a hyphen and its
+ * number in the project: `SPX-142`. The number (`seq`) is stored and never
+ * changes; the prefix is worked out, so the id the board shows is never a
+ * second thing to keep in step.
+ *
+ * A project's prefix is its key in capitals unless named here. spx-stats is
+ * `SPX`, as its AGENTS.md has always promised, not `SPX-STATS`. Every
+ * prefix, named or worked out, must differ from every other project's, or
+ * one short id would name two tickets (the unit test checks the named ones
+ * against each other and against every default).
+ */
+export const TICKET_PREFIXES: Readonly<Record<string, string>> = { "spx-stats": "SPX" };
+
+export function ticketPrefix(projectKey: string): string {
+  return TICKET_PREFIXES[projectKey] ?? projectKey.toUpperCase();
+}
+
+/** `SPX-142`, or null for a ticket not numbered yet. */
+export function formatShortId(projectKey: string, seq: number | null | undefined): string | null {
+  return typeof seq === "number" && Number.isSafeInteger(seq) && seq > 0 ? `${ticketPrefix(projectKey)}-${seq}` : null;
+}
+
+/** Up to nine digits, no sign, no leading zero: `SPX-0142` and `SPX-+142` are not short ids. */
+const SHORT_NUMBER = /^[1-9][0-9]{0,8}$/;
+
+/**
+ * The number in `SPX-142` or `spx-142` when its prefix is this project's,
+ * else null. A prefix that is another project's yields null, so the caller
+ * never looks the number up in the wrong project; a cuid yields null, so
+ * the caller treats it as an id as it always has.
+ */
+export function parseShortId(projectKey: string, input: string): number | null {
+  const text = input.trim();
+  const prefix = `${ticketPrefix(projectKey)}-`;
+  if (text.length <= prefix.length || text.slice(0, prefix.length).toUpperCase() !== prefix) return null;
+  const digits = text.slice(prefix.length);
+  return SHORT_NUMBER.test(digits) ? Number(digits) : null;
+}
+
 /** Invariant 3. */
 export const LEASE_MS = 6 * 60 * 60 * 1000;
 

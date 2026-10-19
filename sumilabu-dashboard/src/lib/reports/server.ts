@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { SEQ_TX_OPTIONS, nextSeq } from "@/lib/board/seq";
 import { draftProblems as ticketDraftProblems, type TicketKind } from "@/lib/board/rules";
 
 import { REPORT_IMAGE_BUDGETS, decodeReportImage, type ReportImageType } from "./image";
@@ -266,8 +267,10 @@ export async function fileReport(projectKey: string, id: string, overrides: File
 
   try {
     const ticketId = await prisma.$transaction(async (tx) => {
+      /* BOARD_RULES.md invariant 14: a filed report's ticket is numbered like any other. */
+      const seq = await nextSeq(tx, projectKey);
       const ticket = await tx.boardTicket.create({
-        data: { projectKey, title: draft.title, detail: draft.detail, kind: draft.kind, askedBy: draft.askedBy },
+        data: { projectKey, seq, title: draft.title, detail: draft.detail, kind: draft.kind, askedBy: draft.askedBy },
       });
       const updated = await tx.report.updateMany({
         where: { id, projectKey, status: { in: [...FILEABLE_FROM] } },
@@ -275,7 +278,7 @@ export async function fileReport(projectKey: string, id: string, overrides: File
       });
       if (updated.count !== 1) throw new NotFileableError();
       return ticket.id as string;
-    });
+    }, SEQ_TX_OPTIONS);
     const after = await getReport(projectKey, id);
     return after ? { ok: true, report: after, ticketId } : { ok: false, reason: "missing" };
   } catch (error) {
