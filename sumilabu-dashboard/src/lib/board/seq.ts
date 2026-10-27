@@ -37,20 +37,24 @@ export async function settleSeqs(tx: Tx, projectKey: string): Promise<{ last: nu
     update: { last: { increment: 0 } },
   });
   const top = await tx.boardTicket.aggregate({ where: { projectKey }, _max: { seq: true } });
-  let last = Math.max(counter.last, top._max.seq ?? 0);
+  const start = Math.max(counter.last, top._max.seq ?? 0);
 
-  const pending = await tx.boardTicket.findMany({
-    where: { projectKey, seq: null },
-    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
-    select: { id: true, updatedAt: true },
-  });
-  for (const row of pending) {
-    last += 1;
-    /* updatedAt is written back as it was: numbering a row is not editing it. */
-    await tx.boardTicket.update({ where: { id: row.id }, data: { seq: last, updatedAt: row.updatedAt } });
-  }
+  /* One statement numbers every unnumbered row of the project, in creation
+     order, after `start`. Raw SQL leaves updatedAt alone, so numbering a row
+     is not an edit. One statement, not one update per row: a few thousand
+     old rows used to outlast the transaction's 30 s and roll it back. */
+  const numbered = await tx.$executeRaw`
+    UPDATE "BoardTicket" AS t
+    SET seq = n.seq
+    FROM (
+      SELECT id, (${start}::int + ROW_NUMBER() OVER (ORDER BY "createdAt", id))::int AS seq
+      FROM "BoardTicket"
+      WHERE "projectKey" = ${projectKey} AND seq IS NULL
+    ) AS n
+    WHERE t.id = n.id AND t."projectKey" = ${projectKey} AND t.seq IS NULL`;
+  const last = start + numbered;
   if (last !== counter.last) await tx.boardTicketCounter.update({ where: { projectKey }, data: { last } });
-  return { last, numbered: pending.length };
+  return { last, numbered };
 }
 
 /** The number for a ticket about to be created, inside the create's transaction. */

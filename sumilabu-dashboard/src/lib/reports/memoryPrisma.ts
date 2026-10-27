@@ -11,7 +11,7 @@
  * the same cases against Postgres.
  */
 
-import { createCounterStore, createRowStore, createTransactionLock, uniqueViolation, type Row } from "../board/memoryStore";
+import { createCounterStore, createRowStore, createTransactionLock, numberUnsettled, uniqueViolation, type Row } from "../board/memoryStore";
 
 const REPORT_DEFAULTS: Row = { status: "new", path: null, appVersion: null, reporterName: null, filedTicketId: null, adminNote: null, imageBytes: null };
 const TICKET_DEFAULTS: Row = { key: null, seq: null, detail: null, area: null, kind: "feature", status: "open", askedBy: null };
@@ -64,11 +64,15 @@ export function memoryPrisma() {
     },
   };
 
+  /** seq.ts's numbering statement, the one raw SQL filing a report makes (memoryStore.ts, `numberUnsettled`). */
+  const executeRaw = (strings: TemplateStringsArray, ...values: unknown[]) => numberUnsettled(ticketStore, strings, values);
+
   type Tx = {
     report: typeof report;
     reportImage: typeof imageStore;
     boardTicket: typeof ticketStore;
     boardTicketCounter: typeof counterStore;
+    $executeRaw: typeof executeRaw;
   };
 
   return {
@@ -76,6 +80,7 @@ export function memoryPrisma() {
     reportImage: imageStore,
     boardTicket: ticketStore,
     boardTicketCounter: counterStore,
+    $executeRaw: executeRaw,
     /**
      * Just enough of Prisma's interactive transaction to exercise
      * `fileReport` and `createReport`: run the callback against the same
@@ -89,7 +94,7 @@ export function memoryPrisma() {
         const ticketSnapshot = ticketStore._snapshot();
         const counterSnapshot = counterStore._snapshot();
         try {
-          return await fn({ report, reportImage: imageStore, boardTicket: ticketStore, boardTicketCounter: counterStore });
+          return await fn({ report, reportImage: imageStore, boardTicket: ticketStore, boardTicketCounter: counterStore, $executeRaw: executeRaw });
         } catch (error) {
           reportStore._restore(reportSnapshot);
           imageStore._restore(imageSnapshot);

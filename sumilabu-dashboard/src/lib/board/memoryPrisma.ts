@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 
-import { createCounterStore, createRowStore, createTransactionLock } from "./memoryStore";
+import { createCounterStore, createRowStore, createTransactionLock, numberUnsettled } from "./memoryStore";
 
 /**
  * An in-memory stand-in for `prisma.boardTicket`, so the ticket routes can be
@@ -148,12 +148,21 @@ export function memoryPrisma() {
   const boardTicketCounter = createCounterStore();
   const serialize = createTransactionLock();
 
-  type Tx = { boardTicket: typeof boardTicket; boardTicketCounter: typeof boardTicketCounter; boardTicketImage: typeof boardTicketImage };
+  /** The one raw statement the code makes: seq.ts's set-based numbering (memoryStore.ts, `numberUnsettled`). */
+  const executeRaw = (strings: TemplateStringsArray, ...values: unknown[]) => numberUnsettled(boardTicket, strings, values);
+
+  type Tx = {
+    boardTicket: typeof boardTicket;
+    boardTicketCounter: typeof boardTicketCounter;
+    boardTicketImage: typeof boardTicketImage;
+    $executeRaw: typeof executeRaw;
+  };
 
   return {
     boardTicket,
     boardTicketImage,
     boardTicketCounter,
+    $executeRaw: executeRaw,
     /** Transactions run one at a time and roll back whole on a throw, as Postgres's row lock and rollback do. */
     $transaction<T>(fn: ((tx: Tx) => Promise<T>) | readonly unknown[]): Promise<T> {
       if (typeof fn !== "function") throw new Error("memory $transaction: pass a callback");
@@ -161,7 +170,7 @@ export function memoryPrisma() {
         const tickets = [...rows];
         const counters = boardTicketCounter._snapshot();
         try {
-          return await fn({ boardTicket, boardTicketCounter, boardTicketImage });
+          return await fn({ boardTicket, boardTicketCounter, boardTicketImage, $executeRaw: executeRaw });
         } catch (error) {
           rows = tickets;
           boardTicketCounter._restore(counters);

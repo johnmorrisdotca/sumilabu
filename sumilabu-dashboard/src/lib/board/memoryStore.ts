@@ -187,3 +187,35 @@ export function createTransactionLock() {
 }
 
 export type RowStore = ReturnType<typeof createRowStore>;
+
+/**
+ * The one raw statement the code makes against a ticket table: seq.ts's
+ * set-based numbering (`UPDATE "BoardTicket" ... ROW_NUMBER() OVER ...`). A
+ * stand-in's `$executeRaw` answers it with this: the same rule in JS over the
+ * store's own rows, with the statement's parameters in their order (start,
+ * projectKey, projectKey). Unnumbered rows of the project, in createdAt then
+ * id order, are numbered after start, and updatedAt is written back as it was,
+ * as the raw SQL leaves it. Any other raw SQL is refused.
+ */
+export async function numberUnsettled(
+  store: {
+    findMany(args: { where: Where; orderBy: readonly { createdAt?: "asc"; id?: "asc" }[]; select: Select }): Promise<Row[]>;
+    update(args: { where: { id: string }; data: Row }): Promise<unknown>;
+  },
+  strings: TemplateStringsArray,
+  values: readonly unknown[],
+): Promise<number> {
+  if (!/ROW_NUMBER\(\) OVER/.test(strings.join("?"))) throw new Error("memory $executeRaw: only the seq numbering statement");
+  const [start, projectKey] = values as [number, string];
+  const pending = await store.findMany({
+    where: { projectKey, seq: null },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+    select: { id: true, updatedAt: true },
+  });
+  let seq = start;
+  for (const row of pending) {
+    seq += 1;
+    await store.update({ where: { id: String(row.id) }, data: { seq, updatedAt: row.updatedAt } });
+  }
+  return pending.length;
+}
