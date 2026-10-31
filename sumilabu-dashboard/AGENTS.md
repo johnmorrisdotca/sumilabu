@@ -205,6 +205,7 @@ workflow runs, so a red push is a red push you could have seen locally.
    | `EXPECTED_HEARTBEAT_SECONDS`, `STALE_AFTER_SECONDS` | `lib/heartbeat-thresholds.ts` | Fallback health thresholds for a device that reports no `heartbeat_interval_s`. |
    | `DASHBOARD_UTC_OFFSET_HOURS` | `app/page.tsx` | Clock and timestamps on the dashboard; default `-8`. |
    | `BOARD_TOKENS_JSON` | `lib/board/auth.ts` | `{ "<projectKey>": "<token>" }` for the ticket routes, and for `POST reports/{id}/file`. Every agent worktree of a site holds its site's entry. |
+   | `BOARD_TOKENS_EXTRA_JSON` | `lib/board/auth.ts` | The same shape, board routes only: how a project is added, since Vercel will not show the first back to add to. A project in both keeps the first's key. |
    | `SETTINGS_TOKENS_JSON` | `lib/board/auth.ts` | Same shape, settings routes only. A site's production deployment holds it and nothing else does. |
    | `REPORTS_TOKENS_JSON` | `lib/board/auth.ts` | Same shape, the reports routes (create/list/get/patch/delete) and `GET /api/v1/health` - but not filing, which needs the board token instead. |
    | `TELEMETRY_DROP_EVENTS` | `lib/telemetry-drop.ts` | Events acknowledged with `{ ok: true, dropped: true }` and not stored: comma list of `event` or `project:event`; `none` stores all. Unset means UmaKuma's `api_route`, `study_review_history` and `reading_signoffs_get_perf`. |

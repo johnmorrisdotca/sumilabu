@@ -7,6 +7,33 @@ import { TOKEN_SCOPES, boardProjectKeys, tokenFor } from "./auth";
  * routes, because a setting decides who may sign up, and a dev project is a
  * separate entry so a test run cannot reach the real rows by accident.
  */
+describe("BOARD_TOKENS_EXTRA_JSON", () => {
+  const env = {
+    BOARD_TOKENS_JSON: JSON.stringify({ umakuma: "board-real" }),
+    BOARD_TOKENS_EXTRA_JSON: JSON.stringify({ hotaru: "board-extra", umakuma: "not-this-one" }),
+  };
+
+  it("gives a project a board without touching the first setting", () => {
+    expect(tokenFor(TOKEN_SCOPES.board, "hotaru", env)).toBe("board-extra");
+    expect(boardProjectKeys(TOKEN_SCOPES.board, env)).toEqual(["hotaru", "umakuma"]);
+  });
+
+  it("can never replace a key the first setting holds", () => {
+    expect(tokenFor(TOKEN_SCOPES.board, "umakuma", env)).toBe("board-real");
+  });
+
+  it("opens nothing but the board", () => {
+    expect(tokenFor(TOKEN_SCOPES.settings, "hotaru", env)).toBeNull();
+    expect(tokenFor(TOKEN_SCOPES.reports, "hotaru", env)).toBeNull();
+  });
+
+  it("a bad second setting breaks nobody", () => {
+    const bad = { ...env, BOARD_TOKENS_EXTRA_JSON: "[Sensitive]" };
+    expect(tokenFor(TOKEN_SCOPES.board, "umakuma", bad)).toBe("board-real");
+    expect(tokenFor(TOKEN_SCOPES.board, "hotaru", bad)).toBeNull();
+  });
+});
+
 describe("tokenFor", () => {
   const env = {
     BOARD_TOKENS_JSON: JSON.stringify({ umakuma: "board-real", "umakuma-dev": "board-dev" }),

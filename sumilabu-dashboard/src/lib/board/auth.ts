@@ -45,15 +45,8 @@ const TOKEN_ENV: Record<TokenScope, string> = {
 
 /** The token a project presents for one scope, from that scope's map. */
 export function tokenFor(scope: TokenScope, projectKey: string, env: Record<string, string | undefined> = process.env): string | null {
-  const raw = env[TOKEN_ENV[scope]];
-  if (!raw) return null;
-  try {
-    const parsed = JSON.parse(raw) as Record<string, unknown>;
-    const token = parsed[projectKey];
-    return typeof token === "string" && token.length > 0 ? token : null;
-  } catch {
-    return null;
-  }
+  const token = tokenMap(scope, env)[projectKey];
+  return token && token.length > 0 ? token : null;
 }
 
 export function boardTokenFor(projectKey: string): string | null {
@@ -83,8 +76,7 @@ export function authorizeBoard(req: NextRequest, projectKey: string, scope: Toke
   return { projectKey, actor: actorOf(req) };
 }
 
-function tokenMap(scope: TokenScope, env: Record<string, string | undefined> = process.env): Record<string, string> {
-  const raw = env[TOKEN_ENV[scope]];
+function readTokens(raw: string | undefined): Record<string, string> {
   if (!raw) return {};
   try {
     const parsed = JSON.parse(raw) as Record<string, unknown>;
@@ -92,6 +84,17 @@ function tokenMap(scope: TokenScope, env: Record<string, string | undefined> = p
   } catch {
     return {};
   }
+}
+
+/**
+ * A scope's map. The board's has a second setting, BOARD_TOKENS_EXTRA_JSON, so a
+ * project can be given a board without touching the first: Vercel will not show a
+ * sensitive value back, so that one cannot be read and added to. A project in both
+ * keeps the first setting's key, and a bad second setting breaks nobody.
+ */
+function tokenMap(scope: TokenScope, env: Record<string, string | undefined> = process.env): Record<string, string> {
+  const main = readTokens(env[TOKEN_ENV[scope]]);
+  return scope === TOKEN_SCOPES.board ? { ...readTokens(env.BOARD_TOKENS_EXTRA_JSON), ...main } : main;
 }
 
 /**
