@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 
+import { parseJson, readChanges, type StoredChanges } from "./changes";
 import { overallByItem, parseScorecard, type Scorecard } from "./contract";
 
 /* How many runs stay in Postgres: the latest for the page and a handful behind
@@ -33,6 +34,8 @@ export type ScorecardData = {
   receivedAt: string;
   /** Oldest first, the latest run last. */
   trend: TrendPoint[];
+  /** What moved since earlier runs, worked out when the run was uploaded (SUMILABU-14); null before the first comparison. */
+  changes?: StoredChanges | null;
 };
 
 /**
@@ -48,7 +51,7 @@ export async function readScorecard(): Promise<ScorecardData | null> {
     select: { id: true, generatedAt: true, receivedAt: true, overall: true },
   });
   if (runs.length === 0) return null;
-  const latest = await prisma.scorecardRun.findUnique({ where: { id: runs[0].id }, select: { payload: true } });
+  const latest = await prisma.scorecardRun.findUnique({ where: { id: runs[0].id }, select: { payload: true, changes: true } });
   if (!latest) return null;
   const parsed = parseScorecard(latest.payload);
   if (!parsed.ok) {
@@ -58,5 +61,7 @@ export async function readScorecard(): Promise<ScorecardData | null> {
   const trend: TrendPoint[] = runs
     .map((run) => ({ generatedAt: run.generatedAt.toISOString(), overall: (run.overall ?? {}) as Record<string, number | null> }))
     .reverse();
-  return { doc: parsed.doc, receivedAt: runs[0].receivedAt.toISOString(), trend };
+  /* Stored with the run by the upload: the page reads the comparison as it is and never looks at the history. */
+  const changes = readChanges(parseJson(latest.changes));
+  return { doc: parsed.doc, receivedAt: runs[0].receivedAt.toISOString(), trend, changes };
 }

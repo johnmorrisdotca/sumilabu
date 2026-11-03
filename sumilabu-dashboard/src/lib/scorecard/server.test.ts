@@ -33,7 +33,7 @@ describe("readScorecard", () => {
     ]);
     findUnique.mockResolvedValue({ payload: sample });
     const data = await readScorecard();
-    expect(findUnique).toHaveBeenCalledWith({ where: { id: "r3" }, select: { payload: true } });
+    expect(findUnique).toHaveBeenCalledWith({ where: { id: "r3" }, select: { payload: true, changes: true } });
     expect(data?.doc.items).toHaveLength(10);
     expect(data?.trend.map((t) => t.generatedAt)).toEqual(["2026-10-19T23:00:00.000Z", "2026-10-26T23:00:00.000Z", "2026-11-02T23:00:00.000Z"]);
     expect(data?.receivedAt).toBe("2026-11-03T00:00:00.000Z");

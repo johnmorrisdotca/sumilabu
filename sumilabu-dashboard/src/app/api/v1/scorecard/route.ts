@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { parseScorecard } from "@/lib/scorecard/contract";
 import { forgetScorecard } from "@/lib/scorecard/data";
+import { recordHistory, type HistoryResult } from "@/lib/scorecard/history";
 import { saveScorecardRun } from "@/lib/scorecard/server";
 
 export const runtime = "nodejs";
@@ -38,7 +39,7 @@ function fail(error: string, status: number, extra: Record<string, unknown> = {}
  * Upload one scorecard run (docs/scorecard.md). Bearer `SCORECARD_TOKEN`; the
  * body is the collector's JSON document, at most 1 MiB, checked against the
  * contract before anything is stored. One row per run, the newest ten kept,
- * and the page's cache is cleared so the next view shows it. The order is
+ * the run's key figures kept and compared with earlier runs, and the page's cache is cleared so the next view shows it. The order is
  * cheap to costly: token, then declared size, then the body, then the shape,
  * and the database is only reached by a document that passed all of them.
  */
@@ -68,9 +69,19 @@ export async function POST(req: NextRequest) {
 
   try {
     const { pruned } = await saveScorecardRun(parsed.doc, byteSize);
+    /* The changes since earlier runs are worked out here, once per upload, and
+       stored with the run (SUMILABU-14). A failure there never loses the run:
+       the page shows it without arrows, and the next upload tries again. */
+    let history: HistoryResult | "failed";
+    try {
+      history = await recordHistory(parsed.doc);
+    } catch (error) {
+      console.error(error);
+      history = "failed";
+    }
     forgetScorecard();
     return NextResponse.json(
-      { ok: true, generatedAt: parsed.doc.generatedAt, items: parsed.doc.items.length, bytes: byteSize, pruned },
+      { ok: true, generatedAt: parsed.doc.generatedAt, items: parsed.doc.items.length, bytes: byteSize, pruned, history },
       { headers: NO_STORE },
     );
   } catch (error) {

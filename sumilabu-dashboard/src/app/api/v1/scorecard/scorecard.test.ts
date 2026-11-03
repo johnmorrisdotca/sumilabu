@@ -4,15 +4,18 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import sample from "@/lib/scorecard/fixtures/sample.json";
 
-const { upsert, findMany, deleteMany, revalidateTag } = vi.hoisted(() => ({
+const { upsert, findMany, deleteMany, revalidateTag, recordHistory } = vi.hoisted(() => ({
   upsert: vi.fn(),
   findMany: vi.fn(),
   deleteMany: vi.fn(),
   revalidateTag: vi.fn(),
+  recordHistory: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({ revalidateTag, unstable_cache: (fn: unknown) => fn }));
 vi.mock("@/lib/prisma", () => ({ prisma: { scorecardRun: { upsert, findMany, deleteMany } } }));
+/* The history's own rules are tested in lib/scorecard/history.test.ts; here only that the upload calls it, once, after the run is saved. */
+vi.mock("@/lib/scorecard/history", () => ({ recordHistory }));
 
 const { POST, MAX_BODY_BYTES } = await import("./route");
 
@@ -32,10 +35,12 @@ beforeEach(() => {
   upsert.mockResolvedValue({});
   findMany.mockResolvedValue([]);
   deleteMany.mockResolvedValue({ count: 0 });
+  recordHistory.mockResolvedValue({ runsKept: 2, backfilled: 0, pruned: 0, compared: { previous: "2026-10-26T23:00:00.000Z", week: "2026-10-26T23:00:00.000Z", month: null } });
 });
 
 const touchedNothing = () => {
   expect(upsert).not.toHaveBeenCalled();
+  expect(recordHistory).not.toHaveBeenCalled();
   expect(revalidateTag).not.toHaveBeenCalled();
 };
 
@@ -116,6 +121,25 @@ describe("POST /api/v1/scorecard", () => {
     expect(args.where.generatedAt).toEqual(new Date("2026-11-02T23:00:00Z"));
     expect(args.create.itemCount).toBe(10);
     expect(args.create.overall["kazoku-ui"]).toBe(8);
+    expect(revalidateTag).toHaveBeenCalledWith("scorecard", { expire: 0 });
+  });
+
+  it("works out the changes since earlier runs once, after the run is saved, and says what it compared", async () => {
+    const res = await POST(post(valid()));
+    const body = await res.json();
+    expect(recordHistory).toHaveBeenCalledTimes(1);
+    expect(recordHistory.mock.calls[0][0].generatedAt).toBe("2026-11-02T23:00:00Z");
+    expect(upsert.mock.invocationCallOrder[0]).toBeLessThan(recordHistory.mock.invocationCallOrder[0]);
+    expect(body.history.compared.previous).toBe("2026-10-26T23:00:00.000Z");
+  });
+
+  it("keeps the run and clears the cache when the history cannot be written", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    recordHistory.mockRejectedValue(new Error("history down"));
+    const res = await POST(post(valid()));
+    expect(res.status).toBe(200);
+    expect((await res.json()).history).toBe("failed");
+    expect(upsert).toHaveBeenCalledTimes(1);
     expect(revalidateTag).toHaveBeenCalledWith("scorecard", { expire: 0 });
   });
 

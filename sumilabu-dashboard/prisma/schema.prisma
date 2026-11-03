@@ -341,4 +341,31 @@ model ScorecardRun {
   overall     Json
   /// The validated document, as the contract describes it.
   payload     Json
+  /// What moved since earlier runs (SUMILABU-14): worked out once, when the
+  /// run is uploaded, against the previous run, a week back and a month back
+  /// (lib/scorecard/history.ts). JSON as plain text, so the column moves to
+  /// SQLite unchanged. Null on a run uploaded before that existed.
+  changes     String?
+}
+
+/// The key figures of one item in one scorecard run (SUMILABU-14): rank,
+/// grades, overall score, tickets, bugs, downloads, docs score and version
+/// drift, so runs can be compared after their documents are gone. One small
+/// row per item per run, never a copy of the document. Kept every run for 30
+/// days, then one run a week for a year (lib/scorecard/changes.ts,
+/// `datesToPrune`); written and pruned only by the upload.
+model ScorecardFigures {
+  /// The run's `generatedAt`.
+  generatedAt DateTime
+  /// At most 100 characters (the contract's cap on an item id).
+  itemId      String
+  /// The item's name in that run, so a package that was dropped can be
+  /// named; at most 120 characters (the contract's cap).
+  name        String
+  /// figure id -> number, as JSON text; a figure that could not be read is
+  /// left out. Plain text columns only, no Postgres-only type, so the table
+  /// moves to SQLite (SUMILABU-15) as it is.
+  figures     String
+
+  @@id([generatedAt, itemId])
 }
