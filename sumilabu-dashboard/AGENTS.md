@@ -366,6 +366,7 @@ Since then:
 - `scripts/check-function-sizes.mjs`, `scripts/function-sizes.baseline.json`,
   `src/lib/function-size-gate.mjs` — the function-size gate, its recorded
   sizes and its rules (see Function size, below).
+- `docs/turso-move.md` — the plan to move the database from Neon to Turso (SUMILABU-15): the measured usage, the budgets, the schema in SQLite terms, the order and the way back. Not done yet.
 - `env/.env.example` — the environment template.
 
 # Testing
