@@ -152,6 +152,18 @@ export function ScorecardView({ data, nowIso, favourites: initialFavourites = []
     history.pushState(null, "", window.location.pathname + window.location.search + hashFor(view));
     setOpenId(null);
   }, [view]);
+  const [refreshing, setRefreshing] = useState<"idle" | "busy" | "failed">("idle");
+  /* Clears the server's cached reads, then loads the page again; the view comes back from this browser's memory and the hearts from the server. */
+  const refresh = useCallback(async () => {
+    setRefreshing("busy");
+    try {
+      const res = await fetch("/packages/refresh", { method: "POST" });
+      if (!res.ok) throw new Error(String(res.status));
+      window.location.reload();
+    } catch {
+      setRefreshing("failed");
+    }
+  }, []);
   const reset = useCallback(() => {
     writeStorage(null);
     setView(DEFAULT_VIEW);
@@ -210,6 +222,9 @@ export function ScorecardView({ data, nowIso, favourites: initialFavourites = []
             {doc.items.length} items{average !== null ? ` · average overall ${average}` : ""} · {flagged} flagged
           </p>
           <span className="flex gap-2 print:hidden">
+            <button type="button" onClick={refresh} disabled={refreshing === "busy"} className={chip(false)} data-testid="refresh-data" title="Clear the server's cached copy and show the newest data">
+              {refreshing === "busy" ? "Refreshing…" : refreshing === "failed" ? "Refresh failed, try again" : "Refresh data"}
+            </button>
             <button type="button" onClick={reset} className={chip(false)} data-testid="reset-view" title="Forget the sort, filters and tabs this browser remembers">
               Reset view
             </button>
