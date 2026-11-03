@@ -56,12 +56,14 @@ export function TicketChanges({ item }: { item: ScorecardItem }) {
   );
 }
 
-/** A grade cell with its change under it, so a row keeps one column per grade. */
+/** A grade cell with its change under it, so a row keeps one column per grade. The change has a line of its own, kept even when empty, so a box never moves up because its neighbour has a change (John, 2026-11-03). */
 function GradeWithChange({ item, figure, value, label }: { item: string; figure: string; value: number | null; label: string }) {
   return (
     <span className="inline-flex flex-col items-center">
       <GradeCell value={value} label={label} />
-      <ItemChange item={item} figure={figure} size="xs" />
+      <span className="flex h-3.5 items-start justify-center leading-none" data-testid="change-slot">
+        <ItemChange item={item} figure={figure} size="xs" />
+      </span>
     </span>
   );
 }
