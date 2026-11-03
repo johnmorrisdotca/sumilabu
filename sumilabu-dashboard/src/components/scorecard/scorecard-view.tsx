@@ -4,7 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "reac
 import Link from "next/link";
 
 import { TICKET_KINDS } from "@/lib/scorecard/contract";
-import { favouriteCount, favouritesFirst } from "@/lib/scorecard/favourites";
+import { favouriteCount } from "@/lib/scorecard/favourites";
 import { familyMedian } from "@/lib/scorecard/radar";
 import type { ScorecardData } from "@/lib/scorecard/server";
 import { FAMILY_WIDE, KIND_LABEL, donePerDay, ticketTotals, ticketsOf, totalsSentence } from "@/lib/scorecard/tickets";
@@ -155,7 +155,7 @@ export function ScorecardView({ data, nowIso, favourites: initialFavourites = []
     history.replaceState(null, "", window.location.pathname + window.location.search);
   }, []);
 
-  const visible = useMemo(() => (doc ? favouritesFirst(sortItems(filterItems(doc.items, view.filters, favourites), view.sort.key, view.sort.dir), favourites) : []), [doc, view.filters, view.sort, favourites]);
+  const visible = useMemo(() => (doc ? sortItems(filterItems(doc.items, view.filters, favourites), view.sort.key, view.sort.dir) : []), [doc, view.filters, view.sort, favourites]);
   const allTickets = useMemo(() => (doc ? ticketsOf(doc.items, doc.familyTickets) : []), [doc]);
   const totals = useMemo(() => (doc ? ticketTotals(doc) : null), [doc]);
 
@@ -319,7 +319,7 @@ export function ScorecardView({ data, nowIso, favourites: initialFavourites = []
                 <ScorecardTable items={visible} columns={columns} sortKey={view.sort.key} sortDir={view.sort.dir} onSort={(key, dir) => change({ ...view, sort: { key, dir } })} onOpen={open} favourites={favourites} onToggleFavourite={toggle} />
                 <ScorecardCards items={visible} columns={columns} onOpen={open} favourites={favourites} onToggleFavourite={toggle} />
                 <p className="text-xs text-stone-500 dark:text-stone-400 print:hidden">
-                  {visible.length} of {doc.items.length} shown, favourites first. 1 is worst, 10 is best; a dash means it could not be judged. Tap a name to open it.
+                  {visible.length} of {doc.items.length} shown, in the order of the column you sorted by; ♥ Favourites shows only yours. 1 is worst, 10 is best; a dash means it could not be judged. Tap a name to open it.
                 </p>
                 {allTickets.length > 0 ? (
                   <TicketBrowser title="Every ticket" tickets={allTickets} filters={view.ticketList.filters} sort={view.ticketList.sort} onChange={(next) => change({ ...view, ticketList: next })} nowIso={nowIso} favourites={favourites} items={itemsForFilter} />

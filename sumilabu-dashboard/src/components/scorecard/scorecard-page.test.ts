@@ -210,12 +210,11 @@ describe("favourites on the page (SUMILABU-9)", () => {
     expect((out.match(/aria-label="Add to favourites"/g) ?? []).length).toBe(18);
   });
 
-  it("lists the favourites first, each part in the current sort", () => {
-    const out = withFavs(["onibako", "chizu"]);
-    const rows = [...out.matchAll(/data-testid="scorecard-row" data-item="([^"]+)"/g)].map((m) => m[1]);
-    expect(rows.slice(0, 2).sort()).toEqual(["chizu", "onibako"]);
-    const plain = [...withFavs([]).matchAll(/data-testid="scorecard-row" data-item="([^"]+)"/g)].map((m) => m[1]);
-    expect(rows.slice(2)).toEqual(plain.filter((id) => id !== "chizu" && id !== "onibako"));
+  it("keeps the rows in the sorted order whatever is hearted (John, 2026-11-03: a heart must not change a sort)", () => {
+    const rowsOf = (out: string) => [...out.matchAll(/data-testid="scorecard-row" data-item="([^"]+)"/g)].map((m) => m[1]);
+    const plain = rowsOf(withFavs([]));
+    const last = plain.slice(-2);
+    expect(rowsOf(withFavs(last))).toEqual(plain);
   });
 
   it("offers a Favourites chip with the count, and a Reset view button", () => {
@@ -256,10 +255,11 @@ describe("tickets on the page (SUMILABU-12)", () => {
     expect(out).toContain('data-testid="ticket-item-filter"');
   });
 
-  it("compares the items' tickets in the Tickets tab, favourites first", () => {
+  it("compares the items' tickets in the Tickets tab, in the sorted order whatever is hearted", () => {
     const panel = html(createElement(TicketsPanel, { items: rdoc.items, sort: { key: "open", dir: "desc" }, chips: { hasBugs: false, hasCritical: false, nothingOpen: false }, onChange: () => {}, favourites: new Set(["tane"]), onToggleFavourite: () => {}, onOpen: () => {} }));
     const rows = [...panel.matchAll(/data-testid="tickets-row" data-item="([^"]+)"/g)].map((m) => m[1]);
-    expect(rows[0]).toBe("tane");
+    const unhearted = html(createElement(TicketsPanel, { items: rdoc.items, sort: { key: "open", dir: "desc" }, chips: { hasBugs: false, hasCritical: false, nothingOpen: false }, onChange: () => {}, favourites: new Set<string>(), onToggleFavourite: () => {}, onOpen: () => {} }));
+    expect(rows).toEqual([...unhearted.matchAll(/data-testid="tickets-row" data-item="([^"]+)"/g)].map((m) => m[1]));
     expect(rows.length).toBe(rdoc.items.filter((i) => i.tickets).length);
     for (const label of ["Has bugs", "Has critical", "Nothing open"]) expect(panel).toContain(label);
   });

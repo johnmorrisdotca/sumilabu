@@ -74,10 +74,9 @@ describe("the list of tickets", () => {
     expect(filterTickets(list, { ...NO_TICKET_FILTERS, status: "open" }, NOW).map((x) => x.id)).toEqual(["open"]);
   });
 
-  it("sorts by priority, then the oldest first, with favourite packages on top", () => {
+  it("sorts by priority, then the oldest first, with no favourite pinned above the sort", () => {
     const list = [t({ id: "n", priority: "normal", created: "2026-10-01" }), t({ id: "c", priority: "critical", created: "2026-11-01" }), t({ id: "h-old", priority: "high", created: "2026-09-01" }), t({ id: "h-new", priority: "high", created: "2026-10-30" }), t({ id: "fav", priority: "low", itemId: "fav" })];
-    expect(sortTickets(list, { key: "priority", dir: "asc" }, new Set(), NOW).map((x) => x.id)).toEqual(["c", "h-old", "h-new", "n", "fav"]);
-    expect(sortTickets(list, { key: "priority", dir: "asc" }, new Set(["fav"]), NOW)[0].id).toBe("fav");
+    expect(sortTickets(list, { key: "priority", dir: "asc" }, NOW).map((x) => x.id)).toEqual(["c", "h-old", "h-new", "n", "fav"]);
   });
 
   it("counts a ticket's age in whole days, null without a date", () => {

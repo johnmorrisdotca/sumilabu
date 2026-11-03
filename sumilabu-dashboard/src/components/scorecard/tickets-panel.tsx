@@ -1,5 +1,4 @@
 import type { ScorecardItem } from "@/lib/scorecard/contract";
-import { favouritesFirst } from "@/lib/scorecard/favourites";
 import { filterTicketRows, openByKindParts, sortTicketRows, ticketRow, type TicketRow } from "@/lib/scorecard/tickets";
 import type { TicketTableChips, TicketTableSort } from "@/lib/scorecard/view-state";
 
@@ -32,14 +31,11 @@ const COLS: Array<{ key: TicketTableSort["key"]; label: string; title: string }>
 /**
  * Every item's tickets side by side (SUMILABU-12): the counts as sortable
  * columns and a bar of open tickets by kind, all bars on one scale so a long
- * bar is a long queue. Favourites first, as in every list.
+ * bar is a long queue. The sort is the column pressed; a heart marks a favourite.
  */
 export function TicketsPanel({ items, sort, chips, onChange, favourites, onToggleFavourite, onOpen }: Props) {
   const rows = items.map(ticketRow).filter((r): r is TicketRow => r !== null);
-  const shown = favouritesFirst(
-    sortTicketRows(filterTicketRows(rows, chips), sort).map((r) => ({ ...r, id: r.item.id })),
-    favourites,
-  );
+  const shown = sortTicketRows(filterTicketRows(rows, chips), sort).map((r) => ({ ...r, id: r.item.id }));
   const scale = Math.max(1, ...rows.map((r) => r.open));
   const set = (patch: Partial<TicketTableChips>) => onChange({ sort, chips: { ...chips, ...patch } });
   const unread = items.length - rows.length;

@@ -77,7 +77,7 @@ function TicketDetail({ t, nowIso, onClose }: { t: ListedTicket; nowIso: string;
 export function TicketBrowser({ tickets, filters, sort, onChange, nowIso, favourites, items, title }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
   const set = (patch: Partial<TicketListFilters>) => onChange({ filters: { ...filters, ...patch }, sort });
-  const shown = useMemo(() => sortTickets(filterTickets(tickets, filters, nowIso), sort, favourites, nowIso), [tickets, filters, sort, favourites, nowIso]);
+  const shown = useMemo(() => sortTickets(filterTickets(tickets, filters, nowIso), sort, nowIso), [tickets, filters, sort, nowIso]);
   const kinds = chipCounts(tickets, filters, nowIso, "kind", ["all", ...TICKET_KINDS]);
   const priorities = chipCounts(tickets, filters, nowIso, "priority", ["all", ...TICKET_PRIORITIES]);
   const statuses = chipCounts(tickets, filters, nowIso, "status", ["all", ...TICKET_STATUSES]);

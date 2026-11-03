@@ -157,7 +157,7 @@ export function chipCounts<K extends "kind" | "priority" | "status">(tickets: re
 }
 
 /** Priority first (critical at the top), then oldest first; or by the column John pressed, the same two breaking ties. */
-export function sortTickets(tickets: readonly ListedTicket[], sort: TicketListSort, favourites: ReadonlySet<string>, nowIso: string): ListedTicket[] {
+export function sortTickets(tickets: readonly ListedTicket[], sort: TicketListSort, nowIso: string): ListedTicket[] {
   const sign = sort.dir === "asc" ? 1 : -1;
   const age = (t: ListedTicket) => ageDays(t.created, nowIso) ?? -1;
   const base = (a: ListedTicket, b: ListedTicket) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || age(b) - age(a) || a.id.localeCompare(b.id);
@@ -175,8 +175,7 @@ export function sortTickets(tickets: readonly ListedTicket[], sort: TicketListSo
         return String(a[sort.key]).localeCompare(String(b[sort.key])) * sign || base(a, b);
     }
   };
-  const sorted = [...tickets].sort(by);
-  return [...sorted.filter((t) => favourites.has(t.itemId)), ...sorted.filter((t) => !favourites.has(t.itemId))];
+  return [...tickets].sort(by);
 }
 
 /* ---- the charts' numbers ---- */
