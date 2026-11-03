@@ -138,8 +138,9 @@ export async function getTicketByKey(projectKey: string, key: string): Promise<B
  */
 export async function boardReadTag(projectKey: string, shape: string): Promise<string> {
   const version = await cachedBoardVersion(projectKey, async () => {
-    const held = await prisma.boardTicket.findMany({ where: { projectKey, claimedAt: { not: null } }, select: { claimedAt: true } });
-    return held.map((row) => row.claimedAt!.toISOString());
+    /* By claimedBy, which the (projectKey, claimedBy) index answers: only held rows are read, whatever the board's size. */
+    const held = await prisma.boardTicket.findMany({ where: { projectKey, claimedBy: { not: null } }, select: { claimedAt: true } });
+    return held.flatMap((row) => (row.claimedAt ? [row.claimedAt.toISOString()] : []));
   });
   return boardEtag(version, shape);
 }
