@@ -42,6 +42,17 @@ describe("the scorecard table", () => {
     expect(out).toContain("10 items");
   });
 
+  it("centres every grade box: an empty line above it as tall as the change line below it, in every grade cell (John, 2026-11-03)", () => {
+    const balance = (out.match(/data-testid="change-balance"/g) ?? []).length;
+    const slots = (out.match(/data-testid="change-slot"/g) ?? []).length;
+    expect(slots).toBeGreaterThan(0);
+    expect(balance).toBe(slots);
+    for (const cell of out.matchAll(/<span class="inline-flex flex-col items-center">(.*?)data-testid="change-slot"/g)) {
+      expect(cell[1].indexOf('data-testid="change-balance"')).toBe(cell[1].search(/data-testid="change-balance"/));
+      expect(cell[1].startsWith('<span class="h-3.5" aria-hidden="true" data-testid="change-balance">')).toBe(true);
+    }
+  });
+
   it("has one row per item, with its name, kind, owner and version", () => {
     expect(out.match(/data-testid="scorecard-row"/g)).toHaveLength(10);
     for (const item of doc.items) expect(out).toContain(item.name.replace("@", "@"));
