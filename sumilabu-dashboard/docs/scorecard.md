@@ -28,8 +28,27 @@ and app John owns from 1 to 10 (ticket SUMILABU-6). A collector on John's Mac
    woken by it. A fresh deployment shows "No scorecard has been uploaded yet"
    until the first upload.
 
-The page has no sign-in (the dashboard has none) and is marked `noindex`. The
-document holds no secrets by contract: it is shown on a public page.
+## Who can see the page
+
+`/packages` is private to John, behind a second key, `SCORECARD_VIEW_KEY`, kept
+apart from the upload key (a leaked view key reads and cannot write; a leaked
+upload key writes and cannot read).
+
+- No `SCORECARD_VIEW_KEY` on the deployment: `/packages` is a 404 for everyone.
+- No valid cookie: only a small key form. The data is read *after* the cookie
+  is checked, so nothing about the scorecard is in the HTML or the RSC payload
+  of that response, and there is no API route that returns it.
+- A right key (`POST /packages/session`, same-origin only, compared in constant
+  time) sets `scorecard_view`: HttpOnly, Secure, SameSite=Strict, Path=/packages,
+  30 days. It holds an expiry and an HMAC of it made with the key, never the
+  key; the server checks the expiry too, and changing the key at Vercel signs
+  everyone out. A wrong key waits one second and gets the same redirect each
+  time; nothing is counted or stored, no timer runs.
+- "Sign out" on the page clears the cookie. The page stays `noindex`.
+
+To read the key when signing in on a new browser, without printing it:
+
+    security find-generic-password -s "sumilabu SCORECARD_VIEW_KEY" -w | pbcopy
 
 ## Setting it up, once
 
@@ -37,12 +56,14 @@ Schema (additive, one new table): it goes live with the deploy workflow's
 `db push`; the SQL is `prisma/manual-migrations/20261102_scorecard_run.sql`.
 Back production up first (AGENTS.md, "Making a change and shipping it", step 4).
 
-The key, one command (makes it, keeps it in the keychain, puts it on Vercel as a
-sensitive production variable; run before the deploy so the first deployment has it):
+The two keys, one command (makes each, keeps it in the keychain, puts it on Vercel
+as a sensitive production variable, the values only ever on standard input; run
+before the deploy so the first deployment has them):
 
-    T=$(openssl rand -hex 32) && printf 'add-generic-password -U -s "sumilabu SCORECARD_TOKEN" -a "%s" -w "%s"\n' "$USER" "$T" | security -i && printf '%s' "$T" | vercel env add SCORECARD_TOKEN production --sensitive --project sumilabu-dashboard --scope spxis-projects-0d6306b4
+    for n in SCORECARD_TOKEN SCORECARD_VIEW_KEY; do T=$(openssl rand -hex 32) && printf 'add-generic-password -U -s "sumilabu %s" -a "%s" -w "%s"\n' "$n" "$USER" "$T" | security -i && printf '%s' "$T" | vercel env add "$n" production --sensitive --project sumilabu-dashboard --scope spxis-projects-0d6306b4 || break; done
 
-Then `pnpm scorecard:upload` after each collector run.
+Then `pnpm scorecard:upload` after each collector run, and sign in at
+`/packages` with the key from the keychain (command above).
 
 ## Rules for the document
 

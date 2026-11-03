@@ -214,6 +214,7 @@ workflow runs, so a red push is a red push you could have seen locally.
    | `REPORTS_TOKENS_JSON` | `lib/board/auth.ts` | Same shape, the reports routes (create/list/get/patch/delete) and `GET /api/v1/health` - but not filing, which needs the board token instead. |
    | `TELEMETRY_DROP_EVENTS` | `lib/telemetry-drop.ts` | Events acknowledged with `{ ok: true, dropped: true }` and not stored: comma list of `event` or `project:event`; `none` stores all. Unset means UmaKuma's `api_route`, `study_review_history` and `reading_signoffs_get_perf`. |
    | `SCORECARD_TOKEN` | `api/v1/scorecard` | The one bearer key for uploading a package-scorecard run (`docs/scorecard.md`). Unset means the route refuses everyone. Never reuse it for another map. |
+   | `SCORECARD_VIEW_KEY` | `app/packages` | The key John types to open `/packages`; its cookie is an HMAC made with it. Unset means the page 404s for everyone. Never the same value as `SCORECARD_TOKEN`. |
    | `CALENDAR_ICS_URL`, `CALENDAR_TOKEN` | `api/v1/calendar/upcoming` | A published iCal feed and the one bearer token the MagTag presents for it. Read through the data cache every 15 minutes; never touches Neon. |
 
    Four token maps, four purposes. Never reuse a value across them: they are
@@ -237,7 +238,7 @@ workflow runs, so a red push is a red push you could have seen locally.
   `src/lib/scorecard/`, `api/v1/scorecard` — the package scorecard
   (`docs/scorecard.md`): John's Mac uploads a run with `pnpm scorecard:upload`,
   one `ScorecardRun` row each (newest ten kept), the page reads it through the
-  data cache tag `scorecard`, cleared by the upload. No sign-in, `noindex`.
+  data cache tag `scorecard`, cleared by the upload. Private: view key + HttpOnly cookie, `noindex`, no data read before the cookie is checked.
 - `scripts/prune-telemetry.mjs` (`pnpm db:prune-telemetry`) — retention:
   AppTelemetryEvent 14 days, DeviceEvent 30. A dry run unless `--apply`;
   it never touches the board, reports, devices or sources.

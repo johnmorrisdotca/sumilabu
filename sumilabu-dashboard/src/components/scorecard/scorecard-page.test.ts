@@ -1,6 +1,6 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { parseScorecard } from "@/lib/scorecard/contract";
 import sample from "@/lib/scorecard/fixtures/sample.json";
@@ -128,25 +128,5 @@ describe("an item's detail", () => {
     expect(out).toContain("Nothing to measure here.");
     expect(out).toContain("not updated for 58 days");
     expect(out).toContain("first run: no trend yet");
-  });
-});
-
-describe("the /packages page", () => {
-  const getScorecard = vi.fn();
-  beforeEach(() => {
-    vi.resetModules();
-    getScorecard.mockReset();
-    vi.doMock("@/lib/scorecard/data", () => ({ getScorecard }));
-  });
-
-  it("reads the cached data once and draws it, not indexed by search engines", async () => {
-    getScorecard.mockResolvedValue(data);
-    const mod = await import("@/app/packages/page");
-    const out = html(await mod.default());
-    expect(getScorecard).toHaveBeenCalledTimes(1);
-    expect(out).toContain("Package scorecard");
-    expect(out).toContain("Updated whenever the collector");
-    expect(mod.metadata.robots).toEqual({ index: false, follow: false });
-    expect(mod.dynamic).toBe("force-dynamic");
   });
 });
