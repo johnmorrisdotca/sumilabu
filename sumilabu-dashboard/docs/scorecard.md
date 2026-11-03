@@ -43,6 +43,50 @@ The view key that opened it until then (`SCORECARD_VIEW_KEY`, its form and
 `POST /packages/session`) is gone; nothing reads that variable any more, and it
 can be deleted from Vercel and the keychain whenever convenient.
 
+## What the page does besides the table (2026-11-03)
+
+- **Favourites** (SUMILABU-9). A heart on every row, phone card and detail
+  header; favourites come first in every list, each part in the current sort,
+  and the "Favourites (n)" chip (`#tab=table&filter=favourites`) shows only
+  them. The hearts are kept on the server so they follow John across devices:
+  one row of the settings store (`BoardSetting`, project key `_sumilabu-site`,
+  key `scorecard.favourites`; no settings token is issued for that key, so the
+  token API cannot reach it). No schema change. The page reads the list in the
+  same render as the run, both cached; a heart is `POST /packages/favourites
+  { id, on }`, which needs John's session, a same-origin request (`Origin`
+  naming the host, `Sec-Fetch-Site: same-origin` when sent, JSON only) and,
+  to add, an id of the current run. The page changes the heart at once and
+  puts it back with a short message if the save fails.
+- **Pictures** (SUMILABU-8). `links.icon` in a row and on the map, else the
+  card cropped; `links.thumbnail` (and `thumbnailDark` when the page is dark)
+  on a phone card and the detail header. Plain lazy `<img>` with its size set;
+  the browser loads them from the item's own Pages or repository host and the
+  server never fetches one. There is no Content-Security-Policy on the pages,
+  so none had to be widened.
+- **The view is remembered** (SUMILABU-10), per browser, in localStorage under
+  `sumilabu.scorecard.view` (`{ v: 1, ... }`; every field checked on its own,
+  a bad one falls back alone, a new `v` drops them all): the tab, the sort, the
+  filter chips and search, the ranking, the detail tab, and the ticket views'
+  sort and filters. What the address names wins over what was stored, field by
+  field (`#item=jirai&dtab=numbers`, `#tab=rankings&rank=docs`). "Reset view"
+  forgets it. The server cannot see the browser's storage, so a small inline
+  script hides the lists, only when something is stored or the address names
+  a view, until the page has applied it before its first paint; CSS shows them
+  after 1.5 s whatever happens.
+- **Tickets** (SUMILABU-12). A summary at the top (a sentence, four figures, a
+  bar of open tickets by kind, done per day when the boards give dates), a
+  Tickets tab comparing every item (sortable, chips: has bugs, has critical,
+  nothing open), small badges on each row, and in each item's detail, under the
+  grade cards, its figures, its open critical and high tickets and its full
+  list. Every ticket is also listed under the main table with a package
+  filter. The boards give no dates or done tickets yet, so those parts say so.
+- **A radar of the grades** beside an item's Overall, against its family's
+  median, and a tiny one in each row. Rankings draw real bars.
+- **The package map** at `/packages/map` (SUMILABU-11): John's 2026-11-02
+  document "How the packages fit together" drawn from the run (`groups`,
+  `apps`, `libraries`, `dependencies.familyRanges`): the map, package by
+  package, outside dependencies and watch points, as tabs (`#tab=watch`).
+
 ## Setting it up, once
 
 Schema (additive, one new table): it goes live with the deploy workflow's
@@ -143,3 +187,20 @@ Rules
 - `facts` holds 10 to 14 sentences (a moved-repository note may come first).
 - `rankings`: besides every grade id, `downloads`, `dependencyCount`, `daysSinceCommit`, `tests`, `packedKb`, `openBugTickets` and `readmeWords`. For grades best is highest; for those measures best is the end John wants (most downloads, fewest dependencies, most recent, most tests, smallest, fewest bugs, longest README). Five ids each side.
 - `methods` keys: every grade id plus `npmDownloads`, `outsideUse`, `ciRuns`, `tickets`, `codeReadings`, `rankings`.
+
+**2026-11-03, collector 1.1.0 (Mac Studio).** Additions only; `schemaVersion` stays 1, every new field is optional with the default given, and a page written to the shapes above still works. For the package map (SUMILABU-11) and the ticket report (SUMILABU-12).
+
+- `links.thumbnail`, `links.thumbnailDark`, `links.icon` (default: absent): https images, only on `*.github.io`, `raw.githubusercontent.com` or the host of the item's own `links.site` or `links.demo`, with no login or port. The collector drops anything else, because the page refuses a whole run for one. Found in order: the family's `thumbnail.png`, `thumbnail-dark.png`, `icon.png` on GitHub Pages, else the README's first image that is a file in the repository, else a public site's own `og:image`. Private repositories get none.
+- `group` (default null): the package's family on the map, `^[a-z0-9-]{1,40}$`, from `config.json`; a package with none is `other`. Sites and apps are null.
+- `license` (default null): the licence in the repository's package.json, else npm's; null when neither declares one.
+- `dependencies.familyDev` (default []): family packages that only the repository's devDependencies or its demo sub-packages use.
+- `dependencies.familyRanges` (default {}): the range as written for every family package in dependencies, peerDependencies, optionalDependencies and devDependencies of the repository's package.json (an app's package.json files too), plus a demo sub-package's when the root does not name it; npm's manifest when there is no repository. At most 100.
+- `tickets` (default null = no board read for the item): `{ boards, open, inProgress, waitingOnJohn, doneLast7, doneLast30, oldestOpenDays, openByKind: { bug|feature|chore|other: { critical, high, medium, normal, low, unset } }, urgent: [ticket], recentDone: [ticket] }`, with `ticket = { id, title (120), kind, kindDerived, priority, status: waiting | in progress | waiting on John | done, created, done, url }`. Today `waitingOnJohn`, `doneLast30`, `oldestOpenDays`, `created`, `done` and `url` are null and `recentDone` is empty: no task command prints rows as JSON, so only open tickets are read and no board marks a ticket as waiting on John or has a page per ticket. `doneLast7` is a number only where `pnpm task status --json` covers every board the item's tickets come from, else null. `urgent` is open critical and high tickets, critical first (no dates to sort by).
+- Every tickets block (items' `tickets` and `familyTickets`) also has `list` (default []): every open ticket of the block, at most 400, by priority (critical, high, medium, normal, low, unset), then oldest first where a date exists, else the board's own order; done tickets join it once a board gives them. Every ticket (in `list`, `urgent` and `recentDone`) also has `claimedBy` (who holds it, up to 80 characters, or null) and `detail` (the ticket's detail text, up to 4,000 characters, or null when the board's listing does not give it: Itsutsu's does not).
+- Size: the file stays under 950 KB in all (the upload takes at most 1 MiB, which is not raised). When it would not, the longest ticket details are cut first, on a word boundary ending with "…", to the highest common length that fits, and the run says how many were cut.
+- Top level `groups` (default []): `[{ id, label }]` in display order, at most 20.
+- Top level `apps` (default []): `[{ id, letter, name, note, item, private, onMap, family, outside }]`, at most 20: every site and app in config plus hotarutv.com (hotaru's `web/`). `family` is the family packages in its run-time dependencies; `outside` its other run-time dependencies without build, test and lint tools, sorted, at most 40.
+- Top level `libraries` (default {}): `{ "<npm name>": { license, latest } }` for every outside name in the packages' `runtime`, `requiredPeers`, `optionalPeers` and the apps' `outside`, at most 400.
+- Top level `familyTickets` (default null): a tickets block for tickets on shared boards that name no item.
+- Ticket titles and details of private repositories are in the data because the page is private behind Google sign-in. They must never go into a public file.
+- `measures.openTickets`, `openBugTickets` and `crashTickets` keep their rules; they now count the same tickets as the `tickets` block (a shared-board ticket that names an item as a whole word now counts for it, where before only a title prefix did).

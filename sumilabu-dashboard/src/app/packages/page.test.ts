@@ -5,8 +5,9 @@ import { COOKIE_NAME, TEST_ADMINS, TEST_SECRET, jar, sessionToken } from "@/lib/
 import { parseScorecard } from "@/lib/scorecard/contract";
 import sample from "@/lib/scorecard/fixtures/sample.json";
 
-const { getScorecard, cookieJar, redirect } = vi.hoisted(() => ({
+const { getScorecard, loadFavourites, cookieJar, redirect } = vi.hoisted(() => ({
   getScorecard: vi.fn(),
+  loadFavourites: vi.fn(),
   cookieJar: { current: {} as Record<string, string> },
   redirect: vi.fn((to: string) => {
     throw new Error(`NEXT_REDIRECT ${to}`);
@@ -14,6 +15,7 @@ const { getScorecard, cookieJar, redirect } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/scorecard/data", () => ({ getScorecard }));
+vi.mock("@/lib/scorecard/favourites-store", () => ({ loadFavourites }));
 vi.mock("next/navigation", () => ({ redirect }));
 vi.mock("next/headers", () => ({ cookies: async () => jar(cookieJar.current) }));
 
@@ -32,6 +34,7 @@ beforeEach(() => {
   vi.stubEnv("VERCEL", "");
   cookieJar.current = {};
   getScorecard.mockResolvedValue(data);
+  loadFavourites.mockResolvedValue(["chizu"]);
 });
 afterEach(() => vi.unstubAllEnvs());
 
@@ -45,6 +48,7 @@ describe("the /packages page is private", () => {
     cookieJar.current = await cookies();
     await expect(render()).rejects.toThrow("NEXT_REDIRECT /signin");
     expect(getScorecard).not.toHaveBeenCalled();
+    expect(loadFavourites).not.toHaveBeenCalled();
   });
 
   it("is nobody's when the deployment has no secret", async () => {
@@ -61,6 +65,21 @@ describe("the /packages page is private", () => {
     expect(html).toContain("Package scorecard");
     expect(html).toContain("kazoku-ui");
     expect(html).toContain(parsed.doc.items[0].name);
+  });
+
+  it("reads the hearts in the same render as the run, and draws them pressed", async () => {
+    cookieJar.current = { [COOKIE_NAME]: await sessionToken("john@spxis.com") };
+    const html = await render();
+    expect(loadFavourites).toHaveBeenCalledTimes(1);
+    expect(html).toContain("Favourites (1)");
+    expect(html).toMatch(/aria-pressed="true" aria-label="Remove from favourites" title="Remove from favourites: @johnmorrisdotca\/chizu"/);
+  });
+
+  it("carries the script that keeps the lists hidden until a remembered view is applied", async () => {
+    cookieJar.current = { [COOKIE_NAME]: await sessionToken("john@spxis.com") };
+    const html = await render();
+    expect(html).toContain("sumilabu.scorecard.view");
+    expect(html).toContain("data-sc-body");
   });
 
   it("stays noindex and dynamic", () => {

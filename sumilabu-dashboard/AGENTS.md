@@ -293,6 +293,10 @@ Since then:
   (`docs/scorecard.md`): John's Mac uploads a run with `pnpm scorecard:upload`,
   one `ScorecardRun` row each (newest ten kept), the page reads it through the
   data cache tag `scorecard`, cleared by the upload. Private like every page (Google sign-in), `noindex`, no data read before the session is checked.
+  `src/app/packages/map` is the package map drawn from the same run;
+  `src/app/packages/favourites/route.ts` is the one write of the hearts
+  (session, same origin, an id of the run), kept in the settings store under
+  project key `_sumilabu-site`. Both are pages to the gate, not token API.
 - `src/proxy.ts`, `src/lib/auth/` — the page gate and Google sign-in (see
   "Who may use the site" below): `gate.ts` the decision, `session.ts` the
   cookie check shared by the gate and the pages, `current.ts`

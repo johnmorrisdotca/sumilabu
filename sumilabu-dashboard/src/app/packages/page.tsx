@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { ScorecardView } from "@/components/scorecard/scorecard-view";
 import { requireAdmin } from "@/lib/auth/current";
 import { getScorecard } from "@/lib/scorecard/data";
+import { loadFavourites } from "@/lib/scorecard/favourites-store";
+import { RESTORE_SCRIPT } from "@/lib/scorecard/restore-script";
 
 /* A server render per view, but the database read is cached until a new run is
    uploaded (lib/scorecard/data.ts). Not static: the build has no database, and
@@ -24,16 +26,18 @@ export const metadata: Metadata = {
  */
 export default async function PackagesPage() {
   await requireAdmin();
-  const data = await getScorecard();
+  /* The hearts come in the same render as the run: no second request when the page loads. Both reads are cached. */
+  const [data, favourites] = await Promise.all([getScorecard(), loadFavourites()]);
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#f5f0e8_0%,#ece6dc_52%,#e1d8cb_100%)] text-stone-900 print:bg-white">
+    <div className="min-h-screen bg-[linear-gradient(180deg,#f5f0e8_0%,#ece6dc_52%,#e1d8cb_100%)] text-stone-900 dark:bg-[linear-gradient(180deg,#1c1917_0%,#171412_60%,#0c0a09_100%)] dark:text-stone-100 print:bg-white">
+      <script dangerouslySetInnerHTML={{ __html: RESTORE_SCRIPT }} />
       <main className="mx-auto max-w-[110rem] p-4 md:p-8">
         <header className="mb-3">
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.3em] text-stone-500">SumiLabu</p>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.3em] text-stone-500 dark:text-stone-400">SumiLabu</p>
           <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Package scorecard</h1>
-          <p className="mt-1 max-w-2xl text-sm text-stone-600">Every package, site and app, graded 1 to 10. Updated whenever the collector on the Mac runs and uploads.</p>
+          <p className="mt-1 max-w-2xl text-sm text-stone-600 dark:text-stone-300">Every package, site and app, graded 1 to 10. Updated whenever the collector on the Mac runs and uploads.</p>
         </header>
-        <ScorecardView data={data} nowIso={new Date().toISOString()} />
+        <ScorecardView data={data} nowIso={new Date().toISOString()} favourites={favourites} />
       </main>
     </div>
   );

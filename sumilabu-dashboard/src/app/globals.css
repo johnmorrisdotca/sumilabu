@@ -32,3 +32,16 @@ body {
     margin: 10mm;
   }
 }
+
+/* The scorecard's lists wait for the remembered view (SUMILABU-10, page.tsx's
+   inline script). Hidden, not removed, so nothing moves when they appear; the
+   animation shows them after 1.5 s even if the page never hydrates. */
+html[data-sc-restoring] [data-sc-body] {
+  visibility: hidden;
+  animation: sc-reveal 0s linear 1.5s forwards;
+}
+@keyframes sc-reveal {
+  to {
+    visibility: visible;
+  }
+}

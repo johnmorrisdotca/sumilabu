@@ -8,7 +8,11 @@ import sample from "@/lib/scorecard/fixtures/sample.json";
 import type { ScorecardData } from "@/lib/scorecard/server";
 import { gradeColumns } from "@/lib/scorecard/view";
 
+import mapRun from "@/lib/scorecard/fixtures/map-run.json";
+
 import { ItemDetail } from "./item-detail";
+import { RadarChart } from "./radar-chart";
+import { TicketsPanel } from "./tickets-panel";
 import { MethodPanel } from "./method-panel";
 import { RankingsPanel } from "./rankings-panel";
 import { ScorecardView } from "./scorecard-view";
@@ -193,5 +197,95 @@ describe("the real run's additions on screen", () => {
     const chips = html(createElement(RankingsPanel, { doc: rdoc, columns, rankId: "packedKb", onPick: () => {}, onOpen: () => {} }));
     for (const label of ["Downloads, 30 days", "Number of tests", "Tests (grade)", "Dependency count", "Days since commit", "Packed size", "Open bug tickets", "README words"]) expect(chips).toContain(`>${label}<`);
     expect(chips).toContain("58.9 KB");
+  });
+});
+
+describe("favourites on the page (SUMILABU-9)", () => {
+  const withFavs = (favourites: string[]) => html(createElement(ScorecardView, { data, nowIso: NOW, favourites }));
+
+  it("puts a heart on every row and card, pressed for a favourite, with the action as its label", () => {
+    const out = withFavs(["chizu"]);
+    expect((out.match(/data-testid="heart"/g) ?? []).length).toBe(20);
+    expect((out.match(/aria-pressed="true" aria-label="Remove from favourites"/g) ?? []).length).toBe(2);
+    expect((out.match(/aria-label="Add to favourites"/g) ?? []).length).toBe(18);
+  });
+
+  it("lists the favourites first, each part in the current sort", () => {
+    const out = withFavs(["onibako", "chizu"]);
+    const rows = [...out.matchAll(/data-testid="scorecard-row" data-item="([^"]+)"/g)].map((m) => m[1]);
+    expect(rows.slice(0, 2).sort()).toEqual(["chizu", "onibako"]);
+    const plain = [...withFavs([]).matchAll(/data-testid="scorecard-row" data-item="([^"]+)"/g)].map((m) => m[1]);
+    expect(rows.slice(2)).toEqual(plain.filter((id) => id !== "chizu" && id !== "onibako"));
+  });
+
+  it("offers a Favourites chip with the count, and a Reset view button", () => {
+    expect(withFavs(["chizu", "kazoku-ui", "gone"])).toContain("♥ Favourites (2)");
+    expect(withFavs([])).toContain('data-testid="reset-view"');
+  });
+
+  it("puts a picture in each row, or a plain tile when the item has none", () => {
+    const real = parseScorecard(mapRun);
+    if (!real.ok) throw new Error("map run must parse");
+    const out = html(createElement(ScorecardView, { data: { doc: real.doc, receivedAt: "", trend: [] }, nowIso: NOW }));
+    expect(out).toContain('loading="lazy"');
+    expect(out).toContain('src="https://raw.githubusercontent.com/johnmorrisdotca/');
+    expect(out).toMatch(/<img[^>]*width="76"[^>]*height="40"/);
+  });
+});
+
+describe("tickets on the page (SUMILABU-12)", () => {
+  const real = parseScorecard(mapRun);
+  if (!real.ok) throw new Error("map run must parse");
+  const rdoc = real.doc;
+  const out = html(createElement(ScorecardView, { data: { doc: rdoc, receivedAt: "", trend: [] }, nowIso: NOW }));
+
+  it("says the totals in one line at the top, with the figures and a bar by kind", () => {
+    expect(out).toMatch(/data-testid="ticket-sentence">\d+ open tickets, \d+ bugs/);
+    expect(out).toContain('data-testid="ticket-figures"');
+    expect(out).toContain('data-testid="kind-bar"');
+    expect(out).toContain("the boards give no done dates yet");
+  });
+
+  it("puts open bugs and open tickets as badges on a row", () => {
+    expect(out).toContain('data-testid="ticket-badges"');
+  });
+
+  it("lists every ticket under the table, with its filters", () => {
+    expect(out).toContain('data-testid="ticket-browser"');
+    expect(out).toContain('data-chip="kind:bug"');
+    expect(out).toContain('data-testid="ticket-item-filter"');
+  });
+
+  it("compares the items' tickets in the Tickets tab, favourites first", () => {
+    const panel = html(createElement(TicketsPanel, { items: rdoc.items, sort: { key: "open", dir: "desc" }, chips: { hasBugs: false, hasCritical: false, nothingOpen: false }, onChange: () => {}, favourites: new Set(["tane"]), onToggleFavourite: () => {}, onOpen: () => {} }));
+    const rows = [...panel.matchAll(/data-testid="tickets-row" data-item="([^"]+)"/g)].map((m) => m[1]);
+    expect(rows[0]).toBe("tane");
+    expect(rows.length).toBe(rdoc.items.filter((i) => i.tickets).length);
+    for (const label of ["Has bugs", "Has critical", "Nothing open"]) expect(panel).toContain(label);
+  });
+
+  it("shows an item's tickets below its grade cards, and a radar beside its overall", () => {
+    const item = rdoc.items.find((i) => i.id === "kazoku-ui")!;
+    const detail = html(createElement(ItemDetail, { item, columns: gradeColumns(rdoc), trend: [], onBack: () => {}, tickets: [], ticketView: { filters: { kind: "all", priority: "all", status: "all", done: "30", query: "", item: "all" }, sort: { key: "priority", dir: "asc" } }, onTicketView: () => {} }));
+    expect(detail.indexOf('data-testid="ticket-section"')).toBeGreaterThan(detail.indexOf('id="grade-overall"'));
+    expect(detail).toContain('data-testid="radar"');
+    expect(detail).toContain('data-testid="ticket-browser"');
+  });
+});
+
+describe("the radar on screen", () => {
+  it("is a focusable mark per grade, its tooltip the grade and its note, a gap said in words", () => {
+    const item = { ...doc.items[0], grades: { ...doc.items[0].grades, lint: null } };
+    const out = html(createElement(RadarChart, { item, columns: gradeColumns(doc), overall: 8, median: { docs: 6 } }));
+    expect((out.match(/tabindex="0"/g) ?? []).length).toBe(11);
+    expect(out).toContain("Documentation: 9 of 10. Graded 9 on README and docs (sample sentence).");
+    expect(out).toContain("Lint: not judged");
+    expect(out).toContain('data-testid="radar-median"');
+  });
+
+  it("has a tiny version for a row with nothing to press", () => {
+    const out = html(createElement(RadarChart, { item: doc.items[0], columns: gradeColumns(doc), overall: 8, mini: true }));
+    expect(out).toContain('width="28"');
+    expect(out).not.toContain("tabindex");
   });
 });
