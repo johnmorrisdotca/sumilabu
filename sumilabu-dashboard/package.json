@@ -22,6 +22,7 @@
     "deploy:prune": "bash scripts/prune-deployments.sh",
     "scorecard:upload": "bash scripts/upload-scorecard.sh",
     "auth:setup": "bash scripts/google-auth-setup.sh",
+    "auth:e2e": "bash scripts/auth-e2e/run.sh",
     "functions:size": "node scripts/check-function-sizes.mjs"
   },
   "dependencies": {
