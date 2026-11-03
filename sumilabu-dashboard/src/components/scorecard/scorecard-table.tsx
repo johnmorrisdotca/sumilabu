@@ -3,6 +3,9 @@ import { defaultDir, daysSinceUpdate, formatCount, formatDays, itemVersion, over
 
 import { openOfKind } from "@/lib/scorecard/tickets";
 
+import { useContext } from "react";
+
+import { ChangesContext, ItemChange, NewBadge, RankChange } from "./change-arrow";
 import { GradeCell, PrivateBadge } from "./grade-cell";
 import { HeartButton } from "./heart-button";
 import { RadarChart } from "./radar-chart";
@@ -28,6 +31,37 @@ export function TicketBadges({ item }: { item: ScorecardItem }) {
     <span className="ml-1 inline-flex gap-1 align-middle" data-testid="ticket-badges">
       {bugs > 0 ? <span title={`${bugs} open bug${bugs === 1 ? "" : "s"}`} className="rounded-full bg-red-600 px-1.5 text-[10px] font-semibold leading-4 text-white">{bugs} bug{bugs === 1 ? "" : "s"}</span> : null}
       <span title={`${b.open} open ticket${b.open === 1 ? "" : "s"}`} className="rounded-full bg-stone-200 px-1.5 text-[10px] font-semibold leading-4 text-stone-700 dark:bg-stone-700 dark:text-stone-200">{b.open} open</span>
+    </span>
+  );
+}
+
+/** What moved in open bugs and tickets since the run on show; drawn even when none are open now (2 to 0 is news). */
+export function TicketChanges({ item }: { item: ScorecardItem }) {
+  const { comparison } = useContext(ChangesContext);
+  const moved = comparison?.items[item.id];
+  if (!moved?.bugs && !moved?.tickets) return null;
+  /* Labelled, because two bare arrows by a name do not say which count moved. */
+  const part = (figure: "bugs" | "tickets", word: string) =>
+    moved[figure] ? (
+      <span className="inline-flex items-center gap-0.5">
+        <span aria-hidden="true" className="text-[10px] text-stone-500 dark:text-stone-400">{word}</span>
+        <ItemChange item={item.id} figure={figure} size="xs" />
+      </span>
+    ) : null;
+  return (
+    <span className="ml-1 inline-flex gap-1.5 align-middle" data-testid="ticket-changes">
+      {part("bugs", "bugs")}
+      {part("tickets", "open")}
+    </span>
+  );
+}
+
+/** A grade cell with its change under it, so a row keeps one column per grade. */
+function GradeWithChange({ item, figure, value, label }: { item: string; figure: string; value: number | null; label: string }) {
+  return (
+    <span className="inline-flex flex-col items-center">
+      <GradeCell value={value} label={label} />
+      <ItemChange item={item} figure={figure} size="xs" />
     </span>
   );
 }
@@ -110,8 +144,10 @@ export function ScorecardTable({ items, columns, sortKey, sortDir, onSort, onOpe
                         {shortName(item.name)}
                       </button>
                       {item.private ? <PrivateBadge /> : null}
+                      <NewBadge item={item.id} />
                       {item.flags.length > 0 ? <span className="ml-1 text-xs text-amber-700 dark:text-amber-400" title={item.flags.join(", ")}>⚑{item.flags.length}</span> : null}
                       <TicketBadges item={item} />
+                      <TicketChanges item={item} />
                     </span>
                   </span>
                 </th>
@@ -119,17 +155,23 @@ export function ScorecardTable({ items, columns, sortKey, sortDir, onSort, onOpe
                 <td className="px-1.5 py-1.5 text-stone-600 dark:text-stone-300">{item.owner}</td>
                 <td className="px-1.5 py-1.5 font-mono text-xs text-stone-700 dark:text-stone-200">{itemVersion(item) ?? "–"}</td>
                 <td className={`px-1.5 py-1.5 tabular-nums ${staleClass(days)}`}>{formatDays(days)}</td>
-                <td className="px-1.5 py-1.5 tabular-nums text-stone-700 dark:text-stone-200">{formatCount(item.popularity.npmDownloadsWeek)}</td>
+                <td className="px-1.5 py-1.5 tabular-nums text-stone-700 dark:text-stone-200">
+                  <span className="inline-flex flex-col items-start">
+                    {formatCount(item.popularity.npmDownloadsWeek)}
+                    <ItemChange item={item.id} figure="downloads" size="xs" />
+                  </span>
+                </td>
                 <td className="px-1.5 py-1.5 tabular-nums text-stone-700 dark:text-stone-200">{formatCount(item.popularity.stars)}</td>
                 {columns.map((c) => (
                   <td key={c.id} className={`px-0.5 py-1.5 text-center ${c.id === "overall" ? "sticky right-0 z-10 border-l border-stone-200 bg-white dark:bg-stone-900 dark:border-stone-700 dark:bg-stone-900" : ""}`} data-grade={c.id}>
                     {c.id === "overall" ? (
                       <span className="inline-flex items-center gap-1">
                         <RadarChart item={item} columns={columns} overall={overallValue(item)} mini />
-                        <GradeCell value={overallValue(item)} label={c.long} />
+                        <GradeWithChange item={item.id} figure="score" value={overallValue(item)} label={c.long} />
+                        <RankChange item={item.id} />
                       </span>
                     ) : (
-                      <GradeCell value={item.grades[c.id] ?? null} label={c.long} />
+                      <GradeWithChange item={item.id} figure={`g:${c.id}`} value={item.grades[c.id] ?? null} label={c.long} />
                     )}
                   </td>
                 ))}

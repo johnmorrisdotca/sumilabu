@@ -293,6 +293,11 @@ Since then:
   (`docs/scorecard.md`): John's Mac uploads a run with `pnpm scorecard:upload`,
   one `ScorecardRun` row each (newest ten kept), the page reads it through the
   data cache tag `scorecard`, cleared by the upload. Private like every page (Google sign-in), `noindex`, no data read before the session is checked.
+  Each upload also keeps the run's key figures (`ScorecardFigures`, one small
+  row per item, every run for 30 days then one a week for a year) and stores
+  the comparison with the previous run, a week and a month back on the run's
+  row (`lib/scorecard/changes.ts` pure, `history.ts` the writes), so the
+  page's arrows and Changes tab read one column and compare nothing.
   `src/app/packages/map` is the package map drawn from the same run;
   `src/app/packages/favourites/route.ts` is the one write of the hearts
   (session, same origin, an id of the run), kept in the settings store under

@@ -11,6 +11,7 @@ const stored: ViewState = {
   detailTab: "numbers",
   ticketTable: { sort: { key: "bugs", dir: "desc" }, chips: { hasBugs: true, hasCritical: false, nothingOpen: false } },
   ticketList: { filters: { kind: "bug", priority: "high", status: "open", done: "all", query: "zoom", item: "kazoku-ui" }, sort: { key: "age", dir: "desc" } },
+  compare: "month",
 };
 const raw = serializeView(stored);
 
@@ -92,5 +93,25 @@ describe("the address the page writes", () => {
   it("knows the default view", () => {
     expect(isDefaultView(DEFAULT_VIEW)).toBe(true);
     expect(isDefaultView(stored)).toBe(false);
+  });
+});
+
+describe("the comparison choice (SUMILABU-14)", () => {
+  it("is remembered, and falls back alone when it is not one of the three", () => {
+    expect(readStoredView(raw).compare).toBe("month");
+    const bad = JSON.parse(raw);
+    bad.compare = "year";
+    const v = readStoredView(JSON.stringify(bad));
+    expect(v.compare).toBe("previous");
+    expect(v.sort).toEqual(stored.sort);
+  });
+
+  it("is not dropped by a run that has no run that old yet", () => {
+    expect(fitView(readStoredView(raw), { owners: ["johnmorrisdotca"], gradeIds: [], rankIds: ["performance"], itemIds: new Set(["kazoku-ui"]) }).compare).toBe("month");
+  });
+
+  it("has a Changes tab the address can name", () => {
+    expect(readHash("#tab=changes").tab).toBe("changes");
+    expect(hashFor({ ...DEFAULT_VIEW, tab: "changes" })).toBe("#tab=changes");
   });
 });

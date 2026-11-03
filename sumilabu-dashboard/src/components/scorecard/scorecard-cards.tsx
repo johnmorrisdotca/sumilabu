@@ -3,7 +3,8 @@ import { daysSinceUpdate, formatCount, formatDays, itemVersion, overallValue, ty
 
 import { GradeCell, PrivateBadge } from "./grade-cell";
 import { HeartButton } from "./heart-button";
-import { TicketBadges } from "./scorecard-table";
+import { ItemChange, NewBadge, RankChange } from "./change-arrow";
+import { TicketBadges, TicketChanges } from "./scorecard-table";
 import { Thumb } from "./thumb";
 
 /**
@@ -33,21 +34,26 @@ export function ScorecardCards({ items, columns, onOpen, favourites, onToggleFav
                   {item.name}
                 </button>
                 {item.private ? <PrivateBadge /> : null}
+                <NewBadge item={item.id} />
                 <p className="text-xs text-stone-600 dark:text-stone-300">
                   {item.kind} · {item.owner} · {itemVersion(item) ? `v${itemVersion(item)}` : "no version"}
                 </p>
                 <p className="text-xs text-stone-600 dark:text-stone-300">
                   updated {formatDays(days)}
-                  {item.popularity.npmDownloadsWeek !== null ? ` · ${formatCount(item.popularity.npmDownloadsWeek)}/wk` : ""}
+                  {item.popularity.npmDownloadsWeek !== null ? ` · ${formatCount(item.popularity.npmDownloadsWeek)}/wk ` : ""}
+                  <ItemChange item={item.id} figure="downloads" size="xs" />
                   {item.popularity.stars !== null ? ` · ${formatCount(item.popularity.stars)} stars` : ""}
                   {item.flags.length > 0 ? <span className="text-amber-700 dark:text-amber-400"> · ⚑{item.flags.length}</span> : null}
                   <TicketBadges item={item} />
+                  <TicketChanges item={item} />
                 </p>
               </div>
               {overall ? (
                 <div className="flex shrink-0 flex-col items-center gap-0.5">
                   <GradeCell value={overallValue(item)} large label="Overall" />
                   <span className="text-[10px] uppercase tracking-wider text-stone-500 dark:text-stone-400">overall</span>
+                  <ItemChange item={item.id} figure="score" size="xs" />
+                  <RankChange item={item.id} />
                 </div>
               ) : null}
             </div>
@@ -56,6 +62,7 @@ export function ScorecardCards({ items, columns, onOpen, favourites, onToggleFav
                 <div key={c.id} className="flex flex-col items-center gap-0.5" data-grade={c.id}>
                   <span className="text-[10px] uppercase tracking-wide text-stone-500 dark:text-stone-400">{c.label}</span>
                   <GradeCell value={item.grades[c.id] ?? null} label={c.long} />
+                  <ItemChange item={item.id} figure={`g:${c.id}`} size="xs" />
                 </div>
               ))}
             </div>

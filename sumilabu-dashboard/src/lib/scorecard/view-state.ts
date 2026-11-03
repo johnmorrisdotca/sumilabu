@@ -1,9 +1,11 @@
+import { COMPARE_IDS, type CompareId } from "./changes";
 import { TICKET_KINDS, TICKET_PRIORITIES } from "./contract";
 import { NO_FILTERS, type Filters, type SortDir, type SortKey } from "./view";
 
 /*
  * The scorecard remembers how John left it (SUMILABU-10): sort, tab, filter
- * chips, search, the ranking chosen, the detail tab and the ticket views. Kept
+ * chips, search, the ranking chosen, the detail tab, the ticket views and the
+ * run the changes are compared with (SUMILABU-14). Kept
  * in the browser (localStorage), one key per page with a version, because these
  * are per-device preferences; the hearts are on the server (SUMILABU-9).
  *
@@ -17,7 +19,7 @@ import { NO_FILTERS, type Filters, type SortDir, type SortKey } from "./view";
 export const VIEW_STORAGE_KEY = "sumilabu.scorecard.view";
 export const VIEW_VERSION = 1;
 
-export const VIEW_TABS = ["table", "tickets", "rankings", "method"] as const;
+export const VIEW_TABS = ["table", "changes", "tickets", "rankings", "method"] as const;
 export type ViewTab = (typeof VIEW_TABS)[number];
 export const DETAIL_TAB_IDS = ["grades", "facts", "numbers"] as const;
 export type DetailTabId = (typeof DETAIL_TAB_IDS)[number];
@@ -48,6 +50,8 @@ export type ViewState = {
   detailTab: DetailTabId;
   ticketTable: { sort: TicketTableSort; chips: TicketTableChips };
   ticketList: { filters: TicketListFilters; sort: TicketListSort };
+  /** Which earlier run the arrows compare with (SUMILABU-14). Kept as chosen even while no run is that old yet; the page then shows the previous run's. */
+  compare: CompareId;
 };
 
 export const NO_TICKET_FILTERS: TicketListFilters = { kind: "all", priority: "all", status: "all", done: "30", query: "", item: "all" };
@@ -60,6 +64,7 @@ export const DEFAULT_VIEW: ViewState = {
   detailTab: "grades",
   ticketTable: { sort: { key: "open", dir: "desc" }, chips: { hasBugs: false, hasCritical: false, nothingOpen: false } },
   ticketList: { filters: NO_TICKET_FILTERS, sort: { key: "priority", dir: "asc" } },
+  compare: "previous",
 };
 
 const SORT_KEYS = ["name", "kind", "owner", "version", "days", "downloads", "stars"];
@@ -121,6 +126,7 @@ export function readStoredView(raw: string | null | undefined): ViewState {
       },
       sort: { key: oneOf(TICKET_LIST_SORTS, tlSort.key, d.ticketList.sort.key), dir: dir(tlSort.dir, d.ticketList.sort.dir) },
     },
+    compare: oneOf(COMPARE_IDS, value.compare, d.compare),
   };
 }
 

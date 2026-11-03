@@ -10,6 +10,8 @@ import { gradeColumns } from "@/lib/scorecard/view";
 
 import mapRun from "@/lib/scorecard/fixtures/map-run.json";
 
+import { ChangesContext } from "./change-arrow";
+import { ChangesPanel } from "./changes-panel";
 import { ItemDetail } from "./item-detail";
 import { RadarChart } from "./radar-chart";
 import { TicketsPanel } from "./tickets-panel";
@@ -287,5 +289,84 @@ describe("the radar on screen", () => {
     const out = html(createElement(RadarChart, { item: doc.items[0], columns: gradeColumns(doc), overall: 8, mini: true }));
     expect(out).toContain('width="28"');
     expect(out).not.toContain("tabindex");
+  });
+});
+
+describe("changes since an earlier run (SUMILABU-14)", () => {
+  const comparison = {
+    at: "2026-10-26T23:00:00.000Z",
+    items: {
+      "kazoku-ui": { rank: [4, 2] as [number, number], score: [7.5, 8] as [number, number], "g:docs": [6, 8] as [number, number], bugs: [0, 2] as [number, number], downloads: [300, 420] as [number, number] },
+      wazadb: { score: [6, 5.5] as [number, number], rank: [8, 9] as [number, number], tickets: [12, 10] as [number, number] },
+      umakuma: { drift: [2, 1] as [number, number] },
+    },
+    added: ["koyomi-calendars"],
+    dropped: [{ id: "fuda-cards", name: "@johnmorrisdotca/fuda-cards" }],
+  };
+  const withChanges: ScorecardData = { ...data, changes: { v: 1, at: "2026-11-02T23:00:00.000Z", previous: comparison, week: comparison, month: null } };
+  const out = html(createElement(ScorecardView, { data: withChanges, nowIso: NOW }));
+
+  it("draws an arrow, a sign and the amount, coloured by good or bad, with words for a screen reader", () => {
+    expect(out).toContain('data-change="score"');
+    expect(out).toContain("▲+0.5");
+    expect(out).toContain('<span class="sr-only">overall score up 0.5 since 26 Oct</span>');
+    expect(out).toContain('<span class="sr-only">rank up 2 places since 26 Oct</span>');
+    expect(out).toMatch(/data-change="bugs" data-good="no"/);
+    expect(out).toContain('<span class="sr-only">open bugs up 2 since 26 Oct</span>');
+    expect(out).toMatch(/data-change="tickets" data-good="yes"/);
+    expect(out).toContain("▼−0.5");
+  });
+
+  it("puts a change beside each radar grade and the downloads", () => {
+    expect(out).toContain('<span class="sr-only">Documentation grade up 2 since 26 Oct</span>');
+    expect(out).toContain('<span class="sr-only">weekly downloads up 120 since 26 Oct</span>');
+  });
+
+  it("marks a new item and draws nothing where nothing changed", () => {
+    expect(out).toContain('data-testid="new-badge"');
+    const chizuRow = out.slice(out.indexOf('data-item="chizu"'), out.indexOf("</tr>", out.indexOf('data-item="chizu"')));
+    expect(chizuRow).not.toContain("data-change=");
+  });
+
+  it("offers the earlier runs as buttons, a run not kept yet greyed with the reason", () => {
+    expect(out).toContain('data-testid="compare-picker"');
+    expect(out).toMatch(/aria-pressed="true"[^>]*data-compare="previous"/);
+    expect(out).toMatch(/disabled=""[^>]*title="No run a month older is kept yet\."[^>]*data-compare="month"/);
+    expect(out).toContain("Since 26 Oct: 1 moved up, 1 down, 1 changed in other figures, 1 new, 1 dropped.");
+  });
+
+  it("has a Changes tab beside the Scorecard tab", () => {
+    expect(out).toMatch(/role="tab"[^>]*>Changes<\/button>/);
+  });
+
+  it("lists the movers up and down, what is new and what was dropped", () => {
+    const panel = html(createElement(ChangesContext.Provider, { value: { comparison, since: "26 Oct" } }, createElement(ChangesPanel, { items: doc.items, gradeOrder: gradeColumns(doc).map((c) => c.id), onOpen: () => {} })));
+    expect(panel).toMatch(/data-testid="movers-up"[\s\S]*data-item="kazoku-ui"/);
+    expect(panel).toMatch(/data-testid="movers-down"[\s\S]*data-item="wazadb"/);
+    expect(panel).toMatch(/data-testid="movers-other"[\s\S]*data-item="umakuma"/);
+    expect(panel).toContain("koyomi-calendars");
+    expect(panel).toContain("fuda-cards");
+    expect(panel).toContain("(dropped)");
+  });
+
+  it("says when there is nothing to compare with yet", () => {
+    expect(out.length).toBeGreaterThan(0);
+    const none = html(createElement(ScorecardView, { data, nowIso: NOW }));
+    expect(none).toContain("start with the next upload");
+    expect(none).not.toContain('data-testid="compare-picker"');
+  });
+
+  it("shows the item's key figures with what moved", () => {
+    const item = doc.items[0];
+    const detail = html(
+      createElement(
+        ChangesContext.Provider,
+        { value: { comparison, since: "26 Oct" } },
+        createElement(ItemDetail, { item, columns: gradeColumns(doc), trend: [], onBack: () => {}, figures: { rank: 2, score: 8, "g:docs": 8, bugs: 2, tickets: 3, drift: 0 } }),
+      ),
+    );
+    expect(detail).toContain('data-testid="key-figures"');
+    expect(detail).toContain("5 moved since 26 Oct");
+    expect(detail).toMatch(/data-figure="drift"[^>]*>[\s\S]*?Version drift[\s\S]*?0<\/span><\/span>/);
   });
 });

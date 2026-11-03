@@ -87,10 +87,67 @@ can be deleted from Vercel and the keychain whenever convenient.
   `apps`, `libraries`, `dependencies.familyRanges`): the map, package by
   package, outside dependencies and watch points, as tabs (`#tab=watch`).
 
+## Changes since an earlier run (SUMILABU-14, 2026-11-03)
+
+John: "track changes for the package scorecard. up and down arrows for
+example, when gaining in rank, grade, etc."
+
+- **What is kept.** Each upload writes the run's key figures to
+  `ScorecardFigures`, one small row per item per run (about 0.35 KB): rank
+  by overall (1 the best, equal scores share a place), the overall grade,
+  the overall score, each radar grade (`g:<grade id>`), open tickets, open
+  bugs, npm downloads a week, the docs score (`measures.docsScore`,
+  SUMILABU-13) and version drift (how many family packages the item asks for
+  in a range their latest npm release is not in). Never a copy of the
+  document. A figure that could not be read is left out, so a gap never reads
+  as a change. `lib/scorecard/changes.ts` (`figuresOf`).
+- **What is kept how long** (`datesToPrune`): every run for 30 days, then
+  the newest run of each week (Monday to Sunday, UTC) for a year; older ones
+  are deleted by the next upload. At most about 80 runs (fewer when the
+  collector runs weekly): about 1.5 MB for today's 49 items, under 6 MB at
+  the contract's 200 items. Measured on a local Postgres with the real run:
+  315 bytes a row on average, plus about 40 bytes of key.
+- **Compared once, by the upload.** After the run is saved, the upload
+  compares the newest run with the run just before it, the newest run at
+  least 6 days older ("a week ago") and the newest at least 27 days older
+  ("a month ago"), and stores the three comparisons on that run's
+  `ScorecardRun.changes` (only the figures that changed, as `[then, now]`,
+  plus the items that are new and dropped; a few KB). The page reads that one
+  column with the run, through the same cache; it never looks at the history
+  and nothing runs on a timer. The first upload after this was deployed
+  fills in the figures of the kept runs from their stored documents, once.
+  A failure here never loses the run: the reply says `"history": "failed"`
+  and the page shows the run without arrows until the next upload. The
+  reply's `history` says which runs were compared.
+- **On the page.** Under the run's date, "Changes since" with three buttons
+  (Previous run, A week ago, A month ago, each with its date; a run not kept
+  yet is a greyed button that says why) and one sentence ("Since 2 Nov: 3
+  moved up, 5 down, 1 new, 1 dropped."). The choice is remembered with the
+  view (`compare` in `sumilabu.scorecard.view`); while no run is that old the
+  previous run's comparison is shown and the choice is kept. Beside each
+  grade cell, the overall (score and `#rank`), the downloads and the ticket
+  counts (labelled "bugs" and "open") is an arrow with a sign and the amount;
+  nothing where nothing changed; "new" beside an item the earlier run lacked.
+  An item's detail lists every key figure with its value and its change. The
+  **Changes** tab lists the biggest movers up and down (by overall score, by
+  rank when the score is level), the items where only other figures moved,
+  what is new and what was dropped.
+- **Which way is good.** The arrow is the way the figure moved; for rank, up
+  is climbing (a smaller number). Green is better and red is worse for that
+  figure: higher is better for the grades, the score, downloads and the docs
+  score; lower is better for open tickets, open bugs and version drift. A
+  screen reader hears "rank up 3 places since 2 Nov"; the tooltip adds the
+  values ("#7 → #4, better"). Colour is never the only sign.
+- **Portable** (SUMILABU-15, the move to Turso): the new columns are text and
+  timestamps only, JSON kept as text and read by the app, no Postgres-only
+  type or SQL.
+
 ## Setting it up, once
 
 Schema (additive, one new table): it goes live with the deploy workflow's
-`db push`; the SQL is `prisma/manual-migrations/20261102_scorecard_run.sql`.
+`db push`; the SQL is `prisma/manual-migrations/20261102_scorecard_run.sql`,
+and for the changes (one new table, one new nullable column)
+`prisma/manual-migrations/20261103_scorecard_history.sql`.
 Back production up first (AGENTS.md, "Making a change and shipping it", step 4).
 
 The upload key, one command (makes it, keeps it in the keychain, puts it on Vercel

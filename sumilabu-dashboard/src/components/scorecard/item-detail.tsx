@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useContext, useState } from "react";
 
 import type { ScorecardItem } from "@/lib/scorecard/contract";
 import {
@@ -22,10 +22,12 @@ import {
   type RankValue,
 } from "@/lib/scorecard/view";
 
+import { orderFigures } from "@/lib/scorecard/changes";
 import { PICTURE_LINK_KEYS } from "@/lib/scorecard/pictures";
 import type { ListedTicket } from "@/lib/scorecard/tickets";
 import type { TicketListFilters, TicketListSort } from "@/lib/scorecard/view-state";
 
+import { ChangeChip, ChangesContext, ItemChange, NewBadge, RankChange } from "./change-arrow";
 import { DailyBars, GradeCell, PrivateBadge, TrendSpark } from "./grade-cell";
 import { HeartButton } from "./heart-button";
 import { RadarChart } from "./radar-chart";
@@ -80,11 +82,13 @@ type Props = {
   onTicketView?: (next: TicketView) => void;
   favourites?: ReadonlySet<string>;
   nowIso?: string;
+  /** The item's key figures in this run (lib/scorecard/changes.ts, figuresOf), shown with what moved since the run compared with. */
+  figures?: Record<string, number>;
 };
 
 const NO_SET: ReadonlySet<string> = new Set();
 
-export function ItemDetail({ item, columns, trend, onBack, initialTab = "grades", onTabChange, favourite = false, onToggleFavourite, median, tickets = [], ticketView, onTicketView, favourites = NO_SET, nowIso = new Date(0).toISOString() }: Props) {
+export function ItemDetail({ item, columns, trend, onBack, initialTab = "grades", onTabChange, favourite = false, onToggleFavourite, median, tickets = [], ticketView, onTicketView, favourites = NO_SET, nowIso = new Date(0).toISOString(), figures }: Props) {
   const [tab, setTabState] = useState<Tab>(initialTab);
   const setTab = (next: Tab) => {
     setTabState(next);
@@ -122,7 +126,7 @@ export function ItemDetail({ item, columns, trend, onBack, initialTab = "grades"
             <div className="mb-3 max-w-md"><Thumb item={item} size="card" /></div>
             <h2 className="flex items-start gap-1 break-words text-xl font-semibold tracking-tight md:text-2xl">
               {onToggleFavourite ? <HeartButton on={favourite} name={item.name} onToggle={onToggleFavourite} large /> : null}
-              <span className="min-w-0 pt-1.5">{item.name}{item.private ? <PrivateBadge /> : null}</span>
+              <span className="min-w-0 pt-1.5">{item.name}{item.private ? <PrivateBadge /> : null}<NewBadge item={item.id} /></span>
             </h2>
             <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">{item.summary || "No summary."}</p>
             <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-stone-600 dark:text-stone-300">
@@ -146,6 +150,10 @@ export function ItemDetail({ item, columns, trend, onBack, initialTab = "grades"
             <div className="flex flex-col items-center gap-2 sm:items-end">
               <GradeCell value={overallValue(item)} large label="Overall" />
               <span className="text-xs uppercase tracking-wider text-stone-500 dark:text-stone-400">overall</span>
+              <span className="flex items-center gap-2">
+                <ItemChange item={item.id} figure="score" size="md" />
+                <RankChange item={item.id} size="md" />
+              </span>
               <TrendSpark points={trend} />
             </div>
           </div>
@@ -159,6 +167,7 @@ export function ItemDetail({ item, columns, trend, onBack, initialTab = "grades"
             ))}
           </ul>
         ) : null}
+        {figures ? <KeyFigures itemId={item.id} figures={figures} gradeOrder={columns.map((c) => c.id)} /> : null}
       </header>
 
       <div role="tablist" aria-label="Detail" className="flex flex-wrap gap-2 print:hidden">
@@ -182,7 +191,10 @@ export function ItemDetail({ item, columns, trend, onBack, initialTab = "grades"
             <section key={c.id} id={`grade-${c.id}`} className="flex scroll-mt-4 gap-3 rounded-2xl border border-stone-300/80 dark:border-stone-700 bg-white/90 dark:bg-stone-900/90 p-3 shadow-sm" data-grade={c.id}>
               <GradeCell value={c.id === "overall" ? overallValue(item) : (item.grades[c.id] ?? null)} large label={c.long} />
               <div className="min-w-0">
-                <h3 className="text-sm font-semibold">{c.long}</h3>
+                <h3 className="flex flex-wrap items-center gap-x-2 text-sm font-semibold">
+                  {c.long}
+                  <ItemChange item={item.id} figure={c.id === "overall" ? "score" : `g:${c.id}`} />
+                </h3>
                 <p className="mt-0.5 text-sm leading-5 text-stone-600 dark:text-stone-300">{item.gradeNotes[c.id] ?? (item.grades[c.id] == null ? "Could not be judged." : "No note.")}</p>
               </div>
             </section>
@@ -262,5 +274,30 @@ export function ItemDetail({ item, columns, trend, onBack, initialTab = "grades"
         </div>
       ) : null}
     </article>
+  );
+}
+
+/**
+ * Every key figure the runs are compared by, its value now, and an arrow
+ * where it moved since the run on show (SUMILABU-14): rank, grade, score,
+ * each radar grade, open tickets and bugs, downloads, docs score and version
+ * drift. A figure this run could not read is left out.
+ */
+function KeyFigures({ itemId, figures, gradeOrder }: { itemId: string; figures: Record<string, number>; gradeOrder: readonly string[] }) {
+  const { comparison, since } = useContext(ChangesContext);
+  const changed = comparison?.items[itemId] ?? {};
+  const ids = orderFigures(Object.keys(figures), gradeOrder);
+  const moved = Object.keys(changed).length;
+  return (
+    <section className="mt-3 border-t border-stone-200 pt-3 dark:border-stone-700" data-testid="key-figures">
+      <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-stone-500 dark:text-stone-400">
+        Key figures{comparison ? (moved > 0 ? `, ${moved} moved since ${since}` : `, nothing moved since ${since}`) : ""}
+      </h3>
+      <div className="flex flex-wrap gap-1.5">
+        {ids.map((f) => (
+          <ChangeChip key={f} figure={f} pair={changed[f]} since={since} now={figures[f]} />
+        ))}
+      </div>
+    </section>
   );
 }

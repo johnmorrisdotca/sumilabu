@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
+import { changesSentence, chosenComparison, figuresOf, sinceLabel } from "@/lib/scorecard/changes";
 import { TICKET_KINDS } from "@/lib/scorecard/contract";
 import { favouriteCount } from "@/lib/scorecard/favourites";
 import { familyMedian } from "@/lib/scorecard/radar";
@@ -34,6 +35,8 @@ import {
   type ViewTab,
 } from "@/lib/scorecard/view-state";
 
+import { ChangesContext, type ChangesView } from "./change-arrow";
+import { ChangesPanel, ComparePicker } from "./changes-panel";
 import { ItemDetail } from "./item-detail";
 import { MethodPanel } from "./method-panel";
 import { RankingsPanel } from "./rankings-panel";
@@ -46,6 +49,7 @@ import { useFavourites } from "./use-favourites";
 
 const TABS: Array<{ id: ViewTab; label: string }> = [
   { id: "table", label: "Scorecard" },
+  { id: "changes", label: "Changes" },
   { id: "tickets", label: "Tickets" },
   { id: "rankings", label: "Rankings" },
   { id: "method", label: "How it is graded" },
@@ -158,6 +162,14 @@ export function ScorecardView({ data, nowIso, favourites: initialFavourites = []
   const visible = useMemo(() => (doc ? sortItems(filterItems(doc.items, view.filters, favourites), view.sort.key, view.sort.dir) : []), [doc, view.filters, view.sort, favourites]);
   const allTickets = useMemo(() => (doc ? ticketsOf(doc.items, doc.familyTickets) : []), [doc]);
   const totals = useMemo(() => (doc ? ticketTotals(doc) : null), [doc]);
+  /* The comparison was made when the run was uploaded (SUMILABU-14); the page only picks which of the three to show. */
+  const storedChanges = data?.changes ?? null;
+  const shown = chosenComparison(storedChanges, view.compare);
+  const changesView = useMemo<ChangesView>(
+    () => ({ comparison: shown?.comparison ?? null, since: shown && storedChanges ? sinceLabel(shown.comparison.at, storedChanges.at) : "" }),
+    [shown, storedChanges],
+  );
+  const nowFigures = useMemo(() => (doc ? figuresOf(doc) : {}), [doc]);
 
   if (!data || !doc || !totals) {
     return (
@@ -184,6 +196,7 @@ export function ScorecardView({ data, nowIso, favourites: initialFavourites = []
   const kindParts = TICKET_KINDS.map((k) => ({ key: k, label: KIND_LABEL[k], value: totals.byKind[k] }));
 
   return (
+    <ChangesContext.Provider value={changesView}>
     <div className="grid grid-cols-[minmax(0,1fr)] gap-3">
       <section className={`${card} grid gap-3 p-4`} data-testid="scorecard-summary">
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
@@ -205,6 +218,23 @@ export function ScorecardView({ data, nowIso, favourites: initialFavourites = []
             </button>
           </span>
         </div>
+        {storedChanges && shown ? (
+          <div className="grid gap-1 border-t border-stone-200 pt-3 dark:border-stone-700" data-testid="changes-summary">
+            <ComparePicker changes={storedChanges} chosen={view.compare} shown={shown.id} onPick={(compare) => change({ ...view, compare })} />
+            <p className="text-sm text-stone-700 dark:text-stone-200" data-testid="changes-summary-sentence">
+              {changesSentence(shown.comparison, changesView.since)}{" "}
+              {view.tab !== "changes" && !openItem ? (
+                <button type="button" onClick={() => change({ ...view, tab: "changes" }, true)} className="underline underline-offset-2 print:hidden">
+                  See the biggest movers
+                </button>
+              ) : null}
+            </p>
+          </div>
+        ) : (
+          <p className="border-t border-stone-200 pt-3 text-xs text-stone-500 dark:border-stone-700 dark:text-stone-400" data-testid="changes-summary">
+            Up and down arrows for what changed start with the next upload: each run is compared with the one before, a week back and a month back.
+          </p>
+        )}
         {stale ? <p className="text-sm text-red-700">This run is more than a week old: the collector has probably stopped. Run it again and upload.</p> : null}
         {totals.boardsRead > 0 ? (
           <div className="grid gap-3 border-t border-stone-200 pt-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] dark:border-stone-700" data-testid="ticket-summary">
@@ -244,6 +274,7 @@ export function ScorecardView({ data, nowIso, favourites: initialFavourites = []
             onTicketView={(next) => change({ ...view, ticketList: { filters: { ...next.filters, item: view.ticketList.filters.item }, sort: next.sort } })}
             favourites={favourites}
             nowIso={nowIso}
+            figures={nowFigures[openItem.id]?.figures}
           />
         ) : openId ? (
           <section className={`${card} p-6`}>
@@ -327,6 +358,8 @@ export function ScorecardView({ data, nowIso, favourites: initialFavourites = []
               </>
             ) : null}
 
+            {view.tab === "changes" ? <ChangesPanel items={doc.items} gradeOrder={columns.map((c) => c.id)} onOpen={open} /> : null}
+
             {view.tab === "tickets" ? (
               <TicketsPanel items={doc.items} sort={view.ticketTable.sort} chips={view.ticketTable.chips} onChange={(next) => change({ ...view, ticketTable: next })} favourites={favourites} onToggleFavourite={toggle} onOpen={open} />
             ) : null}
@@ -347,5 +380,6 @@ export function ScorecardView({ data, nowIso, favourites: initialFavourites = []
         </Link>
       </p>
     </div>
+    </ChangesContext.Provider>
   );
 }
