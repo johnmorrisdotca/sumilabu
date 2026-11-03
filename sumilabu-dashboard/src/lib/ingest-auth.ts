@@ -1,3 +1,4 @@
+import { createHash, timingSafeEqual } from "node:crypto";
 import { NextRequest } from "next/server";
 
 export function parseProjectTokens(): Record<string, string> {
@@ -14,6 +15,19 @@ export function parseProjectTokens(): Record<string, string> {
   }
 }
 
+/** Constant time and length-blind: both sides are hashed to the same length first (found by the SUMILABU-7 audit; it was `===`). */
+function sameToken(presented: string, expected: string): boolean {
+  const a = createHash("sha256").update(presented).digest();
+  const b = createHash("sha256").update(expected).digest();
+  return timingSafeEqual(a, b);
+}
+
+/**
+ * Telemetry's door. Still open when no token is configured at all, on
+ * purpose (see `lib/board/auth.ts`: a device that cannot phone home is worse
+ * than one that phones home unauthenticated, and installed firmware cannot be
+ * updated). These routes only write; none returns stored data.
+ */
 export function isAuthorizedIngest(req: NextRequest, projectKey: string): boolean {
   const projectTokens = parseProjectTokens();
   const projectToken = projectTokens[projectKey];
@@ -30,5 +44,5 @@ export function isAuthorizedIngest(req: NextRequest, projectKey: string): boolea
   }
 
   const token = auth.slice("Bearer ".length).trim();
-  return token === configuredToken;
+  return sameToken(token, configuredToken);
 }
