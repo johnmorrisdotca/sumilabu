@@ -12,7 +12,8 @@ import { createHmac, timingSafeEqual } from "node:crypto";
  */
 
 export const VIEW_COOKIE = "scorecard_view";
-export const VIEW_COOKIE_PATH = "/packages";
+/** The whole site: until Google sign-in lands, the same key also opens the dashboard at `/`. */
+export const VIEW_COOKIE_PATH = "/";
 export const VIEW_SESSION_SECONDS = 30 * 24 * 60 * 60;
 /** A wrong key waits this long before it is answered: slow enough to make guessing pointless, with no counter to keep. */
 export const WRONG_KEY_DELAY_MS = 1000;

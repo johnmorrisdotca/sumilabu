@@ -1,5 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 import { AutoRefreshControl } from "@/components/auto-refresh-control";
 import { HeartbeatRadar } from "@/components/heartbeat-radar";
@@ -9,6 +11,7 @@ import { EMPTY_PROJECT_DATA, getProjectData, getProjectLists } from "@/lib/dashb
 import { globalHeartbeat, heartbeatThresholds, isFresh, type HeartbeatThresholds } from "@/lib/heartbeat-thresholds";
 import { formatDateTimeAtOffset, formatHourMinuteAtOffset } from "@/lib/timezone";
 import { LiveClock } from "@/components/live-clock";
+import { VIEW_COOKIE, viewCookieValid } from "@/lib/scorecard/access";
 
 export const dynamic = "force-dynamic";
 
@@ -463,6 +466,9 @@ type PageProps = {
 };
 
 export default async function Home({ searchParams }: PageProps) {
+  /* Private: the dashboard shows devices and telemetry, so only the holder of the view key sees it.
+     Without a valid cookie nothing is read; the key form lives at /packages. */
+  if (!viewCookieValid((await cookies()).get(VIEW_COOKIE)?.value)) redirect("/packages");
   const params = (await searchParams) || {};
   const selectedProject = sanitizeProjectParam(params.project);
   const localTimezoneLabel = `UTC${DASHBOARD_UTC_OFFSET_HOURS >= 0 ? "+" : ""}${DASHBOARD_UTC_OFFSET_HOURS}`;

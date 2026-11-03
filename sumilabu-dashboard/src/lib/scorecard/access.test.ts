@@ -42,9 +42,9 @@ describe("the view cookie", () => {
     expect(viewCookieValid(makeViewCookie(KEY, NOW), null, NOW)).toBe(false);
   });
 
-  it("is written HttpOnly, SameSite=Strict and Path=/packages, Secure when asked", () => {
+  it("is written HttpOnly, SameSite=Strict and Path=/, Secure when asked", () => {
     const header = cookieHeader("v", 2592000, true);
-    for (const part of ["Path=/packages", "Max-Age=2592000", "HttpOnly", "SameSite=Strict", "Secure"]) expect(header).toContain(part);
+    for (const part of ["Path=/", "Max-Age=2592000", "HttpOnly", "SameSite=Strict", "Secure"]) expect(header).toContain(part);
     expect(cookieHeader("v", 0, false)).not.toContain("Secure");
   });
 });

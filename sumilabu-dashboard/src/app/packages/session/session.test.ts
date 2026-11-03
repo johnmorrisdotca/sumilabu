@@ -71,7 +71,7 @@ describe("POST /packages/session", () => {
     expect(res.status).toBe(303);
     expect(res.headers.get("location")).toBe("/packages");
     const cookie = res.headers.get("set-cookie") ?? "";
-    for (const part of ["scorecard_view=", "Path=/packages", "Max-Age=2592000", "HttpOnly", "SameSite=Strict", "Secure"]) expect(cookie).toContain(part);
+    for (const part of ["scorecard_view=", "Path=/", "Max-Age=2592000", "HttpOnly", "SameSite=Strict", "Secure"]) expect(cookie).toContain(part);
     expect(cookie).not.toContain(KEY);
     const value = cookie.split(";")[0].split("=")[1];
     expect(viewCookieValid(value, KEY)).toBe(true);

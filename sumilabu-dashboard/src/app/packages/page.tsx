@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 
@@ -50,12 +51,17 @@ export default async function PackagesPage({ searchParams }: { searchParams?: Pr
             <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Package scorecard</h1>
             <p className="mt-1 max-w-2xl text-sm text-stone-600">Every package, site and app, graded 1 to 10. Updated whenever the collector on the Mac runs and uploads.</p>
           </div>
+          <div className="flex items-center gap-2 print:hidden">
+          <Link href="/" className="rounded-full border border-stone-300 bg-white/80 px-3 py-1.5 text-sm text-stone-700 hover:border-stone-500">
+            Dashboard
+          </Link>
           <form method="POST" action="/packages/session" className="print:hidden">
             <input type="hidden" name="action" value="signout" />
             <button type="submit" className="rounded-full border border-stone-300 bg-white/80 px-3 py-1.5 text-sm text-stone-700 hover:border-stone-500">
               Sign out
             </button>
           </form>
+          </div>
         </header>
         <ScorecardView data={data} nowIso={new Date().toISOString()} />
       </main>
