@@ -1,0 +1,8199 @@
+{
+ "schemaVersion": 1,
+ "generatedAt": "2026-11-03T09:07:57Z",
+ "generator": {
+  "name": "package-scorecard",
+  "version": "1.1.0"
+ },
+ "methods": {},
+ "items": [
+  {
+   "id": "tane",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/tane",
+   "summary": "Tane 種 — Seeded random numbers for JavaScript: reproducible streams, shuffle, pick, sample, weighted choice, daily seeds and saved positions. Zero dependencies.",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/tane",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/tane",
+    "demo": "https://johnmorrisdotca.github.io/tane/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/tane/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "1.3.1",
+    "repo": "1.3.1",
+    "count": 9
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-10-31",
+    "created": "2026-09-30",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 3
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [
+     "react"
+    ],
+    "family": [],
+    "dev": 9,
+    "packedKb": 58.9,
+    "unpackedKb": 210.1,
+    "requiredPeers": [],
+    "familyDev": [],
+    "familyRanges": {}
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 9.09
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 10,
+    "tests": 8,
+    "bugs": 10,
+    "crashes": 9,
+    "code": 10,
+    "lint": 9,
+    "performance": 8,
+    "usefulness": 7,
+    "freshness": 10,
+    "robustness": 9,
+    "overall": 9
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [],
+   "group": "games-words",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 0,
+    "inProgress": 0,
+    "waitingOnJohn": null,
+    "doneLast7": 0,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": []
+   }
+  },
+  {
+   "id": "hikidashi",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/hikidashi",
+   "summary": "Hikidashi 引き出し — Japanese text tools for JavaScript: era dates (和暦) and kanji numerals both ways, dictionary forms of conjugated words, readings shared over kanji, words pulled from pasted text,…",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/hikidashi",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/hikidashi",
+    "demo": "https://johnmorrisdotca.github.io/hikidashi/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/hikidashi/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "1.1.1",
+    "repo": "1.1.1",
+    "count": 6
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-10-31",
+    "created": "2026-10-02",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 3
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [],
+    "family": [],
+    "dev": 7,
+    "packedKb": 60.7,
+    "unpackedKb": 203.7,
+    "requiredPeers": [],
+    "familyDev": [],
+    "familyRanges": {}
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 8.95
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 10,
+    "tests": 8,
+    "bugs": 10,
+    "crashes": 9,
+    "code": 10,
+    "lint": 9,
+    "performance": 7,
+    "usefulness": 6,
+    "freshness": 10,
+    "robustness": 9,
+    "overall": 9
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [],
+   "group": "maps-addresses",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 0,
+    "inProgress": 0,
+    "waitingOnJohn": null,
+    "doneLast7": 0,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": []
+   }
+  },
+  {
+   "id": "korokoro",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/korokoro",
+   "summary": "Korokoro コロコロ — Dice roller with notation and exact odds: mixed dice, seeded rolls, history and a browser tray. Zero dependencies.",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/korokoro",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/korokoro",
+    "demo": "https://johnmorrisdotca.github.io/korokoro/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/korokoro/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "1.16.1",
+    "repo": "1.16.1",
+    "count": 18
+   },
+   "dates": {
+    "lastCommit": "2026-10-31",
+    "lastRelease": "2026-10-31",
+    "created": "2026-09-30",
+    "daysSinceCommit": 3,
+    "daysSinceRelease": 3
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [
+     "vue",
+     "react"
+    ],
+    "family": [],
+    "dev": 14,
+    "packedKb": 295.2,
+    "unpackedKb": 1022,
+    "requiredPeers": [],
+    "familyDev": [],
+    "familyRanges": {}
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 8.95
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 10,
+    "tests": 8,
+    "bugs": 10,
+    "crashes": 9,
+    "code": 9,
+    "lint": 9,
+    "performance": 5,
+    "usefulness": 8,
+    "freshness": 10,
+    "robustness": 9,
+    "overall": 9
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [],
+   "group": "games-words",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 0,
+    "inProgress": 0,
+    "waitingOnJohn": null,
+    "doneLast7": 0,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": []
+   }
+  },
+  {
+   "id": "bushu",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/bushu",
+   "summary": "Bushu 部首 — Find kanji by their radicals: intersect chosen RADKFILE parts, use Japanese radical names and kanji stroke counts, and mount an English/Japanese picker. 253 radicals and their 6,355…",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/bushu",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/bushu",
+    "demo": "https://johnmorrisdotca.github.io/bushu/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/bushu/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "1.1.2",
+    "repo": "1.1.2",
+    "count": 6
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-11-02",
+    "created": "2026-10-02",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 0
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [],
+    "family": [],
+    "dev": 7,
+    "packedKb": 121.8,
+    "unpackedKb": 301.5,
+    "requiredPeers": [],
+    "familyDev": [],
+    "familyRanges": {}
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 8.91
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 10,
+    "tests": 8,
+    "bugs": 10,
+    "crashes": 9,
+    "code": 10,
+    "lint": 9,
+    "performance": 10,
+    "usefulness": 4,
+    "freshness": 10,
+    "robustness": 9,
+    "overall": 9
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [],
+   "group": "games-words",
+   "license": "(MIT AND CC-BY-SA-4.0 AND CC-BY-4.0)",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 0,
+    "inProgress": 0,
+    "waitingOnJohn": null,
+    "doneLast7": 0,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": []
+   }
+  },
+  {
+   "id": "jirai",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/jirai",
+   "summary": "Jirai 地雷 — Minesweeper with no-guess boards: square, orthogonal, hexagonal and wraparound fields, seeded safe openings, bounded generation, explained hints and accessible English/Japanese play.…",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/jirai",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/jirai",
+    "demo": "https://johnmorrisdotca.github.io/jirai/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/jirai/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "0.5.1",
+    "repo": "0.5.1",
+    "count": 9
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-10-31",
+    "created": "2026-10-05",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 3
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [
+     "react"
+    ],
+    "family": [],
+    "dev": 9,
+    "packedKb": 89.2,
+    "unpackedKb": 378.1,
+    "requiredPeers": [],
+    "familyDev": [],
+    "familyRanges": {}
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 8.86
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 10,
+    "tests": 7,
+    "bugs": 10,
+    "crashes": 9,
+    "code": 10,
+    "lint": 9,
+    "performance": 8,
+    "usefulness": 6,
+    "freshness": 10,
+    "robustness": 9,
+    "overall": 9
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [],
+   "group": "games-words",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 0,
+    "inProgress": 0,
+    "waitingOnJohn": null,
+    "doneLast7": 0,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": []
+   }
+  },
+  {
+   "id": "toranpu",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/toranpu",
+   "summary": "Toranpu トランプ — Playing cards, card games and solitaire: Hearts, Spades, Euchre, Cribbage, Oh Hell, Crazy Eights, Go Fish, Big Two, President, Gin Rummy, War and Stack Up; solitaires, seeded deals…",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/toranpu",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/toranpu",
+    "demo": "https://johnmorrisdotca.github.io/toranpu/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/toranpu/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "2.16.0",
+    "repo": "2.16.0",
+    "count": 20
+   },
+   "dates": {
+    "lastCommit": "2026-11-03",
+    "lastRelease": "2026-11-02",
+    "created": "2026-09-30",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 0
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [
+     "react"
+    ],
+    "family": [],
+    "dev": 10,
+    "packedKb": 509.2,
+    "unpackedKb": 2102.6,
+    "requiredPeers": [],
+    "familyDev": [],
+    "familyRanges": {}
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 8.86
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 9,
+    "tests": 8,
+    "bugs": 10,
+    "crashes": 9,
+    "code": 9,
+    "lint": 9,
+    "performance": 5,
+    "usefulness": 8,
+    "freshness": 10,
+    "robustness": 9,
+    "overall": 9
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [],
+   "group": "games-words",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 1,
+    "inProgress": 0,
+    "waitingOnJohn": null,
+    "doneLast7": 0,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 1
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": [
+     {
+      "id": "T-1",
+      "title": "Invented ticket 1 (chore, unset)",
+      "kind": "chore",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 1."
+     }
+    ]
+   }
+  },
+  {
+   "id": "domino",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/domino",
+   "summary": "Domino ドミノ — Dominoes and Mexican Train: double-nine to double-fifteen sets, rules for two to eight, computer players, seeded deals, saved-game replay, English and Japanese words, and a CLI.…",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/domino",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/domino",
+    "demo": "https://johnmorrisdotca.github.io/domino/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/domino/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "1.1.4",
+    "repo": "1.1.4",
+    "count": 6
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-10-31",
+    "created": "2026-10-01",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 3
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [],
+    "family": [],
+    "dev": 7,
+    "packedKb": 77.2,
+    "unpackedKb": 244.3,
+    "requiredPeers": [],
+    "familyDev": [],
+    "familyRanges": {}
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 8.82
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 10,
+    "tests": 8,
+    "bugs": 10,
+    "crashes": 10,
+    "code": 10,
+    "lint": 9,
+    "performance": 8,
+    "usefulness": 3,
+    "freshness": 10,
+    "robustness": 9,
+    "overall": 9
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [],
+   "group": "games-words",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 0,
+    "inProgress": 0,
+    "waitingOnJohn": null,
+    "doneLast7": 0,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": []
+   }
+  },
+  {
+   "id": "hata",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/hata",
+   "summary": "Hata 旗 — Country and region flags as SVG: country, regional and former-country flags (the Soviet Union, Yugoslavia and more), native ratios and curated frames, source/author/licence metadata, one…",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/hata",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/hata",
+    "demo": "https://johnmorrisdotca.github.io/hata/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/hata/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "1.7.3",
+    "repo": "1.7.3",
+    "count": 14
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-11-02",
+    "created": "2026-10-09",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 0
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [],
+    "family": [],
+    "dev": 16,
+    "packedKb": 8155.8,
+    "unpackedKb": 27521.4,
+    "requiredPeers": [],
+    "familyDev": [
+     "kuni"
+    ],
+    "familyRanges": {
+     "kuni": "1.1.0"
+    }
+   },
+   "measures": {
+    "ciLastFailedOnMain": true,
+    "overallScore": 8.82
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 7,
+    "tests": 7,
+    "bugs": 10,
+    "crashes": 10,
+    "code": 7,
+    "lint": 9,
+    "performance": 9,
+    "usefulness": 10,
+    "freshness": 10,
+    "robustness": 9,
+    "overall": 9
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [
+    "CI failing",
+    "a 1133-line file"
+   ],
+   "group": "sports-flags",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 2,
+    "inProgress": 1,
+    "waitingOnJohn": null,
+    "doneLast7": 0,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 1
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 1
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": [
+     {
+      "id": "T-2",
+      "title": "Invented ticket 2 (chore, unset)",
+      "kind": "chore",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 2."
+     },
+     {
+      "id": "T-3",
+      "title": "Invented ticket 3 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 3."
+     }
+    ]
+   }
+  },
+  {
+   "id": "jarajara",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/jarajara",
+   "summary": "Jarajara ジャラジャラ — Mahjong tiles and mahjong solitaire: the 144-tile set in 42 SVG faces, stacked layouts, matching rules, seeded deals and Awase alone or at a table of two to four. TypeScript,…",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/jarajara",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/jarajara",
+    "demo": "https://johnmorrisdotca.github.io/jarajara/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/jarajara/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "1.8.0",
+    "repo": "1.8.0",
+    "count": 13
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-11-02",
+    "created": "2026-10-01",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 0
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [],
+    "family": [],
+    "dev": 8,
+    "packedKb": 247.9,
+    "unpackedKb": 981.7,
+    "requiredPeers": [],
+    "familyDev": [],
+    "familyRanges": {}
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 8.77
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 10,
+    "tests": 8,
+    "bugs": 10,
+    "crashes": 9,
+    "code": 9,
+    "lint": 9,
+    "performance": 7,
+    "usefulness": 5,
+    "freshness": 10,
+    "robustness": 9,
+    "overall": 9
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [],
+   "group": "games-words",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 0,
+    "inProgress": 0,
+    "waitingOnJohn": null,
+    "doneLast7": 0,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": []
+   }
+  },
+  {
+   "id": "kyuubu",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/kyuubu",
+   "summary": "Kyuubu キューブ — Twisty cube puzzle for the browser: CSS 3D cubes, seeded scrambles and step-by-step solves in React, Vue, Svelte, Angular or plain HTML. Zero dependencies.",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/kyuubu",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/kyuubu",
+    "demo": "https://johnmorrisdotca.github.io/kyuubu/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/kyuubu/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "1.14.0",
+    "repo": "1.14.0",
+    "count": 23
+   },
+   "dates": {
+    "lastCommit": "2026-11-03",
+    "lastRelease": "2026-11-02",
+    "created": "2026-09-30",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 0
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [
+     "react"
+    ],
+    "family": [],
+    "dev": 9,
+    "packedKb": 207.7,
+    "unpackedKb": 814.8,
+    "requiredPeers": [],
+    "familyDev": [],
+    "familyRanges": {}
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 8.77
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 10,
+    "tests": 8,
+    "bugs": 10,
+    "crashes": 9,
+    "code": 9,
+    "lint": 8,
+    "performance": 6,
+    "usefulness": 6,
+    "freshness": 10,
+    "robustness": 9,
+    "overall": 9
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [],
+   "group": "games-words",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 0,
+    "inProgress": 0,
+    "waitingOnJohn": null,
+    "doneLast7": 0,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": []
+   }
+  },
+  {
+   "id": "dougu-sports",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/dougu-sports",
+   "summary": "Dougu Sports 道具 — Sports emblems as SVG for JavaScript: trophies, medals, crests, sport icons, and the ball and gear of every sport, in metal, line or flat colour, with optional 3D turning and a…",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/dougu-sports",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/dougu-sports",
+    "demo": "https://johnmorrisdotca.github.io/dougu-sports/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/dougu-sports/main/docs/images/balls-desk-light.webp"
+   },
+   "versions": {
+    "npm": "0.29.0",
+    "repo": "0.29.0",
+    "count": 34
+   },
+   "dates": {
+    "lastCommit": "2026-11-03",
+    "lastRelease": "2026-11-03",
+    "created": "2026-10-14",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 0
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [],
+    "family": [],
+    "dev": 27,
+    "packedKb": 473.7,
+    "unpackedKb": 1672.9,
+    "requiredPeers": [],
+    "familyDev": [
+     "hata",
+     "kazoku-ui"
+    ],
+    "familyRanges": {
+     "hata": "1.5.0",
+     "kazoku-ui": "^0.10.1"
+    }
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 8.73
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 9,
+    "tests": 8,
+    "bugs": 10,
+    "crashes": 9,
+    "code": 9,
+    "lint": 9,
+    "performance": 4,
+    "usefulness": 7,
+    "freshness": 10,
+    "robustness": 9,
+    "overall": 9
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [],
+   "group": "sports-flags",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 10,
+    "inProgress": 2,
+    "waitingOnJohn": null,
+    "doneLast7": 7,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 1,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 9
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [
+     {
+      "id": "T-4",
+      "title": "Invented ticket 4 (feature, high)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "high",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 4."
+     }
+    ],
+    "recentDone": [],
+    "list": [
+     {
+      "id": "T-5",
+      "title": "Invented ticket 5 (feature, high)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "high",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 5."
+     },
+     {
+      "id": "T-6",
+      "title": "Invented ticket 6 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 6."
+     },
+     {
+      "id": "T-7",
+      "title": "Invented ticket 7 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 7."
+     },
+     {
+      "id": "T-8",
+      "title": "Invented ticket 8 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 8."
+     },
+     {
+      "id": "T-9",
+      "title": "Invented ticket 9 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 9."
+     },
+     {
+      "id": "T-10",
+      "title": "Invented ticket 10 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 10."
+     },
+     {
+      "id": "T-11",
+      "title": "Invented ticket 11 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 11."
+     },
+     {
+      "id": "T-12",
+      "title": "Invented ticket 12 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 12."
+     },
+     {
+      "id": "T-13",
+      "title": "Invented ticket 13 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 13."
+     },
+     {
+      "id": "T-14",
+      "title": "Invented ticket 14 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 14."
+     }
+    ]
+   }
+  },
+  {
+   "id": "kuni",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/kuni",
+   "summary": "Kuni 国 — Countries, states and provinces: ISO 3166 codes and English/Japanese names, subdivisions, country facts and groupings, typed lookups, on-demand country data and an optional card. Zero…",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/kuni",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/kuni",
+    "demo": "https://johnmorrisdotca.github.io/kuni/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/kuni/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "1.4.0",
+    "repo": "1.4.0",
+    "count": 5
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-10-15",
+    "created": "2026-10-09",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 19
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [],
+    "family": [],
+    "dev": 15,
+    "packedKb": 939.3,
+    "unpackedKb": 3853.9,
+    "requiredPeers": [],
+    "familyDev": [
+     "chizu"
+    ],
+    "familyRanges": {
+     "chizu": "1.4.0"
+    }
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 8.73
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 9,
+    "tests": 7,
+    "bugs": 10,
+    "crashes": 9,
+    "code": 8,
+    "lint": 9,
+    "performance": 7,
+    "usefulness": 8,
+    "freshness": 10,
+    "robustness": 9,
+    "overall": 9
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [
+    "a 1133-line file"
+   ],
+   "group": "maps-addresses",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 1,
+    "inProgress": 1,
+    "waitingOnJohn": null,
+    "doneLast7": 0,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 1
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": [
+     {
+      "id": "T-15",
+      "title": "Invented ticket 15 (chore, unset)",
+      "kind": "chore",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 15."
+     }
+    ]
+   }
+  },
+  {
+   "id": "address-plus",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/address-plus",
+   "summary": "address-plus アドレスプラス — US and Canadian address parser: parse, validate, format and compare addresses, with Japanese support and modules for Australia, France, Germany and the UK. TypeScript, batch…",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/address-plus",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/address-plus",
+    "demo": "https://johnmorrisdotca.github.io/address-plus/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/address-plus/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "1.7.0",
+    "repo": "1.7.0",
+    "count": 7
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-10-15",
+    "created": "2026-10-09",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 19
+   },
+   "dependencies": {
+    "runtime": [
+     "fast-levenshtein"
+    ],
+    "optionalPeers": [],
+    "family": [],
+    "dev": 22,
+    "packedKb": 1009.7,
+    "unpackedKb": 5814.2,
+    "requiredPeers": [],
+    "familyDev": [
+     "hikidashi",
+     "kuni"
+    ],
+    "familyRanges": {
+     "hikidashi": "^1.0.2",
+     "kuni": "1.1.0"
+    }
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 8.64
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 6,
+    "tests": 8,
+    "bugs": 10,
+    "crashes": 9,
+    "code": 8,
+    "lint": 10,
+    "performance": 5,
+    "usefulness": 9,
+    "freshness": 10,
+    "robustness": 9,
+    "overall": 9
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [
+    "a 1179-line file"
+   ],
+   "group": "maps-addresses",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 2,
+    "inProgress": 1,
+    "waitingOnJohn": null,
+    "doneLast7": 0,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 1
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 1
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": [
+     {
+      "id": "T-16",
+      "title": "Invented ticket 16 (chore, unset)",
+      "kind": "chore",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 16."
+     },
+     {
+      "id": "T-17",
+      "title": "Invented ticket 17 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 17."
+     }
+    ]
+   }
+  },
+  {
+   "id": "hitotsu",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/hitotsu",
+   "summary": "Hitotsu 一つ — Colour-card shedding game for two to eight: classic and party rules, a computer player, a table for several devices and its own deck. Zero dependencies.",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/hitotsu",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/hitotsu",
+    "demo": "https://johnmorrisdotca.github.io/hitotsu/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/hitotsu/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "1.6.0",
+    "repo": "1.6.0",
+    "count": 11
+   },
+   "dates": {
+    "lastCommit": "2026-11-03",
+    "lastRelease": "2026-11-02",
+    "created": "2026-09-30",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 0
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [
+     "react"
+    ],
+    "family": [],
+    "dev": 9,
+    "packedKb": 115.4,
+    "unpackedKb": 355.1,
+    "requiredPeers": [],
+    "familyDev": [],
+    "familyRanges": {}
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 8.55
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 10,
+    "tests": 7,
+    "bugs": 10,
+    "crashes": 10,
+    "code": 9,
+    "lint": 9,
+    "performance": 7,
+    "usefulness": 3,
+    "freshness": 10,
+    "robustness": 9,
+    "overall": 9
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [],
+   "group": "games-words",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 2,
+    "inProgress": 0,
+    "waitingOnJohn": null,
+    "doneLast7": 0,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 2
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": [
+     {
+      "id": "T-18",
+      "title": "Invented ticket 18 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 18."
+     },
+     {
+      "id": "T-19",
+      "title": "Invented ticket 19 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 19."
+     }
+    ]
+   }
+  },
+  {
+   "id": "senshu-jerseys",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/senshu-jerseys",
+   "summary": "Senshu Jerseys 選手 — Sports jerseys and judogi as SVG for JavaScript: hockey, baseball, basketball, football, soccer, rugby and handball cuts, sweaters, kits, caps, helmets and retired-number…",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/senshu-jerseys",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/senshu-jerseys",
+    "demo": "https://johnmorrisdotca.github.io/senshu-jerseys/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/senshu-jerseys/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "0.35.0",
+    "repo": "0.35.0",
+    "count": 42
+   },
+   "dates": {
+    "lastCommit": "2026-11-03",
+    "lastRelease": "2026-11-03",
+    "created": "2026-10-14",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 0
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [],
+    "family": [],
+    "dev": 26,
+    "packedKb": 526.3,
+    "unpackedKb": 1805.2,
+    "requiredPeers": [],
+    "familyDev": [
+     "kazoku-ui"
+    ],
+    "familyRanges": {
+     "kazoku-ui": "^0.7.3"
+    }
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 8.55
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 9,
+    "tests": 8,
+    "bugs": 10,
+    "crashes": 9,
+    "code": 7,
+    "lint": 9,
+    "performance": 4,
+    "usefulness": 7,
+    "freshness": 10,
+    "robustness": 9,
+    "overall": 9
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [
+    "a 1253-line file"
+   ],
+   "group": "sports-flags",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board",
+     "board"
+    ],
+    "open": 3,
+    "inProgress": 1,
+    "waitingOnJohn": null,
+    "doneLast7": 5,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 3
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": [
+     {
+      "id": "T-20",
+      "title": "Invented ticket 20 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 20."
+     },
+     {
+      "id": "T-21",
+      "title": "Invented ticket 21 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 21."
+     },
+     {
+      "id": "T-22",
+      "title": "Invented ticket 22 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 22."
+     }
+    ]
+   }
+  },
+  {
+   "id": "sugoroku",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/sugoroku",
+   "summary": "Sugoroku 双六 — Backgammon and its variants: native rules, doubling cube, match play, Long Gammon, Nackgammon, Hypergammon and Tabula, replayable records, computer players and an SVG board.…",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/sugoroku",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/sugoroku",
+    "demo": "https://johnmorrisdotca.github.io/sugoroku/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/sugoroku/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "1.1.1",
+    "repo": "1.1.1",
+    "count": 5
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-10-31",
+    "created": "2026-10-02",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 3
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [],
+    "family": [],
+    "dev": 7,
+    "packedKb": 151.2,
+    "unpackedKb": 527.3,
+    "requiredPeers": [],
+    "familyDev": [],
+    "familyRanges": {}
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 8.55
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 10,
+    "tests": 7,
+    "bugs": 10,
+    "crashes": 9,
+    "code": 9,
+    "lint": 9,
+    "performance": 7,
+    "usefulness": 4,
+    "freshness": 10,
+    "robustness": 9,
+    "overall": 9
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [],
+   "group": "games-words",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 0,
+    "inProgress": 0,
+    "waitingOnJohn": null,
+    "doneLast7": 0,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": []
+   }
+  },
+  {
+   "id": "tenka",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/tenka",
+   "summary": "Tenka 天下 — World conquest strategy game: seeded rules for two to six, world and Europe maps, dice, cards, saved games and a playable table for React, Vue, Svelte, Angular or plain HTML. Zero…",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/tenka",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/tenka",
+    "demo": "https://johnmorrisdotca.github.io/tenka/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/tenka/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "2.3.0",
+    "repo": "2.3.0",
+    "count": 12
+   },
+   "dates": {
+    "lastCommit": "2026-11-03",
+    "lastRelease": "2026-11-02",
+    "created": "2026-09-30",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 0
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [
+     "react",
+     "@johnmorrisdotca/toranpu",
+     "@johnmorrisdotca/korokoro"
+    ],
+    "family": [
+     "toranpu",
+     "korokoro"
+    ],
+    "dev": 12,
+    "packedKb": 184.8,
+    "unpackedKb": 637.4,
+    "requiredPeers": [],
+    "familyDev": [],
+    "familyRanges": {
+     "korokoro": ">=1.15.0 <2",
+     "toranpu": ">=2.14.0 <3"
+    }
+   },
+   "measures": {
+    "ciLastFailedOnMain": true,
+    "overallScore": 8.55
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 10,
+    "tests": 7,
+    "bugs": 10,
+    "crashes": 9,
+    "code": 9,
+    "lint": 9,
+    "performance": 7,
+    "usefulness": 4,
+    "freshness": 10,
+    "robustness": 9,
+    "overall": 9
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [
+    "CI failing"
+   ],
+   "group": "games-words",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 1,
+    "inProgress": 0,
+    "waitingOnJohn": null,
+    "doneLast7": 0,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 1
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": [
+     {
+      "id": "T-23",
+      "title": "Invented ticket 23 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 23."
+     }
+    ]
+   }
+  },
+  {
+   "id": "chikyu-earth",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/chikyu-earth",
+   "summary": "Chikyu Earth 地球 — A line-drawn globe for the web: country outlines that turn at the Earth's own rate, centred on where you are, with an optional realistic Earth from space (three.js), the Sun,…",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/chikyu-earth",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/chikyu-earth",
+    "demo": "https://johnmorrisdotca.github.io/chikyu-earth/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/chikyu-earth/main/docs/images/line-desk.png"
+   },
+   "versions": {
+    "npm": "0.10.0",
+    "repo": "0.10.0",
+    "count": 9
+   },
+   "dates": {
+    "lastCommit": "2026-11-03",
+    "lastRelease": "2026-11-03",
+    "created": "2026-11-01",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 0
+   },
+   "dependencies": {
+    "runtime": [
+     "d3-geo",
+     "@johnmorrisdotca/chizu"
+    ],
+    "optionalPeers": [
+     "three",
+     "satellite.js",
+     "astronomy-engine",
+     "@johnmorrisdotca/kazoku-ui"
+    ],
+    "family": [
+     "chizu",
+     "kazoku-ui"
+    ],
+    "dev": 32,
+    "packedKb": 1992.5,
+    "unpackedKb": 2235.9,
+    "requiredPeers": [],
+    "familyDev": [],
+    "familyRanges": {
+     "chizu": "^1.6.0",
+     "kazoku-ui": ">=0.9.0"
+    }
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 8.5
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 6,
+    "tests": 7,
+    "bugs": 10,
+    "crashes": 10,
+    "code": 9,
+    "lint": 9,
+    "performance": 10,
+    "usefulness": 5,
+    "freshness": 10,
+    "robustness": 9,
+    "overall": 9
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [],
+   "group": "3d-views",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 3,
+    "inProgress": 1,
+    "waitingOnJohn": null,
+    "doneLast7": 16,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 1,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 2
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [
+     {
+      "id": "T-24",
+      "title": "Invented ticket 24 (feature, high)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "high",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 24."
+     }
+    ],
+    "recentDone": [],
+    "list": [
+     {
+      "id": "T-25",
+      "title": "Invented ticket 25 (feature, high)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "high",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 25."
+     },
+     {
+      "id": "T-26",
+      "title": "Invented ticket 26 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 26."
+     },
+     {
+      "id": "T-27",
+      "title": "Invented ticket 27 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 27."
+     }
+    ]
+   }
+  },
+  {
+   "id": "gunjin",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/gunjin",
+   "summary": "Gunjin 軍人 — Hidden-rank strategy games: five immutable engines, private setups, player/observer views, redacted replay and accessible English/Japanese pass-the-device play. Zero runtime dependencies.",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/gunjin",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/gunjin",
+    "demo": "https://johnmorrisdotca.github.io/gunjin/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/gunjin/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "0.2.2",
+    "repo": "0.2.2",
+    "count": 7
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-10-31",
+    "created": "2026-10-05",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 3
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [],
+    "family": [],
+    "dev": 7,
+    "packedKb": 55.6,
+    "unpackedKb": 248.1,
+    "requiredPeers": [],
+    "familyDev": [],
+    "familyRanges": {}
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 8.5
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 10,
+    "tests": 6,
+    "bugs": 10,
+    "crashes": 10,
+    "code": 10,
+    "lint": 9,
+    "performance": 7,
+    "usefulness": 3,
+    "freshness": 10,
+    "robustness": 9,
+    "overall": 9
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [],
+   "group": "games-words",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 0,
+    "inProgress": 0,
+    "waitingOnJohn": null,
+    "doneLast7": 0,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": []
+   }
+  },
+  {
+   "id": "narabe",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/narabe",
+   "summary": "Narabe 並べ — Board game rules engine: gomoku, Reversi, Go, checkers: fifty-two abstract games, immutable moves, replay, SVG boards and React. Pure TypeScript, zero dependencies.",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/narabe",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/narabe",
+    "demo": "https://johnmorrisdotca.github.io/narabe/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/narabe/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "1.4.0",
+    "repo": "1.4.0",
+    "count": 8
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-11-02",
+    "created": "2026-09-30",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 0
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [
+     "react"
+    ],
+    "family": [],
+    "dev": 9,
+    "packedKb": 427.9,
+    "unpackedKb": 1790,
+    "requiredPeers": [],
+    "familyDev": [],
+    "familyRanges": {}
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 8.5
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 9,
+    "tests": 8,
+    "bugs": 10,
+    "crashes": 9,
+    "code": 8,
+    "lint": 9,
+    "performance": 5,
+    "usefulness": 5,
+    "freshness": 10,
+    "robustness": 9,
+    "overall": 9
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [
+    "a 1078-line file"
+   ],
+   "group": "games-words",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 0,
+    "inProgress": 0,
+    "waitingOnJohn": null,
+    "doneLast7": 1,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": []
+   }
+  },
+  {
+   "id": "karakuri",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/karakuri",
+   "summary": "Karakuri からくり — Physics and hyper-casual puzzle games: eight puzzle games, native rules and solvers, deterministic 2D physics, level lists and pointer/keyboard play in English and Japanese. Zero…",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/karakuri",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/karakuri",
+    "demo": "https://johnmorrisdotca.github.io/karakuri/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/karakuri/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "0.2.1",
+    "repo": "0.2.1",
+    "count": 5
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-10-31",
+    "created": "2026-10-06",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 3
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [],
+    "family": [],
+    "dev": 8,
+    "packedKb": 121.6,
+    "unpackedKb": 469.6,
+    "requiredPeers": [],
+    "familyDev": [],
+    "familyRanges": {}
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 8.45
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 10,
+    "tests": 7,
+    "bugs": 10,
+    "crashes": 9,
+    "code": 9,
+    "lint": 9,
+    "performance": 7,
+    "usefulness": 3,
+    "freshness": 10,
+    "robustness": 9,
+    "overall": 8
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [],
+   "group": "games-words",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 0,
+    "inProgress": 0,
+    "waitingOnJohn": null,
+    "doneLast7": 0,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": []
+   }
+  },
+  {
+   "id": "suido",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/suido",
+   "summary": "Suido 水道 — Pipe-connecting puzzle: 3,520 fixed levels, a seeded generator and solver, walls, locked pieces, big pieces and an SVG board. TypeScript, zero dependencies.",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/suido",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/suido",
+    "demo": "https://johnmorrisdotca.github.io/suido/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/suido/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "1.6.1",
+    "repo": "1.6.1",
+    "count": 10
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-10-31",
+    "created": "2026-10-01",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 3
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [],
+    "family": [],
+    "dev": 7,
+    "packedKb": 628.8,
+    "unpackedKb": 1783.6,
+    "requiredPeers": [],
+    "familyDev": [],
+    "familyRanges": {}
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 8.45
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 9,
+    "tests": 8,
+    "bugs": 10,
+    "crashes": 9,
+    "code": 9,
+    "lint": 9,
+    "performance": 6,
+    "usefulness": 3,
+    "freshness": 10,
+    "robustness": 9,
+    "overall": 8
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [],
+   "group": "games-words",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 0,
+    "inProgress": 0,
+    "waitingOnJohn": null,
+    "doneLast7": 0,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": []
+   }
+  },
+  {
+   "id": "taisen-brackets",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/taisen-brackets",
+   "summary": "Taisen Brackets 対戦, knockout brackets as SVG: from a list of ties (games, best-of series, two legs, replays, byes, a third-place match) it works out the rounds and halves and draws the bracket…",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/taisen-brackets",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/taisen-brackets",
+    "demo": "https://johnmorrisdotca.github.io/taisen-brackets/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/taisen-brackets/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "0.18.0",
+    "repo": "0.18.0",
+    "count": 25
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-10-30",
+    "created": "2026-10-14",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 3
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [
+     "@johnmorrisdotca/hata",
+     "@johnmorrisdotca/dougu-sports"
+    ],
+    "family": [
+     "hata",
+     "dougu-sports"
+    ],
+    "dev": 8,
+    "packedKb": 234.9,
+    "unpackedKb": 807.6,
+    "requiredPeers": [],
+    "familyDev": [],
+    "familyRanges": {
+     "dougu-sports": ">=0.1.0 <1",
+     "hata": ">=1.5.0 <2"
+    }
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 8.45
+   },
+   "grades": {
+    "docs": 9,
+    "dependencies": 10,
+    "tests": 8,
+    "bugs": 9,
+    "crashes": 9,
+    "code": 8,
+    "lint": 9,
+    "performance": 5,
+    "usefulness": 6,
+    "freshness": 10,
+    "robustness": 9,
+    "overall": 8
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [
+    "a 1142-line file"
+   ],
+   "group": "sports-flags",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 2,
+    "inProgress": 1,
+    "waitingOnJohn": null,
+    "doneLast7": 1,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 1
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 1
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": [
+     {
+      "id": "T-28",
+      "title": "Invented ticket 28 (chore, unset)",
+      "kind": "chore",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 28."
+     },
+     {
+      "id": "T-29",
+      "title": "Invented ticket 29 (bug, unset)",
+      "kind": "bug",
+      "kindDerived": false,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 29."
+     }
+    ]
+   }
+  },
+  {
+   "id": "chizu",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/chizu",
+   "summary": "Chizu 地図 — SVG maps for JavaScript: world and country outlines, 32 countries' regions, English/Japanese names, pan and zoom, insets, geography quizzes and numbered callouts. Zero dependencies.",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/chizu",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/chizu",
+    "demo": "https://johnmorrisdotca.github.io/chizu/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/chizu/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "1.7.0",
+    "repo": "1.7.0",
+    "count": 12
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-11-02",
+    "created": "2026-10-02",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 0
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [],
+    "family": [],
+    "dev": 27,
+    "packedKb": 6969.9,
+    "unpackedKb": 20949.5,
+    "requiredPeers": [],
+    "familyDev": [
+     "kazoku-ui",
+     "kuni"
+    ],
+    "familyRanges": {
+     "kazoku-ui": "^0.10.0",
+     "kuni": "1.1.0"
+    }
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 8.36
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 7,
+    "tests": 8,
+    "bugs": 10,
+    "crashes": 8,
+    "code": 6,
+    "lint": 8,
+    "performance": 5,
+    "usefulness": 9,
+    "freshness": 10,
+    "robustness": 9,
+    "overall": 8
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [
+    "a 1603-line file"
+   ],
+   "group": "maps-addresses",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 0,
+    "inProgress": 0,
+    "waitingOnJohn": null,
+    "doneLast7": 7,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": []
+   }
+  },
+  {
+   "id": "tobiishi",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/tobiishi",
+   "summary": "Tobiishi 飛び石 — Peg solitaire: nine classic, shaped, wide and tall boards, immutable rules, seeded solvable challenges, SVG drawing and accessible English/Japanese play. Zero runtime dependencies.",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/tobiishi",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/tobiishi",
+    "demo": "https://johnmorrisdotca.github.io/tobiishi/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/tobiishi/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "0.3.1",
+    "repo": "0.3.1",
+    "count": 7
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-10-31",
+    "created": "2026-10-05",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 3
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [],
+    "family": [],
+    "dev": 7,
+    "packedKb": 45.7,
+    "unpackedKb": 167.8,
+    "requiredPeers": [],
+    "familyDev": [],
+    "familyRanges": {}
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 8.36
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 10,
+    "tests": 6,
+    "bugs": 10,
+    "crashes": 9,
+    "code": 10,
+    "lint": 9,
+    "performance": 9,
+    "usefulness": 3,
+    "freshness": 10,
+    "robustness": 8,
+    "overall": 8
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [],
+   "group": "games-words",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 0,
+    "inProgress": 0,
+    "waitingOnJohn": null,
+    "doneLast7": 0,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": []
+   }
+  },
+  {
+   "id": "tsunagi",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/tsunagi",
+   "summary": "Tsunagi 繋ぎ — Connect-the-pairs line puzzle: seeded layouts, 2,368 hand-checked levels with unique answers, solver, walls, bridges, portals, hexagons and an SVG board. TypeScript, zero dependencies.",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/tsunagi",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/tsunagi",
+    "demo": "https://johnmorrisdotca.github.io/tsunagi/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/tsunagi/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "1.8.0",
+    "repo": "1.8.0",
+    "count": 14
+   },
+   "dates": {
+    "lastCommit": "2026-11-03",
+    "lastRelease": "2026-11-02",
+    "created": "2026-10-01",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 0
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [],
+    "family": [],
+    "dev": 7,
+    "packedKb": 499.6,
+    "unpackedKb": 1837.1,
+    "requiredPeers": [],
+    "familyDev": [],
+    "familyRanges": {}
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 8.36
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 9,
+    "tests": 8,
+    "bugs": 10,
+    "crashes": 9,
+    "code": 7,
+    "lint": 9,
+    "performance": 6,
+    "usefulness": 4,
+    "freshness": 10,
+    "robustness": 9,
+    "overall": 8
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [
+    "a 1051-line file"
+   ],
+   "group": "games-words",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 0,
+    "inProgress": 0,
+    "waitingOnJohn": null,
+    "doneLast7": 0,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": []
+   }
+  },
+  {
+   "id": "koyomi-calendars",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/koyomi-calendars",
+   "summary": "Koyomi 暦: calendar-page icons as SVG, 18 original designs in light and dark, in any language through Intl. No image, no font, no dependency; import one design alone for a few kilobytes.",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/koyomi-calendars",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/koyomi-calendars",
+    "demo": "https://johnmorrisdotca.github.io/koyomi-calendars/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/koyomi-calendars/main/docs/images/hero.png"
+   },
+   "versions": {
+    "npm": "0.1.1",
+    "repo": "0.1.1",
+    "count": 3
+   },
+   "dates": {
+    "lastCommit": "2026-11-03",
+    "lastRelease": "2026-11-03",
+    "created": "2026-11-02",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 0
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [],
+    "family": [],
+    "dev": 8,
+    "packedKb": 53.9,
+    "unpackedKb": 172.2,
+    "requiredPeers": [],
+    "familyDev": [
+     "kazoku-ui"
+    ],
+    "familyRanges": {
+     "kazoku-ui": "^0.9.0"
+    }
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 8.32
+   },
+   "grades": {
+    "docs": 8,
+    "dependencies": 10,
+    "tests": 6,
+    "bugs": 10,
+    "crashes": 10,
+    "code": 10,
+    "lint": 9,
+    "performance": 7,
+    "usefulness": 4,
+    "freshness": 10,
+    "robustness": 9,
+    "overall": 8
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [],
+   "group": "sports-flags",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 1,
+    "inProgress": 0,
+    "waitingOnJohn": null,
+    "doneLast7": 4,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 1
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": [
+     {
+      "id": "T-30",
+      "title": "Invented ticket 30 (chore, unset)",
+      "kind": "chore",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 30."
+     }
+    ]
+   }
+  },
+  {
+   "id": "meikyuu",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/meikyuu",
+   "summary": "Meikyuu 迷宮 — Maze generator and maze game: made by seven algorithms, seeded square, hex, triangle and circular grids, cut-out shapes, arrow puzzles, mixed boards and 3D surfaces, drawn through by…",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/meikyuu",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/meikyuu",
+    "demo": "https://johnmorrisdotca.github.io/meikyuu/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/meikyuu/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "3.2.1",
+    "repo": "3.2.1",
+    "count": 13
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-10-31",
+    "created": "2026-10-02",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 3
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [],
+    "family": [],
+    "dev": 7,
+    "packedKb": 408.7,
+    "unpackedKb": 1640.5,
+    "requiredPeers": [],
+    "familyDev": [],
+    "familyRanges": {}
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 8.32
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 9,
+    "tests": 8,
+    "bugs": 10,
+    "crashes": 9,
+    "code": 7,
+    "lint": 6,
+    "performance": 7,
+    "usefulness": 6,
+    "freshness": 10,
+    "robustness": 8,
+    "overall": 8
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [],
+   "group": "games-words",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 0,
+    "inProgress": 0,
+    "waitingOnJohn": null,
+    "doneLast7": 0,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": []
+   }
+  },
+  {
+   "id": "jisho",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/jisho",
+   "summary": "Jisho 辞書 — Japanese word and kanji data for JavaScript: look words up by reading or written form, fetched a few kilobytes at a time, safe by default or unfiltered with every sense's JMdict marks,…",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/jisho",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/jisho",
+    "demo": "https://johnmorrisdotca.github.io/jisho/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/jisho/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "2.0.0",
+    "repo": "2.0.0",
+    "count": 2
+   },
+   "dates": {
+    "lastCommit": "2026-11-03",
+    "lastRelease": "2026-11-03",
+    "created": "2026-11-03",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 0
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [],
+    "family": [],
+    "dev": 7,
+    "packedKb": 9814.6,
+    "unpackedKb": 34968.5,
+    "requiredPeers": [],
+    "familyDev": [],
+    "familyRanges": {}
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 8.27
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 7,
+    "tests": 8,
+    "bugs": 10,
+    "crashes": 9,
+    "code": 6,
+    "lint": 9,
+    "performance": 9,
+    "usefulness": 6,
+    "freshness": 10,
+    "robustness": 8,
+    "overall": 8
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [],
+   "group": "games-words",
+   "license": "(MIT AND CC-BY-SA-4.0 AND CC-BY-4.0 AND CC-BY-3.0)",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 4,
+    "inProgress": 0,
+    "waitingOnJohn": null,
+    "doneLast7": 3,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 4
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": [
+     {
+      "id": "T-31",
+      "title": "Invented ticket 31 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 31."
+     },
+     {
+      "id": "T-32",
+      "title": "Invented ticket 32 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 32."
+     },
+     {
+      "id": "T-33",
+      "title": "Invented ticket 33 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 33."
+     },
+     {
+      "id": "T-34",
+      "title": "Invented ticket 34 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 34."
+     }
+    ]
+   }
+  },
+  {
+   "id": "kumimoji",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/kumimoji",
+   "summary": "Kumimoji 組み文字 — Crossword tile game in English and Japanese: seeded bags, solo races, two-to-eight-player tables, word lists and a playable table for React, Vue, Svelte, Angular or plain HTML.…",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/kumimoji",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/kumimoji",
+    "demo": "https://johnmorrisdotca.github.io/kumimoji/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/kumimoji/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "1.4.0",
+    "repo": "1.4.0",
+    "count": 9
+   },
+   "dates": {
+    "lastCommit": "2026-11-03",
+    "lastRelease": "2026-11-02",
+    "created": "2026-09-30",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 0
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [
+     "react"
+    ],
+    "family": [],
+    "dev": 11,
+    "packedKb": 793.9,
+    "unpackedKb": 1854.1,
+    "requiredPeers": [],
+    "familyDev": [],
+    "familyRanges": {}
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 8.27
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 9,
+    "tests": 7,
+    "bugs": 10,
+    "crashes": 9,
+    "code": 10,
+    "lint": 9,
+    "performance": 6,
+    "usefulness": 3,
+    "freshness": 10,
+    "robustness": 8,
+    "overall": 8
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [],
+   "group": "games-words",
+   "license": "MIT AND CC-BY-SA-4.0",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 0,
+    "inProgress": 0,
+    "waitingOnJohn": null,
+    "doneLast7": 0,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": []
+   }
+  },
+  {
+   "id": "kotoba",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/kotoba",
+   "summary": "Kotoba 言葉 — Word lists and word-game rules: English, French, German and Japanese kana dictionaries, guess marking, scoring, romaji input, daily words and a native game for any page. TypeScript,…",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/kotoba",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/kotoba",
+    "demo": "https://johnmorrisdotca.github.io/kotoba/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/kotoba/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "1.5.1",
+    "repo": "1.5.1",
+    "count": 13
+   },
+   "dates": {
+    "lastCommit": "2026-11-03",
+    "lastRelease": "2026-11-03",
+    "created": "2026-10-01",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 0
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [],
+    "family": [],
+    "dev": 8,
+    "packedKb": 778.7,
+    "unpackedKb": 1797.5,
+    "requiredPeers": [],
+    "familyDev": [
+     "jisho"
+    ],
+    "familyRanges": {
+     "jisho": "2.0.0"
+    }
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 8.23
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 9,
+    "tests": 7,
+    "bugs": 9,
+    "crashes": 8,
+    "code": 9,
+    "lint": 9,
+    "performance": 7,
+    "usefulness": 5,
+    "freshness": 10,
+    "robustness": 8,
+    "overall": 8
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [
+    "1 open crash or freeze tickets"
+   ],
+   "group": "games-words",
+   "license": "(MIT AND CC-BY-SA-4.0)",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 2,
+    "inProgress": 0,
+    "waitingOnJohn": null,
+    "doneLast7": 5,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 2
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": [
+     {
+      "id": "T-35",
+      "title": "Invented ticket 35 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 35."
+     },
+     {
+      "id": "T-36",
+      "title": "Invented ticket 36 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 36."
+     }
+    ]
+   }
+  },
+  {
+   "id": "kazu",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/kazu",
+   "summary": "Kazu 数 — Sudoku and grid number puzzles: Sudoku and its variants, Futoshiki, Skyscrapers, Cross Sums, Loop, Nurikabe and more. Typed engines, checked seeded puzzles, SVG boards and bilingual…",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/kazu",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/kazu",
+    "demo": "https://johnmorrisdotca.github.io/kazu/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/kazu/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "2.2.0",
+    "repo": "2.2.0",
+    "count": 11
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-11-02",
+    "created": "2026-10-02",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 0
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [],
+    "family": [],
+    "dev": 7,
+    "packedKb": 338,
+    "unpackedKb": 1501.6,
+    "requiredPeers": [],
+    "familyDev": [],
+    "familyRanges": {}
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 8.14
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 9,
+    "tests": 7,
+    "bugs": 10,
+    "crashes": 9,
+    "code": 7,
+    "lint": 7,
+    "performance": 5,
+    "usefulness": 6,
+    "freshness": 10,
+    "robustness": 8,
+    "overall": 8
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [],
+   "group": "games-words",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 0,
+    "inProgress": 0,
+    "waitingOnJohn": null,
+    "doneLast7": 0,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": []
+   }
+  },
+  {
+   "id": "meigen-sports",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/meigen-sports",
+   "summary": "Meigen Sports 名言 — Sports quotations and on-this-day history for JavaScript: source-verified, typed offline data and pure date, sport and entity selectors, with static JSON feeds. One small…",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/meigen-sports",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/meigen-sports",
+    "demo": "https://johnmorrisdotca.github.io/meigen-sports/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/meigen-sports/main/docs/images/hero-icons-light.webp"
+   },
+   "versions": {
+    "npm": "0.24.0",
+    "repo": "0.25.0",
+    "count": 36
+   },
+   "dates": {
+    "lastCommit": "2026-11-03",
+    "lastRelease": "2026-11-03",
+    "created": "2026-10-16",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 0
+   },
+   "dependencies": {
+    "runtime": [
+     "@johnmorrisdotca/koyomi-calendars"
+    ],
+    "optionalPeers": [],
+    "family": [
+     "koyomi-calendars"
+    ],
+    "dev": 29,
+    "packedKb": 1118.8,
+    "unpackedKb": 18300.9,
+    "requiredPeers": [],
+    "familyDev": [
+     "dougu-sports",
+     "hata",
+     "kazoku-ui",
+     "senshu-jerseys"
+    ],
+    "familyRanges": {
+     "dougu-sports": "0.14.0",
+     "hata": "1.7.2",
+     "kazoku-ui": "^0.10.0",
+     "koyomi-calendars": "^0.1.0",
+     "senshu-jerseys": "0.33.1"
+    }
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 7.95
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 7,
+    "tests": 8,
+    "bugs": 10,
+    "crashes": 9,
+    "code": 5,
+    "lint": 9,
+    "performance": 5,
+    "usefulness": 6,
+    "freshness": 9,
+    "robustness": 8,
+    "overall": 8
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [
+    "behind GitHub",
+    "a 2259-line file"
+   ],
+   "group": "sports-flags",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 16,
+    "inProgress": 2,
+    "waitingOnJohn": null,
+    "doneLast7": 21,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 1,
+      "medium": 0,
+      "normal": 0,
+      "low": 2,
+      "unset": 12
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 1
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [
+     {
+      "id": "T-37",
+      "title": "Invented ticket 37 (feature, high)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "high",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 37."
+     }
+    ],
+    "recentDone": [],
+    "list": [
+     {
+      "id": "T-38",
+      "title": "Invented ticket 38 (feature, high)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "high",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 38."
+     },
+     {
+      "id": "T-39",
+      "title": "Invented ticket 39 (feature, low)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "low",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 39."
+     },
+     {
+      "id": "T-40",
+      "title": "Invented ticket 40 (feature, low)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "low",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 40."
+     },
+     {
+      "id": "T-41",
+      "title": "Invented ticket 41 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 41."
+     },
+     {
+      "id": "T-42",
+      "title": "Invented ticket 42 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 42."
+     },
+     {
+      "id": "T-43",
+      "title": "Invented ticket 43 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 43."
+     },
+     {
+      "id": "T-44",
+      "title": "Invented ticket 44 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 44."
+     },
+     {
+      "id": "T-45",
+      "title": "Invented ticket 45 (chore, unset)",
+      "kind": "chore",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 45."
+     },
+     {
+      "id": "T-46",
+      "title": "Invented ticket 46 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 46."
+     },
+     {
+      "id": "T-47",
+      "title": "Invented ticket 47 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 47."
+     },
+     {
+      "id": "T-48",
+      "title": "Invented ticket 48 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 48."
+     },
+     {
+      "id": "T-49",
+      "title": "Invented ticket 49 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 49."
+     },
+     {
+      "id": "T-50",
+      "title": "Invented ticket 50 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 50."
+     },
+     {
+      "id": "T-51",
+      "title": "Invented ticket 51 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 51."
+     },
+     {
+      "id": "T-52",
+      "title": "Invented ticket 52 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 52."
+     },
+     {
+      "id": "T-53",
+      "title": "Invented ticket 53 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 53."
+     }
+    ]
+   }
+  },
+  {
+   "id": "hako-devices",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/hako-devices",
+   "summary": "Hako Devices 箱: line drawings and 3D views of Raspberry Pis, Macs, PCs, phones, tablets, game consoles, NAS boxes and classic machines, as a web component, with tags to filter 2,200+ machines by…",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/hako-devices",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/hako-devices",
+    "demo": "https://johnmorrisdotca.github.io/hako-devices/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/hako-devices/main/docs/images/gallery.jpg"
+   },
+   "versions": {
+    "npm": "0.15.0",
+    "repo": "0.15.0",
+    "count": 13
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-11-02",
+    "created": "2026-10-31",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 0
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [
+     "react",
+     "three"
+    ],
+    "family": [],
+    "dev": 14,
+    "packedKb": 10087.6,
+    "unpackedKb": 30029.3,
+    "requiredPeers": [],
+    "familyDev": [
+     "kazoku-ui"
+    ],
+    "familyRanges": {
+     "kazoku-ui": "0.10.0"
+    }
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 7.86
+   },
+   "grades": {
+    "docs": 8,
+    "dependencies": 7,
+    "tests": 7,
+    "bugs": 9,
+    "crashes": 9,
+    "code": 9,
+    "lint": 9,
+    "performance": 4,
+    "usefulness": 5,
+    "freshness": 10,
+    "robustness": 9,
+    "overall": 8
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [],
+   "group": "3d-views",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board",
+     "board"
+    ],
+    "open": 22,
+    "inProgress": 3,
+    "waitingOnJohn": null,
+    "doneLast7": 21,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 1
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 21
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": [
+     {
+      "id": "T-54",
+      "title": "Invented ticket 54 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 54."
+     },
+     {
+      "id": "T-55",
+      "title": "Invented ticket 55 (bug, unset)",
+      "kind": "bug",
+      "kindDerived": false,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 55."
+     },
+     {
+      "id": "T-56",
+      "title": "Invented ticket 56 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 56."
+     },
+     {
+      "id": "T-57",
+      "title": "Invented ticket 57 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 57."
+     },
+     {
+      "id": "T-58",
+      "title": "Invented ticket 58 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 58."
+     },
+     {
+      "id": "T-59",
+      "title": "Invented ticket 59 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 59."
+     },
+     {
+      "id": "T-60",
+      "title": "Invented ticket 60 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 60."
+     },
+     {
+      "id": "T-61",
+      "title": "Invented ticket 61 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 61."
+     },
+     {
+      "id": "T-62",
+      "title": "Invented ticket 62 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 62."
+     },
+     {
+      "id": "T-63",
+      "title": "Invented ticket 63 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 63."
+     },
+     {
+      "id": "T-64",
+      "title": "Invented ticket 64 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 64."
+     },
+     {
+      "id": "T-65",
+      "title": "Invented ticket 65 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 65."
+     },
+     {
+      "id": "T-66",
+      "title": "Invented ticket 66 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 66."
+     },
+     {
+      "id": "T-67",
+      "title": "Invented ticket 67 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 67."
+     },
+     {
+      "id": "T-68",
+      "title": "Invented ticket 68 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 68."
+     },
+     {
+      "id": "T-69",
+      "title": "Invented ticket 69 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 69."
+     },
+     {
+      "id": "T-70",
+      "title": "Invented ticket 70 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 70."
+     },
+     {
+      "id": "T-71",
+      "title": "Invented ticket 71 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 71."
+     },
+     {
+      "id": "T-72",
+      "title": "Invented ticket 72 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 72."
+     },
+     {
+      "id": "T-73",
+      "title": "Invented ticket 73 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 73."
+     },
+     {
+      "id": "T-74",
+      "title": "Invented ticket 74 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 74."
+     },
+     {
+      "id": "T-75",
+      "title": "Invented ticket 75 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 75."
+     }
+    ]
+   }
+  },
+  {
+   "id": "kazoku-ui",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/kazoku-ui",
+   "summary": "Kazoku UI 家族, the family's shared interface parts as their own versioned package: view controls for any 3D or zoomable view (angle, tilt, auto-turn, zoom about the pointer, pan, touch, address…",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/kazoku-ui",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/kazoku-ui",
+    "demo": "https://johnmorrisdotca.github.io/kazoku-ui/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/kazoku-ui/main/docs/images/hero-light.webp"
+   },
+   "versions": {
+    "npm": "0.10.1",
+    "repo": "0.11.0",
+    "count": 10
+   },
+   "dates": {
+    "lastCommit": "2026-11-03",
+    "lastRelease": "2026-11-02",
+    "created": "2026-11-01",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 0
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [
+     "three"
+    ],
+    "family": [],
+    "dev": 7,
+    "packedKb": 79.8,
+    "unpackedKb": 278.3,
+    "requiredPeers": [],
+    "familyDev": [],
+    "familyRanges": {}
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 7.86
+   },
+   "grades": {
+    "docs": 9,
+    "dependencies": 10,
+    "tests": 8,
+    "bugs": 3,
+    "crashes": 6,
+    "code": 10,
+    "lint": 9,
+    "performance": 10,
+    "usefulness": 6,
+    "freshness": 9,
+    "robustness": 8,
+    "overall": 8
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [
+    "behind GitHub",
+    "2 open crash or freeze tickets"
+   ],
+   "group": "3d-views",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board",
+     "board"
+    ],
+    "open": 28,
+    "inProgress": 1,
+    "waitingOnJohn": null,
+    "doneLast7": 10,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 4
+     },
+     "feature": {
+      "critical": 1,
+      "high": 2,
+      "medium": 0,
+      "normal": 0,
+      "low": 1,
+      "unset": 16
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 4
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [
+     {
+      "id": "T-76",
+      "title": "Invented ticket 76 (feature, critical)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "critical",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 76."
+     },
+     {
+      "id": "T-77",
+      "title": "Invented ticket 77 (feature, high)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "high",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 77."
+     },
+     {
+      "id": "T-78",
+      "title": "Invented ticket 78 (feature, high)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "high",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 78."
+     }
+    ],
+    "recentDone": [],
+    "list": [
+     {
+      "id": "T-79",
+      "title": "Invented ticket 79 (feature, critical)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "critical",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 79."
+     },
+     {
+      "id": "T-80",
+      "title": "Invented ticket 80 (feature, high)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "high",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 80."
+     },
+     {
+      "id": "T-81",
+      "title": "Invented ticket 81 (feature, high)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "high",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 81."
+     },
+     {
+      "id": "T-82",
+      "title": "Invented ticket 82 (feature, low)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "low",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 82."
+     },
+     {
+      "id": "T-83",
+      "title": "Invented ticket 83 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 83."
+     },
+     {
+      "id": "T-84",
+      "title": "Invented ticket 84 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 84."
+     },
+     {
+      "id": "T-85",
+      "title": "Invented ticket 85 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 85."
+     },
+     {
+      "id": "T-86",
+      "title": "Invented ticket 86 (chore, unset)",
+      "kind": "chore",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 86."
+     },
+     {
+      "id": "T-87",
+      "title": "Invented ticket 87 (bug, unset)",
+      "kind": "bug",
+      "kindDerived": false,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 87."
+     },
+     {
+      "id": "T-88",
+      "title": "Invented ticket 88 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 88."
+     },
+     {
+      "id": "T-89",
+      "title": "Invented ticket 89 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 89."
+     },
+     {
+      "id": "T-90",
+      "title": "Invented ticket 90 (bug, unset)",
+      "kind": "bug",
+      "kindDerived": false,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 90."
+     },
+     {
+      "id": "T-91",
+      "title": "Invented ticket 91 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 91."
+     },
+     {
+      "id": "T-92",
+      "title": "Invented ticket 92 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 92."
+     },
+     {
+      "id": "T-93",
+      "title": "Invented ticket 93 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 93."
+     },
+     {
+      "id": "T-94",
+      "title": "Invented ticket 94 (chore, unset)",
+      "kind": "chore",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 94."
+     },
+     {
+      "id": "T-95",
+      "title": "Invented ticket 95 (chore, unset)",
+      "kind": "chore",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 95."
+     },
+     {
+      "id": "T-96",
+      "title": "Invented ticket 96 (chore, unset)",
+      "kind": "chore",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 96."
+     },
+     {
+      "id": "T-97",
+      "title": "Invented ticket 97 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 97."
+     },
+     {
+      "id": "T-98",
+      "title": "Invented ticket 98 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 98."
+     },
+     {
+      "id": "T-99",
+      "title": "Invented ticket 99 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 99."
+     },
+     {
+      "id": "T-100",
+      "title": "Invented ticket 100 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 100."
+     },
+     {
+      "id": "T-101",
+      "title": "Invented ticket 101 (bug, unset)",
+      "kind": "bug",
+      "kindDerived": false,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 101."
+     },
+     {
+      "id": "T-102",
+      "title": "Invented ticket 102 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 102."
+     },
+     {
+      "id": "T-103",
+      "title": "Invented ticket 103 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 103."
+     },
+     {
+      "id": "T-104",
+      "title": "Invented ticket 104 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 104."
+     },
+     {
+      "id": "T-105",
+      "title": "Invented ticket 105 (bug, unset)",
+      "kind": "bug",
+      "kindDerived": false,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 105."
+     },
+     {
+      "id": "T-106",
+      "title": "Invented ticket 106 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 106."
+     }
+    ]
+   }
+  },
+  {
+   "id": "kyogijo-stadiums",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/kyogijo-stadiums",
+   "summary": "Kyogijo Stadiums 競技場, 40 sports' surfaces as SVG, drawn to scale from the rulebooks: NFL, CFL and IFAF football fields, an NHL rink, an NBA court, MLB ballparks, soccer pitches, curling sheets,…",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/kyogijo-stadiums",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/kyogijo-stadiums",
+    "demo": "https://johnmorrisdotca.github.io/kyogijo-stadiums/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/kyogijo-stadiums/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "0.49.1",
+    "repo": "0.50.0",
+    "count": 63
+   },
+   "dates": {
+    "lastCommit": "2026-11-03",
+    "lastRelease": "2026-11-03",
+    "created": "2026-10-14",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 0
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [
+     "@resvg/resvg-js",
+     "@johnmorrisdotca/hata"
+    ],
+    "family": [
+     "hata"
+    ],
+    "dev": 11,
+    "packedKb": 2211.7,
+    "unpackedKb": 8351.9,
+    "requiredPeers": [],
+    "familyDev": [
+     "chizu",
+     "dougu-sports",
+     "taisen-brackets"
+    ],
+    "familyRanges": {
+     "chizu": "1.4.0",
+     "dougu-sports": "0.13.0",
+     "hata": ">=1.5.0 <2",
+     "taisen-brackets": "0.17.1"
+    }
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 7.5
+   },
+   "grades": {
+    "docs": 9,
+    "dependencies": 8,
+    "tests": 9,
+    "bugs": 7,
+    "crashes": 5,
+    "code": 7,
+    "lint": 9,
+    "performance": 3,
+    "usefulness": 6,
+    "freshness": 9,
+    "robustness": 8,
+    "overall": 8
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [
+    "behind GitHub",
+    "2 open crash or freeze tickets",
+    "a 1894-line file"
+   ],
+   "group": "sports-flags",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board",
+     "board"
+    ],
+    "open": 27,
+    "inProgress": 1,
+    "waitingOnJohn": null,
+    "doneLast7": 17,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 1
+     },
+     "feature": {
+      "critical": 0,
+      "high": 1,
+      "medium": 0,
+      "normal": 0,
+      "low": 7,
+      "unset": 16
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 2
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [
+     {
+      "id": "T-107",
+      "title": "Invented ticket 107 (feature, high)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "high",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 107."
+     }
+    ],
+    "recentDone": [],
+    "list": [
+     {
+      "id": "T-108",
+      "title": "Invented ticket 108 (feature, high)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "high",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 108."
+     },
+     {
+      "id": "T-109",
+      "title": "Invented ticket 109 (feature, low)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "low",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 109."
+     },
+     {
+      "id": "T-110",
+      "title": "Invented ticket 110 (feature, low)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "low",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 110."
+     },
+     {
+      "id": "T-111",
+      "title": "Invented ticket 111 (feature, low)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "low",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 111."
+     },
+     {
+      "id": "T-112",
+      "title": "Invented ticket 112 (feature, low)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "low",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 112."
+     },
+     {
+      "id": "T-113",
+      "title": "Invented ticket 113 (feature, low)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "low",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 113."
+     },
+     {
+      "id": "T-114",
+      "title": "Invented ticket 114 (feature, low)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "low",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 114."
+     },
+     {
+      "id": "T-115",
+      "title": "Invented ticket 115 (feature, low)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "low",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 115."
+     },
+     {
+      "id": "T-116",
+      "title": "Invented ticket 116 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 116."
+     },
+     {
+      "id": "T-117",
+      "title": "Invented ticket 117 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 117."
+     },
+     {
+      "id": "T-118",
+      "title": "Invented ticket 118 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 118."
+     },
+     {
+      "id": "T-119",
+      "title": "Invented ticket 119 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 119."
+     },
+     {
+      "id": "T-120",
+      "title": "Invented ticket 120 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 120."
+     },
+     {
+      "id": "T-121",
+      "title": "Invented ticket 121 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 121."
+     },
+     {
+      "id": "T-122",
+      "title": "Invented ticket 122 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 122."
+     },
+     {
+      "id": "T-123",
+      "title": "Invented ticket 123 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 123."
+     },
+     {
+      "id": "T-124",
+      "title": "Invented ticket 124 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 124."
+     },
+     {
+      "id": "T-125",
+      "title": "Invented ticket 125 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 125."
+     },
+     {
+      "id": "T-126",
+      "title": "Invented ticket 126 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 126."
+     },
+     {
+      "id": "T-127",
+      "title": "Invented ticket 127 (chore, unset)",
+      "kind": "chore",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 127."
+     },
+     {
+      "id": "T-128",
+      "title": "Invented ticket 128 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 128."
+     },
+     {
+      "id": "T-129",
+      "title": "Invented ticket 129 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 129."
+     },
+     {
+      "id": "T-130",
+      "title": "Invented ticket 130 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 130."
+     },
+     {
+      "id": "T-131",
+      "title": "Invented ticket 131 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 131."
+     },
+     {
+      "id": "T-132",
+      "title": "Invented ticket 132 (bug, unset)",
+      "kind": "bug",
+      "kindDerived": false,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 132."
+     },
+     {
+      "id": "T-133",
+      "title": "Invented ticket 133 (chore, unset)",
+      "kind": "chore",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 133."
+     },
+     {
+      "id": "T-134",
+      "title": "Invented ticket 134 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 134."
+     }
+    ]
+   }
+  },
+  {
+   "id": "houseki",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/houseki",
+   "summary": "Houseki 宝石 — Match-3 gem puzzles: five gem and stone puzzle engines, 684 measured challenges, bilingual lessons, deterministic saves, magnetic floors, Shizen and Arashi campaigns. TypeScript. Zero…",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/houseki",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/houseki",
+    "demo": "https://johnmorrisdotca.github.io/houseki/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/houseki/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "0.5.0",
+    "repo": "0.5.0",
+    "count": 10
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-11-02",
+    "created": "2026-10-06",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 0
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [],
+    "family": [],
+    "dev": 7,
+    "packedKb": 367.5,
+    "unpackedKb": 6590.7,
+    "requiredPeers": [],
+    "familyDev": [],
+    "familyRanges": {}
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 7.45
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 8,
+    "tests": 8,
+    "bugs": 10,
+    "crashes": 8,
+    "code": 4,
+    "lint": 9,
+    "performance": 4,
+    "usefulness": 3,
+    "freshness": 10,
+    "robustness": 7,
+    "overall": 7
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [
+    "a 15887-line file"
+   ],
+   "group": "games-words",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 1,
+    "inProgress": 0,
+    "waitingOnJohn": null,
+    "doneLast7": 2,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 1
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": [
+     {
+      "id": "T-135",
+      "title": "Invented ticket 135 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 135."
+     }
+    ]
+   }
+  },
+  {
+   "id": "fuda-cards",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/fuda-cards",
+   "summary": "Fuda Cards: collectible card frames for images and interactive 3D content.",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/fuda-cards",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/fuda-cards",
+    "demo": "https://johnmorrisdotca.github.io/fuda-cards/"
+   },
+   "versions": {
+    "npm": "0.9.2",
+    "repo": "0.10.0",
+    "count": 13
+   },
+   "dates": {
+    "lastCommit": "2026-11-03",
+    "lastRelease": "2026-11-02",
+    "created": "2026-11-01",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 0
+   },
+   "dependencies": {
+    "runtime": [
+     "@johnmorrisdotca/kazoku-ui"
+    ],
+    "optionalPeers": [],
+    "family": [
+     "kazoku-ui"
+    ],
+    "dev": 1,
+    "packedKb": 72.3,
+    "unpackedKb": 227.6,
+    "requiredPeers": [],
+    "familyDev": [
+     "uchusen-rockets"
+    ],
+    "familyRanges": {
+     "kazoku-ui": "^0.10.0",
+     "uchusen-rockets": "0.2.2"
+    }
+   },
+   "measures": {
+    "ciLastFailedOnMain": null,
+    "overallScore": 7.41
+   },
+   "grades": {
+    "docs": 9,
+    "dependencies": 9,
+    "tests": 7,
+    "bugs": 3,
+    "crashes": 10,
+    "code": 10,
+    "lint": 2,
+    "performance": 9,
+    "usefulness": 2,
+    "freshness": 9,
+    "robustness": 9,
+    "overall": 7
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [
+    "needs linting: no linter set up",
+    "behind GitHub"
+   ],
+   "group": "3d-views",
+   "license": null,
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 33,
+    "inProgress": 4,
+    "waitingOnJohn": null,
+    "doneLast7": 17,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 1,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 4
+     },
+     "feature": {
+      "critical": 1,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 1,
+      "unset": 25
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 1
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [
+     {
+      "id": "T-136",
+      "title": "Invented ticket 136 (feature, critical)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "critical",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 136."
+     },
+     {
+      "id": "T-137",
+      "title": "Invented ticket 137 (bug, critical)",
+      "kind": "bug",
+      "kindDerived": false,
+      "priority": "critical",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 137."
+     }
+    ],
+    "recentDone": [],
+    "list": [
+     {
+      "id": "T-138",
+      "title": "Invented ticket 138 (feature, critical)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "critical",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 138."
+     },
+     {
+      "id": "T-139",
+      "title": "Invented ticket 139 (bug, critical)",
+      "kind": "bug",
+      "kindDerived": false,
+      "priority": "critical",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 139."
+     },
+     {
+      "id": "T-140",
+      "title": "Invented ticket 140 (feature, low)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "low",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 140."
+     },
+     {
+      "id": "T-141",
+      "title": "Invented ticket 141 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 141."
+     },
+     {
+      "id": "T-142",
+      "title": "Invented ticket 142 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 142."
+     },
+     {
+      "id": "T-143",
+      "title": "Invented ticket 143 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 143."
+     },
+     {
+      "id": "T-144",
+      "title": "Invented ticket 144 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 144."
+     },
+     {
+      "id": "T-145",
+      "title": "Invented ticket 145 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 145."
+     },
+     {
+      "id": "T-146",
+      "title": "Invented ticket 146 (chore, unset)",
+      "kind": "chore",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 146."
+     },
+     {
+      "id": "T-147",
+      "title": "Invented ticket 147 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 147."
+     },
+     {
+      "id": "T-148",
+      "title": "Invented ticket 148 (bug, unset)",
+      "kind": "bug",
+      "kindDerived": false,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 148."
+     },
+     {
+      "id": "T-149",
+      "title": "Invented ticket 149 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 149."
+     },
+     {
+      "id": "T-150",
+      "title": "Invented ticket 150 (bug, unset)",
+      "kind": "bug",
+      "kindDerived": false,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 150."
+     },
+     {
+      "id": "T-151",
+      "title": "Invented ticket 151 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 151."
+     },
+     {
+      "id": "T-152",
+      "title": "Invented ticket 152 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 152."
+     },
+     {
+      "id": "T-153",
+      "title": "Invented ticket 153 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 153."
+     },
+     {
+      "id": "T-154",
+      "title": "Invented ticket 154 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 154."
+     },
+     {
+      "id": "T-155",
+      "title": "Invented ticket 155 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 155."
+     },
+     {
+      "id": "T-156",
+      "title": "Invented ticket 156 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 156."
+     },
+     {
+      "id": "T-157",
+      "title": "Invented ticket 157 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 157."
+     },
+     {
+      "id": "T-158",
+      "title": "Invented ticket 158 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 158."
+     },
+     {
+      "id": "T-159",
+      "title": "Invented ticket 159 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 159."
+     },
+     {
+      "id": "T-160",
+      "title": "Invented ticket 160 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 160."
+     },
+     {
+      "id": "T-161",
+      "title": "Invented ticket 161 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 161."
+     },
+     {
+      "id": "T-162",
+      "title": "Invented ticket 162 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 162."
+     },
+     {
+      "id": "T-163",
+      "title": "Invented ticket 163 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 163."
+     },
+     {
+      "id": "T-164",
+      "title": "Invented ticket 164 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 164."
+     },
+     {
+      "id": "T-165",
+      "title": "Invented ticket 165 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 165."
+     },
+     {
+      "id": "T-166",
+      "title": "Invented ticket 166 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 166."
+     },
+     {
+      "id": "T-167",
+      "title": "Invented ticket 167 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 167."
+     },
+     {
+      "id": "T-168",
+      "title": "Invented ticket 168 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 168."
+     },
+     {
+      "id": "T-169",
+      "title": "Invented ticket 169 (bug, unset)",
+      "kind": "bug",
+      "kindDerived": false,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 169."
+     },
+     {
+      "id": "T-170",
+      "title": "Invented ticket 170 (bug, unset)",
+      "kind": "bug",
+      "kindDerived": false,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 170."
+     }
+    ]
+   }
+  },
+  {
+   "id": "rest-in-pieces",
+   "kind": "package",
+   "private": false,
+   "owner": "spxis",
+   "name": "@johnmorrisdotca/rest-in-pieces",
+   "summary": "REST in Pieces — Fake REST API data for testing: seeded related datasets, paging, filters, latency and error drills, safe values, CSV/NDJSON/SQL, OpenAPI mocks, browser fetch, MSW and Vite.",
+   "links": {
+    "repo": "https://github.com/spxis/rest-in-pieces",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/rest-in-pieces",
+    "demo": "https://spxis.github.io/rest-in-pieces/",
+    "thumbnail": "https://raw.githubusercontent.com/spxis/rest-in-pieces/main/docs/images/hero-desk-light.webp"
+   },
+   "versions": {
+    "npm": "3.2.1",
+    "repo": "3.2.1",
+    "count": 14
+   },
+   "dates": {
+    "lastCommit": "2026-10-22",
+    "lastRelease": "2026-10-22",
+    "created": "2026-10-09",
+    "daysSinceCommit": 12,
+    "daysSinceRelease": 12
+   },
+   "dependencies": {
+    "runtime": [
+     "zod",
+     "hono",
+     "yaml",
+     "@faker-js/faker",
+     "fast-xml-parser",
+     "@hono/node-server",
+     "@hono/zod-openapi",
+     "@johnmorrisdotca/kuni",
+     "@scalar/hono-api-reference",
+     "@johnmorrisdotca/address-plus"
+    ],
+    "optionalPeers": [
+     "msw",
+     "vite",
+     "@johnmorrisdotca/hata",
+     "@johnmorrisdotca/chizu"
+    ],
+    "family": [
+     "kuni",
+     "address-plus",
+     "hata",
+     "chizu"
+    ],
+    "dev": 14,
+    "packedKb": 3005.3,
+    "unpackedKb": 11474.4,
+    "requiredPeers": [],
+    "familyDev": [],
+    "familyRanges": {}
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 7.41
+   },
+   "grades": {
+    "docs": 9,
+    "dependencies": 1,
+    "tests": 8,
+    "bugs": 10,
+    "crashes": 8,
+    "code": 8,
+    "lint": 8,
+    "performance": 3,
+    "usefulness": 7,
+    "freshness": 9,
+    "robustness": 8,
+    "overall": 7
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [
+    "1 high or critical advisories in runtime dependencies",
+    "a 1353-line file"
+   ],
+   "group": "other",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 0,
+    "inProgress": 0,
+    "waitingOnJohn": null,
+    "doneLast7": 0,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [],
+    "recentDone": [],
+    "list": []
+   }
+  },
+  {
+   "id": "uchusen-rockets",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/uchusen-rockets",
+   "summary": "Uchusen Rockets 宇宙船: line drawings and 3D views of rockets, as a web component. Every variant with its own sourced sizes, a typed way to assemble a rocket from parts, stack and separate. No logos.…",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/uchusen-rockets",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/uchusen-rockets",
+    "demo": "https://johnmorrisdotca.github.io/uchusen-rockets/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/uchusen-rockets/main/docs/images/main-painted.jpg"
+   },
+   "versions": {
+    "npm": "0.3.0",
+    "repo": "0.3.0",
+    "count": 5
+   },
+   "dates": {
+    "lastCommit": "2026-11-03",
+    "lastRelease": "2026-11-03",
+    "created": "2026-10-31",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 0
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [
+     "react",
+     "three"
+    ],
+    "family": [],
+    "dev": 20,
+    "packedKb": 19405.3,
+    "unpackedKb": 43241.8,
+    "requiredPeers": [],
+    "familyDev": [
+     "chikyu-earth",
+     "kazoku-ui"
+    ],
+    "familyRanges": {
+     "chikyu-earth": "0.5.0",
+     "kazoku-ui": "^0.10.0"
+    }
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 7.36
+   },
+   "grades": {
+    "docs": 8,
+    "dependencies": 7,
+    "tests": 7,
+    "bugs": 9,
+    "crashes": 8,
+    "code": 8,
+    "lint": 9,
+    "performance": 4,
+    "usefulness": 3,
+    "freshness": 10,
+    "robustness": 8,
+    "overall": 7
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [
+    "a 1164-line file"
+   ],
+   "group": "3d-views",
+   "license": "MIT AND CC-BY-4.0 AND ODbL-1.0",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 38,
+    "inProgress": 15,
+    "waitingOnJohn": null,
+    "doneLast7": 0,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 1,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 1,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 35
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 1
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [
+     {
+      "id": "T-171",
+      "title": "Invented ticket 171 (bug, critical)",
+      "kind": "bug",
+      "kindDerived": false,
+      "priority": "critical",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 171."
+     },
+     {
+      "id": "T-172",
+      "title": "Invented ticket 172 (feature, high)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "high",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 172."
+     }
+    ],
+    "recentDone": [],
+    "list": [
+     {
+      "id": "T-173",
+      "title": "Invented ticket 173 (bug, critical)",
+      "kind": "bug",
+      "kindDerived": false,
+      "priority": "critical",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 173."
+     },
+     {
+      "id": "T-174",
+      "title": "Invented ticket 174 (feature, high)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "high",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 174."
+     },
+     {
+      "id": "T-175",
+      "title": "Invented ticket 175 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 175."
+     },
+     {
+      "id": "T-176",
+      "title": "Invented ticket 176 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 176."
+     },
+     {
+      "id": "T-177",
+      "title": "Invented ticket 177 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 177."
+     },
+     {
+      "id": "T-178",
+      "title": "Invented ticket 178 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 178."
+     },
+     {
+      "id": "T-179",
+      "title": "Invented ticket 179 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 179."
+     },
+     {
+      "id": "T-180",
+      "title": "Invented ticket 180 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 180."
+     },
+     {
+      "id": "T-181",
+      "title": "Invented ticket 181 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 181."
+     },
+     {
+      "id": "T-182",
+      "title": "Invented ticket 182 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 182."
+     },
+     {
+      "id": "T-183",
+      "title": "Invented ticket 183 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 183."
+     },
+     {
+      "id": "T-184",
+      "title": "Invented ticket 184 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 184."
+     },
+     {
+      "id": "T-185",
+      "title": "Invented ticket 185 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 185."
+     },
+     {
+      "id": "T-186",
+      "title": "Invented ticket 186 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 186."
+     },
+     {
+      "id": "T-187",
+      "title": "Invented ticket 187 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 187."
+     },
+     {
+      "id": "T-188",
+      "title": "Invented ticket 188 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 188."
+     },
+     {
+      "id": "T-189",
+      "title": "Invented ticket 189 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 189."
+     },
+     {
+      "id": "T-190",
+      "title": "Invented ticket 190 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 190."
+     },
+     {
+      "id": "T-191",
+      "title": "Invented ticket 191 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 191."
+     },
+     {
+      "id": "T-192",
+      "title": "Invented ticket 192 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 192."
+     },
+     {
+      "id": "T-193",
+      "title": "Invented ticket 193 (chore, unset)",
+      "kind": "chore",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 193."
+     },
+     {
+      "id": "T-194",
+      "title": "Invented ticket 194 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 194."
+     },
+     {
+      "id": "T-195",
+      "title": "Invented ticket 195 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 195."
+     },
+     {
+      "id": "T-196",
+      "title": "Invented ticket 196 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 196."
+     },
+     {
+      "id": "T-197",
+      "title": "Invented ticket 197 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 197."
+     },
+     {
+      "id": "T-198",
+      "title": "Invented ticket 198 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 198."
+     },
+     {
+      "id": "T-199",
+      "title": "Invented ticket 199 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 199."
+     },
+     {
+      "id": "T-200",
+      "title": "Invented ticket 200 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 200."
+     },
+     {
+      "id": "T-201",
+      "title": "Invented ticket 201 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 201."
+     },
+     {
+      "id": "T-202",
+      "title": "Invented ticket 202 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 202."
+     },
+     {
+      "id": "T-203",
+      "title": "Invented ticket 203 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 203."
+     },
+     {
+      "id": "T-204",
+      "title": "Invented ticket 204 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 204."
+     },
+     {
+      "id": "T-205",
+      "title": "Invented ticket 205 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 205."
+     },
+     {
+      "id": "T-206",
+      "title": "Invented ticket 206 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 206."
+     },
+     {
+      "id": "T-207",
+      "title": "Invented ticket 207 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 207."
+     },
+     {
+      "id": "T-208",
+      "title": "Invented ticket 208 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 208."
+     },
+     {
+      "id": "T-209",
+      "title": "Invented ticket 209 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 209."
+     },
+     {
+      "id": "T-210",
+      "title": "Invented ticket 210 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 210."
+     }
+    ]
+   }
+  },
+  {
+   "id": "wakusei-planets",
+   "kind": "package",
+   "private": false,
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/wakusei-planets",
+   "summary": "Wakusei Planets 惑星 — The Sun, planets and moons for the web: each as a clean line drawing, a shaded realistic drawing or a painted surface map, with real sizes, axial tilt and rotation as data,…",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/wakusei-planets",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/wakusei-planets",
+    "demo": "https://johnmorrisdotca.github.io/wakusei-planets/",
+    "thumbnail": "https://raw.githubusercontent.com/johnmorrisdotca/wakusei-planets/main/docs/images/hero-desk.png"
+   },
+   "versions": {
+    "npm": "0.3.1",
+    "repo": "0.4.0",
+    "count": 3
+   },
+   "dates": {
+    "lastCommit": "2026-11-03",
+    "lastRelease": "2026-11-03",
+    "created": "2026-11-03",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 0
+   },
+   "dependencies": {
+    "runtime": [
+     "@johnmorrisdotca/kazoku-ui"
+    ],
+    "optionalPeers": [
+     "three",
+     "@johnmorrisdotca/chikyu-earth"
+    ],
+    "family": [
+     "kazoku-ui",
+     "chikyu-earth"
+    ],
+    "dev": 29,
+    "packedKb": 1466.2,
+    "unpackedKb": 1631.2,
+    "requiredPeers": [],
+    "familyDev": [],
+    "familyRanges": {
+     "chikyu-earth": ">=0.10.0",
+     "kazoku-ui": "^0.9.1"
+    }
+   },
+   "measures": {
+    "ciLastFailedOnMain": false,
+    "overallScore": 6.64
+   },
+   "grades": {
+    "docs": 9,
+    "dependencies": 8,
+    "tests": 6,
+    "bugs": 3,
+    "crashes": 4,
+    "code": 9,
+    "lint": 9,
+    "performance": 8,
+    "usefulness": 3,
+    "freshness": 9,
+    "robustness": 7,
+    "overall": 7
+   },
+   "gradeNotes": {},
+   "facts": [],
+   "flags": [
+    "behind GitHub",
+    "2 open crash or freeze tickets"
+   ],
+   "group": "3d-views",
+   "license": "MIT",
+   "tickets": {
+    "boards": [
+     "board",
+     "board"
+    ],
+    "open": 15,
+    "inProgress": 8,
+    "waitingOnJohn": null,
+    "doneLast7": 29,
+    "doneLast30": null,
+    "oldestOpenDays": null,
+    "openByKind": {
+     "bug": {
+      "critical": 0,
+      "high": 5,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "feature": {
+      "critical": 0,
+      "high": 2,
+      "medium": 0,
+      "normal": 1,
+      "low": 0,
+      "unset": 7
+     },
+     "chore": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     },
+     "other": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "normal": 0,
+      "low": 0,
+      "unset": 0
+     }
+    },
+    "urgent": [
+     {
+      "id": "T-211",
+      "title": "Invented ticket 211 (bug, high)",
+      "kind": "bug",
+      "kindDerived": false,
+      "priority": "high",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 211."
+     },
+     {
+      "id": "T-212",
+      "title": "Invented ticket 212 (feature, high)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "high",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 212."
+     },
+     {
+      "id": "T-213",
+      "title": "Invented ticket 213 (bug, high)",
+      "kind": "bug",
+      "kindDerived": false,
+      "priority": "high",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 213."
+     },
+     {
+      "id": "T-214",
+      "title": "Invented ticket 214 (feature, high)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "high",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 214."
+     },
+     {
+      "id": "T-215",
+      "title": "Invented ticket 215 (bug, high)",
+      "kind": "bug",
+      "kindDerived": false,
+      "priority": "high",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 215."
+     },
+     {
+      "id": "T-216",
+      "title": "Invented ticket 216 (bug, high)",
+      "kind": "bug",
+      "kindDerived": false,
+      "priority": "high",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 216."
+     },
+     {
+      "id": "T-217",
+      "title": "Invented ticket 217 (bug, high)",
+      "kind": "bug",
+      "kindDerived": false,
+      "priority": "high",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 217."
+     }
+    ],
+    "recentDone": [],
+    "list": [
+     {
+      "id": "T-218",
+      "title": "Invented ticket 218 (bug, high)",
+      "kind": "bug",
+      "kindDerived": false,
+      "priority": "high",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 218."
+     },
+     {
+      "id": "T-219",
+      "title": "Invented ticket 219 (feature, high)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "high",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 219."
+     },
+     {
+      "id": "T-220",
+      "title": "Invented ticket 220 (bug, high)",
+      "kind": "bug",
+      "kindDerived": false,
+      "priority": "high",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 220."
+     },
+     {
+      "id": "T-221",
+      "title": "Invented ticket 221 (feature, high)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "high",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 221."
+     },
+     {
+      "id": "T-222",
+      "title": "Invented ticket 222 (bug, high)",
+      "kind": "bug",
+      "kindDerived": false,
+      "priority": "high",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 222."
+     },
+     {
+      "id": "T-223",
+      "title": "Invented ticket 223 (bug, high)",
+      "kind": "bug",
+      "kindDerived": false,
+      "priority": "high",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 223."
+     },
+     {
+      "id": "T-224",
+      "title": "Invented ticket 224 (bug, high)",
+      "kind": "bug",
+      "kindDerived": false,
+      "priority": "high",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 224."
+     },
+     {
+      "id": "T-225",
+      "title": "Invented ticket 225 (feature, normal)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "normal",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 225."
+     },
+     {
+      "id": "T-226",
+      "title": "Invented ticket 226 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 226."
+     },
+     {
+      "id": "T-227",
+      "title": "Invented ticket 227 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 227."
+     },
+     {
+      "id": "T-228",
+      "title": "Invented ticket 228 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 228."
+     },
+     {
+      "id": "T-229",
+      "title": "Invented ticket 229 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "in progress",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": "Mac Studio",
+      "detail": "Invented detail for ticket 229."
+     },
+     {
+      "id": "T-230",
+      "title": "Invented ticket 230 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 230."
+     },
+     {
+      "id": "T-231",
+      "title": "Invented ticket 231 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 231."
+     },
+     {
+      "id": "T-232",
+      "title": "Invented ticket 232 (feature, unset)",
+      "kind": "feature",
+      "kindDerived": true,
+      "priority": "unset",
+      "status": "waiting",
+      "created": null,
+      "done": null,
+      "url": null,
+      "claimedBy": null,
+      "detail": "Invented detail for ticket 232."
+     }
+    ]
+   }
+  }
+ ],
+ "rankings": {},
+ "groups": [
+  {
+   "id": "3d-views",
+   "label": "3D views"
+  },
+  {
+   "id": "maps-addresses",
+   "label": "Maps and addresses"
+  },
+  {
+   "id": "sports-flags",
+   "label": "Sports and flags"
+  },
+  {
+   "id": "games-words",
+   "label": "Games and words"
+  },
+  {
+   "id": "other",
+   "label": "Other packages"
+  }
+ ],
+ "apps": [
+  {
+   "id": "itsutsu",
+   "letter": "I",
+   "name": "itsutsu.com",
+   "note": "games site",
+   "item": "itsutsu",
+   "private": false,
+   "onMap": true,
+   "family": [
+    "chizu",
+    "domino",
+    "gunjin",
+    "hata",
+    "hitotsu",
+    "houseki",
+    "jarajara",
+    "jirai",
+    "jisho",
+    "karakuri",
+    "kazu",
+    "korokoro",
+    "kotoba",
+    "kumimoji",
+    "kuni",
+    "kyuubu",
+    "meikyuu",
+    "narabe",
+    "sugoroku",
+    "suido",
+    "tane",
+    "tenka",
+    "tobiishi",
+    "toranpu",
+    "tsunagi"
+   ],
+   "outside": [
+    "@prisma/client",
+    "next",
+    "next-auth",
+    "qrcode",
+    "react",
+    "react-dom",
+    "server-only",
+    "swr",
+    "zod"
+   ]
+  },
+  {
+   "id": "hotarutv",
+   "letter": "C",
+   "name": "hotarutv.com",
+   "note": "the control room",
+   "item": "hotaru",
+   "private": true,
+   "onMap": true,
+   "family": [
+    "hako-devices"
+   ],
+   "outside": []
+  },
+  {
+   "id": "hotaru",
+   "letter": "H",
+   "name": "hotaru app",
+   "note": "TV app and relays",
+   "item": "hotaru",
+   "private": true,
+   "onMap": true,
+   "family": [
+    "hata"
+   ],
+   "outside": []
+  },
+  {
+   "id": "ridemuseum",
+   "letter": "",
+   "name": "ridemuseum",
+   "note": "no family packages",
+   "item": "ridemuseum",
+   "private": true,
+   "onMap": true,
+   "family": [],
+   "outside": []
+  },
+  {
+   "id": "spx-stats",
+   "letter": "",
+   "name": "spxn.com",
+   "note": "sports statistics site",
+   "item": "spx-stats",
+   "private": false,
+   "onMap": false,
+   "family": [
+    "address-plus",
+    "chizu",
+    "dougu-sports",
+    "hata",
+    "koyomi-calendars",
+    "kyogijo-stadiums",
+    "meigen-sports",
+    "senshu-jerseys",
+    "taisen-brackets"
+   ],
+   "outside": [
+    "d3",
+    "d3-sankey",
+    "next",
+    "next-auth",
+    "react",
+    "react-dom",
+    "server-only",
+    "zod"
+   ]
+  },
+  {
+   "id": "sumilabu",
+   "letter": "",
+   "name": "app.sumilabu.com",
+   "note": "ticket boards and dashboard",
+   "item": "sumilabu",
+   "private": false,
+   "onMap": false,
+   "family": [],
+   "outside": [
+    "@prisma/client",
+    "next",
+    "next-auth",
+    "react",
+    "react-dom",
+    "zod"
+   ]
+  },
+  {
+   "id": "umakuma",
+   "letter": "",
+   "name": "umakuma.com",
+   "note": "members' study site",
+   "item": "umakuma",
+   "private": true,
+   "onMap": false,
+   "family": [
+    "bushu",
+    "chizu",
+    "hikidashi"
+   ],
+   "outside": []
+  },
+  {
+   "id": "wazadb",
+   "letter": "",
+   "name": "wazadb.com",
+   "note": "techniques database",
+   "item": "wazadb",
+   "private": true,
+   "onMap": false,
+   "family": [
+    "chizu"
+   ],
+   "outside": []
+  },
+  {
+   "id": "onibako",
+   "letter": "",
+   "name": "Onibako",
+   "note": "home media stack",
+   "item": "onibako",
+   "private": true,
+   "onMap": false,
+   "family": [],
+   "outside": []
+  }
+ ],
+ "libraries": {
+  "@faker-js/faker": {
+   "license": "MIT",
+   "latest": "10.6.0"
+  },
+  "@hono/node-server": {
+   "license": "MIT",
+   "latest": "2.1.6"
+  },
+  "@hono/zod-openapi": {
+   "license": "MIT",
+   "latest": "1.6.3"
+  },
+  "@prisma/client": {
+   "license": "Apache-2.0",
+   "latest": "7.10.1"
+  },
+  "@resvg/resvg-js": {
+   "license": "MPL-2.0",
+   "latest": "2.6.2"
+  },
+  "@scalar/hono-api-reference": {
+   "license": "MIT",
+   "latest": "0.12.17"
+  },
+  "astronomy-engine": {
+   "license": "MIT",
+   "latest": "2.1.19"
+  },
+  "d3": {
+   "license": "ISC",
+   "latest": "7.9.1"
+  },
+  "d3-geo": {
+   "license": "ISC",
+   "latest": "3.1.2"
+  },
+  "d3-sankey": {
+   "license": "BSD-3-Clause",
+   "latest": "0.12.3"
+  },
+  "fast-levenshtein": {
+   "license": "MIT",
+   "latest": "3.0.0"
+  },
+  "fast-xml-parser": {
+   "license": "MIT",
+   "latest": "5.11.2"
+  },
+  "hono": {
+   "license": "MIT",
+   "latest": "4.13.16"
+  },
+  "msw": {
+   "license": "MIT",
+   "latest": "3.0.3"
+  },
+  "next": {
+   "license": "MIT",
+   "latest": "16.4.4"
+  },
+  "next-auth": {
+   "license": "ISC",
+   "latest": "4.24.15"
+  },
+  "qrcode": {
+   "license": "MIT",
+   "latest": "1.5.4"
+  },
+  "react": {
+   "license": "MIT",
+   "latest": "19.3.1"
+  },
+  "react-dom": {
+   "license": "MIT",
+   "latest": "19.3.1"
+  },
+  "satellite.js": {
+   "license": "MIT",
+   "latest": "7.1.0"
+  },
+  "server-only": {
+   "license": "MIT",
+   "latest": "0.0.1"
+  },
+  "swr": {
+   "license": "MIT",
+   "latest": "2.5.1"
+  },
+  "three": {
+   "license": "MIT",
+   "latest": "0.187.0"
+  },
+  "vite": {
+   "license": "MIT",
+   "latest": "8.3.5"
+  },
+  "vue": {
+   "license": "MIT",
+   "latest": "3.5.44"
+  },
+  "yaml": {
+   "license": "ISC",
+   "latest": "2.9.1"
+  },
+  "zod": {
+   "license": "MIT",
+   "latest": "4.6.7"
+  }
+ },
+ "familyTickets": {
+  "boards": [
+   "board",
+   "board"
+  ],
+  "open": 7,
+  "inProgress": 0,
+  "waitingOnJohn": null,
+  "doneLast7": 2,
+  "doneLast30": null,
+  "oldestOpenDays": null,
+  "openByKind": {
+   "bug": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "normal": 0,
+    "low": 0,
+    "unset": 0
+   },
+   "feature": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "normal": 0,
+    "low": 0,
+    "unset": 7
+   },
+   "chore": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "normal": 0,
+    "low": 0,
+    "unset": 0
+   },
+   "other": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "normal": 0,
+    "low": 0,
+    "unset": 0
+   }
+  },
+  "urgent": [],
+  "recentDone": [],
+  "list": [
+   {
+    "id": "T-233",
+    "title": "Invented ticket 233 (feature, unset)",
+    "kind": "feature",
+    "kindDerived": true,
+    "priority": "unset",
+    "status": "waiting",
+    "created": null,
+    "done": null,
+    "url": null,
+    "claimedBy": null,
+    "detail": "Invented detail for ticket 233."
+   },
+   {
+    "id": "T-234",
+    "title": "Invented ticket 234 (feature, unset)",
+    "kind": "feature",
+    "kindDerived": true,
+    "priority": "unset",
+    "status": "waiting",
+    "created": null,
+    "done": null,
+    "url": null,
+    "claimedBy": null,
+    "detail": "Invented detail for ticket 234."
+   },
+   {
+    "id": "T-235",
+    "title": "Invented ticket 235 (feature, unset)",
+    "kind": "feature",
+    "kindDerived": true,
+    "priority": "unset",
+    "status": "waiting",
+    "created": null,
+    "done": null,
+    "url": null,
+    "claimedBy": null,
+    "detail": "Invented detail for ticket 235."
+   },
+   {
+    "id": "T-236",
+    "title": "Invented ticket 236 (feature, unset)",
+    "kind": "feature",
+    "kindDerived": true,
+    "priority": "unset",
+    "status": "waiting",
+    "created": null,
+    "done": null,
+    "url": null,
+    "claimedBy": null,
+    "detail": "Invented detail for ticket 236."
+   },
+   {
+    "id": "T-237",
+    "title": "Invented ticket 237 (feature, unset)",
+    "kind": "feature",
+    "kindDerived": true,
+    "priority": "unset",
+    "status": "waiting",
+    "created": null,
+    "done": null,
+    "url": null,
+    "claimedBy": null,
+    "detail": "Invented detail for ticket 237."
+   },
+   {
+    "id": "T-238",
+    "title": "Invented ticket 238 (feature, unset)",
+    "kind": "feature",
+    "kindDerived": true,
+    "priority": "unset",
+    "status": "waiting",
+    "created": null,
+    "done": null,
+    "url": null,
+    "claimedBy": null,
+    "detail": "Invented detail for ticket 238."
+   },
+   {
+    "id": "T-239",
+    "title": "Invented ticket 239 (feature, unset)",
+    "kind": "feature",
+    "kindDerived": true,
+    "priority": "unset",
+    "status": "waiting",
+    "created": null,
+    "done": null,
+    "url": null,
+    "claimedBy": null,
+    "detail": "Invented detail for ticket 239."
+   }
+  ]
+ },
+ "skipped": [],
+ "run": null
+}

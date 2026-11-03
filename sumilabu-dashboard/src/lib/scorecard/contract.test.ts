@@ -96,3 +96,71 @@ describe("overallByItem", () => {
     expect(overall["chizu"]).toBe(7.5);
   });
 });
+
+describe("picture links (SUMILABU-8)", () => {
+  const withPicture = (key: string, url: string, links: Record<string, string> = {}) => {
+    const doc = clone();
+    doc.items[0].links = { ...links, [key]: url };
+    return parseScorecard(doc);
+  };
+
+  it.each([
+    ["thumbnail", "https://johnmorrisdotca.github.io/kazoku-ui/thumbnail.png"],
+    ["thumbnailDark", "https://johnmorrisdotca.github.io/kazoku-ui/thumbnail-dark.png"],
+    ["icon", "https://johnmorrisdotca.github.io/kazoku-ui/icon.png"],
+    ["thumbnail", "https://raw.githubusercontent.com/johnmorrisdotca/kazoku-ui/main/docs/images/hero-light.webp"],
+  ])("takes %s on GitHub Pages or raw.githubusercontent.com", (key, url) => {
+    expect(withPicture(key, url).ok).toBe(true);
+  });
+
+  it("takes a picture on the item's own site or demo host, and nowhere else's", () => {
+    expect(withPicture("thumbnail", "https://itsutsu.com/og.png", { site: "https://itsutsu.com" }).ok).toBe(true);
+    expect(withPicture("thumbnail", "https://itsutsu.com/og.png", { site: "https://wazadb.com" }).ok).toBe(false);
+  });
+
+  it.each([
+    ["http", "http://johnmorrisdotca.github.io/x/thumbnail.png"],
+    ["another host", "https://evil.example/thumbnail.png"],
+    ["a lookalike host", "https://github.io.evil.example/thumbnail.png"],
+    ["a host ending like Pages", "https://evilgithub.io/thumbnail.png"],
+    ["a nested Pages name", "https://a.b.github.io/thumbnail.png"],
+    ["a login in the address", "https://user:pw@johnmorrisdotca.github.io/x.png"],
+    ["a port", "https://raw.githubusercontent.com:8443/a/b/main/x.png"],
+    ["javascript:", "javascript:alert(1)"],
+    ["a data address", "data:image/png;base64,AAAA"],
+  ])("refuses %s, and names where", (_label, url) => {
+    const parsed = withPicture("thumbnail", url);
+    expect(parsed.ok).toBe(false);
+    if (!parsed.ok) expect(parsed.problems.some((p) => p.startsWith("items.0.links.thumbnail"))).toBe(true);
+  });
+
+  it("holds an icon to the same rule", () => {
+    expect(withPicture("icon", "https://evil.example/icon.png").ok).toBe(false);
+  });
+});
+
+describe("the 2026-11-03 additions (SUMILABU-11, SUMILABU-12)", () => {
+  it("parses today's trimmed run with groups, apps, libraries and tickets, and fills defaults for an older run", () => {
+    const old = parseScorecard(sample);
+    expect(old.ok).toBe(true);
+    if (old.ok) {
+      expect(old.doc.groups).toEqual([]);
+      expect(old.doc.apps).toEqual([]);
+      expect(old.doc.items[0].tickets).toBeNull();
+      expect(old.doc.items[0].dependencies.familyRanges).toEqual({});
+    }
+  });
+
+  it("refuses a ticket with an unknown kind or a link that is not https", () => {
+    const doc = clone();
+    const ticket = { id: "X-1", title: "t", kind: "bug", status: "waiting" };
+    doc.items[0].tickets = { boards: ["modules"], open: 1, list: [{ ...ticket, kind: "rant" }] };
+    expect(parseScorecard(doc).ok).toBe(false);
+    doc.items[0].tickets = { boards: ["modules"], open: 1, list: [{ ...ticket, url: "javascript:alert(1)" }] };
+    expect(parseScorecard(doc).ok).toBe(false);
+    doc.items[0].tickets = { boards: ["modules"], open: 1, list: [ticket] };
+    const ok = parseScorecard(doc);
+    expect(ok.ok).toBe(true);
+    if (ok.ok) expect(ok.doc.items[0].tickets?.list[0]).toMatchObject({ priority: "unset", url: null, detail: null, claimedBy: null });
+  });
+});
