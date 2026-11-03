@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { TICKET_IMAGE_LIMITS, type TicketImageView } from "@/lib/board/images";
+import { nextCacheStandIn } from "@/lib/board/memoryCache";
 import { prisma } from "@/lib/prisma";
 
 import { GET as getImage } from "./[ticketId]/images/[imageId]/route";
@@ -9,6 +10,8 @@ import { GET as listImages, POST as attach } from "./[ticketId]/images/route";
 import { POST as createRoute } from "./route";
 
 /* The ticket image routes against the in-memory board (memoryPrisma.ts). */
+/* Next's data cache, with its contract kept: the board's reads are cached and every write must clear them (ticketCache.ts). */
+vi.mock("next/cache", async () => (await import("@/lib/board/memoryCache")).memoryCache());
 vi.mock("@/lib/prisma", async () => {
   const { memoryPrisma } = await import("@/lib/board/memoryPrisma");
   return { prisma: memoryPrisma() };
@@ -51,6 +54,7 @@ async function send(projectKey: string, ticketId: string, image: string, actor: 
 }
 
 beforeEach(() => {
+  nextCacheStandIn.clear();
   vi.stubEnv("BOARD_TOKENS_JSON", JSON.stringify({ [UK]: TOKEN, [ITS]: TOKEN }));
 });
 

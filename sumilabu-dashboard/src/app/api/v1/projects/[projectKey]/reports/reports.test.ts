@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ReportView } from "@/lib/reports/server";
+import { nextCacheStandIn } from "@/lib/board/memoryCache";
 import { prisma } from "@/lib/prisma";
 
 import { GET as getOne, PATCH, DELETE as del } from "./[id]/route";
@@ -18,6 +19,8 @@ import { GET as list, POST as createRoute } from "./route";
  * Postgres; the projects are the -dev ones, so even that never touches a
  * real board.
  */
+/* Next's data cache, with its contract kept: the board's reads are cached and every write must clear them (ticketCache.ts). */
+vi.mock("next/cache", async () => (await import("@/lib/board/memoryCache")).memoryCache());
 vi.mock("@/lib/prisma", async () => {
   const { memoryPrisma } = await import("@/lib/reports/memoryPrisma");
   return { prisma: memoryPrisma() };
@@ -87,6 +90,7 @@ function png(size = 2048): string {
 const MIB = 1024 * 1024;
 
 beforeEach(async () => {
+  nextCacheStandIn.clear();
   vi.stubEnv("REPORTS_TOKENS_JSON", JSON.stringify({ [UK]: REPORTS_TOKEN }));
   vi.stubEnv("BOARD_TOKENS_JSON", JSON.stringify({ [UK]: BOARD_TOKEN }));
   await prisma.report.deleteMany({ where: { projectKey: UK } });
@@ -197,6 +201,8 @@ describe("filing a report", () => {
     const ticket = await prisma.boardTicket.findFirst({ where: { id: filed.json.ticketId!, projectKey: UK } });
     expect(ticket).not.toBeNull();
     expect((ticket as { detail: string }).detail).toContain(draft.body);
+    /* The new ticket shows on the board's next read: filing clears that board's cached reads, and only that board's. */
+    expect(nextCacheStandIn.revalidated).toEqual(["board-tickets:umakuma-dev"]);
   });
 
   it("refuses the reports token for filing - filing needs the board token", async () => {

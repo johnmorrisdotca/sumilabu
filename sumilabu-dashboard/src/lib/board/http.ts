@@ -57,3 +57,32 @@ export function stampResponse(outcome: StampOutcome): NextResponse {
   if (outcome.reason === "missing") return NextResponse.json({ ok: false, error: "missing" }, { status: 404 });
   return NextResponse.json({ ok: false, error: outcome.reason, ticket: outcome.ticket }, { status: 409 });
 }
+
+/** RFC 9110 13.1.2: a weak comparison, a list of tags, or `*`. */
+export function matchesIfNoneMatch(req: NextRequest, etag: string): boolean {
+  const header = req.headers.get("if-none-match");
+  if (!header) return false;
+  const bare = etag.replace(/^W\//, "");
+  return header.split(",").some((tag) => {
+    const t = tag.trim();
+    return t === "*" || t.replace(/^W\//, "") === bare;
+  });
+}
+
+/* `private, no-cache`: no shared cache may keep a token's answer, and a
+   client asks again each time, cheaply, with its ETag. */
+const READ_HEADERS = { "cache-control": "private, no-cache" } as const;
+
+/**
+ * A board read (`ticketCache.ts`): 304 and no body when the client already
+ * holds this answer, decided after the token check and before any read.
+ * Null when the read must be made.
+ */
+export function notModified(req: NextRequest, etag: string): NextResponse | null {
+  return matchesIfNoneMatch(req, etag) ? new NextResponse(null, { status: 304, headers: { ...READ_HEADERS, etag } }) : null;
+}
+
+/** A board read's 200, carrying the ETag that was taken before the read. */
+export function taggedJson(etag: string, body: unknown): NextResponse {
+  return NextResponse.json(body, { headers: { ...READ_HEADERS, etag } });
+}

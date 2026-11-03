@@ -1,20 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-import { isResponse, patchResponse, readJson, requireCaller } from "@/lib/board/http";
+import { isResponse, notModified, patchResponse, readJson, requireCaller, taggedJson } from "@/lib/board/http";
 import { TICKET_EFFORTS, TICKET_KINDS, TICKET_LIMITS, TICKET_MOVE_TARGETS, TICKET_PRIORITIES } from "@/lib/board/rules";
-import { getTicket, patchTicket } from "@/lib/board/server";
+import { boardReadTag, getTicket, patchTicket } from "@/lib/board/server";
 
 export const runtime = "nodejs";
 
 type Ctx = { params: Promise<{ projectKey: string; ticketId: string }> };
 
+/** With an ETag from the board's version, like the list (`tickets/route.ts`): 304 and no query when it still matches. */
 export async function GET(req: NextRequest, ctx: Ctx) {
   const { projectKey, ticketId } = await ctx.params;
   const caller = requireCaller(req, projectKey, false);
   if (isResponse(caller)) return caller;
+  const etag = await boardReadTag(projectKey, `id:${ticketId}`);
+  const unchanged = notModified(req, etag);
+  if (unchanged) return unchanged;
   const ticket = await getTicket(projectKey, ticketId);
-  return ticket ? NextResponse.json({ ok: true, ticket }) : NextResponse.json({ ok: false, error: "missing" }, { status: 404 });
+  return ticket ? taggedJson(etag, { ok: true, ticket }) : NextResponse.json({ ok: false, error: "missing" }, { status: 404 });
 }
 
 /* `done` is not a destination here, whatever a client's UI wants: invariant 1.

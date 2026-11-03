@@ -338,6 +338,10 @@ Since then:
 - `src/app/api/v1/calendar/upcoming` — the next meetings from a published
   iCal feed, for the MagTag (`firmware/magtag/`); `lib/calendar/ics.ts` is
   the parser, with the recurrence subset a work calendar uses, and its test.
+- `src/lib/board/ticketCache.ts` — the per-board version and ETag of the
+  board reads; `memoryCache.ts` the stand-in for Next's data cache the route
+  tests install (it keeps the contract: an entry lives until its tag is
+  revalidated).
 - `src/lib/board/rules.ts` — `docs/board/BOARD_RULES.md` as code; `server.ts`
   the writes; `auth.ts` the token maps (board, settings and reports scopes);
   `http.ts` the shared responses; `memoryPrisma.ts` the ticket in-memory
@@ -420,6 +424,15 @@ walks it. The PATCH move outcomes (`illegal`, `held`) had no route test until
     under 5, which is also Neon's scale-to-zero wait) and idle-aware;
   - no per-row reads in a list, no reading whole event tables per render
     (`device-latest-event.ts` exists because `page.tsx` once did);
+  - board reads carry an ETag from a per-board version kept in the data
+    cache (`lib/board/ticketCache.ts`), so a client asking again with it
+    gets a 304 with no query; every write in `lib/board/server.ts` clears
+    that board's version, and a new writer to `BoardTicket` must call
+    `forgetBoard` too. The answers themselves are not cached: the data
+    cache bills by 8 KB written, boards are written about as often as read,
+    and a list rewritten after every write would cost tens of units each
+    time (SUMILABU-15, 2026-11-03). `cache.test.ts` beside the ticket routes
+    holds the budgets;
   - static or cached where nothing changes (`openapi` is `force-static`;
     settings reads come from Next's data cache, tagged per project and
     cleared by that project's PUT/DELETE, because on 2026-09-28 they were

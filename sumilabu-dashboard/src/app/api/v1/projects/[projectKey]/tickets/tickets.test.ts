@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { TICKET_LIMITS } from "@/lib/board/rules";
 import type { BoardTicketView } from "@/lib/board/server";
+import { nextCacheStandIn } from "@/lib/board/memoryCache";
 import { prisma } from "@/lib/prisma";
 
 import { GET as getOne, PATCH } from "./[ticketId]/route";
@@ -20,6 +21,8 @@ import { GET as list, POST as createRoute } from "./route";
  * the same cases against Postgres. The projects are the dev ones, so even
  * that run never touches a real board.
  */
+/* Next's data cache, with its contract kept: the board's reads are cached and every write must clear them (ticketCache.ts). */
+vi.mock("next/cache", async () => (await import("@/lib/board/memoryCache")).memoryCache());
 vi.mock("@/lib/prisma", async () => {
   const { memoryPrisma } = await import("@/lib/board/memoryPrisma");
   return { prisma: memoryPrisma() };
@@ -80,6 +83,7 @@ function row(id: string, extra: Record<string, unknown> = {}) {
 }
 
 beforeEach(async () => {
+  nextCacheStandIn.clear();
   vi.stubEnv("BOARD_TOKENS_JSON", JSON.stringify({ [ITS]: TOKEN, [UK]: TOKEN }));
   await prisma.boardTicket.deleteMany({ where: { projectKey: { in: [ITS, UK] } } });
 });

@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { BoardTicketView } from "@/lib/board/server";
+import { nextCacheStandIn } from "@/lib/board/memoryCache";
 import { prisma } from "@/lib/prisma";
 
 import { GET as getOne, PATCH } from "./[ticketId]/route";
@@ -19,6 +20,8 @@ import { GET as list, POST as createRoute } from "./route";
  * Each test gets two projects of its own, so one test's counters never leak
  * into the next; the prefix of `sid-3-a` is `SID-3-A`.
  */
+/* Next's data cache, with its contract kept: the board's reads are cached and every write must clear them (ticketCache.ts). */
+vi.mock("next/cache", async () => (await import("@/lib/board/memoryCache")).memoryCache());
 vi.mock("@/lib/prisma", async () => {
   const { memoryPrisma } = await import("@/lib/board/memoryPrisma");
   return { prisma: memoryPrisma() };
@@ -56,6 +59,7 @@ async function legacyRow(project: string, id: string, createdAt: string, extra: 
 }
 
 beforeEach(() => {
+  nextCacheStandIn.clear();
   n += 1;
   A = `sid-${n}-a`;
   B = `sid-${n}-b`;

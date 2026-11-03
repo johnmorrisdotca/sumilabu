@@ -392,6 +392,23 @@ only grades needs nobody named. A `key` on any entry is refused, 400
 `key_immutable`, the same as a single PATCH (invariant 11). `patchTicket` in
 `server.ts` is the one function behind both routes, so the two never drift.
 
+### Reading cheaply
+
+Every `200` of `GET tickets` (any filter, or `?key=`) and `GET tickets/{id}`
+carries an `ETag`; a client that sends it back as `If-None-Match` gets `304`
+with no body while nothing on that board has changed, and the service
+answers it without a database query (SUMILABU-15). The tag is worked out
+from the board's version, which every write to that board (a create, a move,
+a revision, a grade, a ship, a stamp, an unship, an import, a report filed
+as a ticket) renews, and from the clock, so a hold whose lease runs out
+(invariant 3) changes it with no write. A tag is opaque: compare it, never
+parse it. It names no caller and no token, and the answers are
+`Cache-Control: private, no-cache`, so no shared cache keeps one. A client
+should keep its last answer and its tag per board and per query, ask with
+the tag, and never poll: a `304` is cheap, not free (it is still a call).
+A client that needs one ticket by its short id asks `GET tickets/{shortId}`
+rather than listing the board to find it.
+
 ### Ticket images
 
 A ticket may carry up to **four** screenshots, so a request that arrived as a

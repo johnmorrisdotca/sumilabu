@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { SEQ_TX_OPTIONS, nextSeq } from "@/lib/board/seq";
+import { forgetBoard } from "@/lib/board/ticketCache";
 import { draftProblems as ticketDraftProblems, type TicketKind } from "@/lib/board/rules";
 
 import { REPORT_IMAGE_BUDGETS, decodeReportImage, type ReportImageType } from "./image";
@@ -279,6 +280,8 @@ export async function fileReport(projectKey: string, id: string, overrides: File
       if (updated.count !== 1) throw new NotFileableError();
       return ticket.id as string;
     }, SEQ_TX_OPTIONS);
+    /* The new ticket is on the board: its cached reads (ticketCache.ts) are dropped. */
+    forgetBoard(projectKey);
     const after = await getReport(projectKey, id);
     return after ? { ok: true, report: after, ticketId } : { ok: false, reason: "missing" };
   } catch (error) {

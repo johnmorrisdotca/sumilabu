@@ -26,6 +26,7 @@ import {
   type TicketStatus,
 } from "./rules";
 import { SEQ_TX_OPTIONS, backfillSeqs, nextSeq, resolveTicketId, settledRow } from "./seq";
+import { boardEtag, cachedBoardVersion, forgetBoard } from "./ticketCache";
 
 /** A ticket as the API returns it: the row, plus the one derived fact every reader needs. */
 export type BoardTicketView = {
@@ -129,6 +130,25 @@ export async function getTicketByKey(projectKey: string, key: string): Promise<B
   return row ? view(await settledRow(projectKey, row, find)) : null;
 }
 
+/**
+ * The ETag of one board read (`shape` names it: a list's filter, an id, a
+ * key), worked out without reading the board: the board's version from the
+ * data cache (`ticketCache.ts`) and the clock. Taken before the read it
+ * labels, so an answer can only be newer than its tag, never older.
+ */
+export async function boardReadTag(projectKey: string, shape: string): Promise<string> {
+  const version = await cachedBoardVersion(projectKey, async () => {
+    const held = await prisma.boardTicket.findMany({ where: { projectKey, claimedAt: { not: null } }, select: { claimedAt: true } });
+    return held.map((row) => row.claimedAt!.toISOString());
+  });
+  return boardEtag(version, shape);
+}
+
+/** After a write that changed a row: the board's cached reads are dropped, and the next read sees the change. */
+function changed(projectKey: string, didChange: boolean): void {
+  if (didChange) forgetBoard(projectKey);
+}
+
 export type TicketDraft = {
   title: string;
   detail?: string | null;
@@ -163,6 +183,7 @@ export async function createTicket(projectKey: string, draft: TicketDraft): Prom
         },
       });
     }, SEQ_TX_OPTIONS);
+    changed(projectKey, true);
     return { ok: true, ticket: view(row) };
   } catch (error) {
     if (!draft.key || !keyTaken(error)) throw error;
@@ -207,6 +228,7 @@ export async function moveTicket(
     where: moveWhere(id, projectKey, before.status, actor, now),
     data: { ...moveData(to, actor, now), ...(text ? textData(text, actor, now) : {}) },
   });
+  changed(projectKey, moved.count > 0);
   const after = await getTicket(projectKey, id);
   if (moved.count === 1 && after) return { ok: true, ticket: after };
   if (!after) return { ok: false, reason: "missing", ticket: null };
@@ -225,6 +247,7 @@ export async function reviseTicket(projectKey: string, idOrShortId: string, text
     where: { id, projectKey, status: { in: [...TEXT_EDITABLE_FROM] } },
     data: textData(text, actor, new Date()),
   });
+  changed(projectKey, revised.count > 0);
   const after = await getTicket(projectKey, id);
   if (revised.count === 1 && after) return { ok: true, ticket: after };
   if (!after) return { ok: false, reason: "missing", ticket: null };
@@ -241,6 +264,7 @@ export async function gradeTicket(projectKey: string, idOrShortId: string, grade
   if (grade.effort !== undefined) data.effort = grade.effort;
   if (Object.keys(data).length === 0) return getTicket(projectKey, id);
   const updated = await prisma.boardTicket.updateMany({ where: { id, projectKey }, data });
+  changed(projectKey, updated.count > 0);
   return updated.count === 1 ? getTicket(projectKey, id) : null;
 }
 
@@ -310,6 +334,7 @@ export async function shipTicket(
     where: moveWhere(id, projectKey, before.status, actor, ship.releasedAt),
     data: shipData(ship.version, ship.entryId, ship.releasedAt),
   });
+  changed(projectKey, moved.count > 0);
   const after = await getTicket(projectKey, id);
   if (moved.count === 1 && after) return { ok: true, ticket: after };
   return { ok: false, reason: after?.status === before.status ? "held" : "illegal", ticket: after, heldBy: after?.claimedBy };
@@ -348,6 +373,7 @@ export async function stampTicket(
     where: { id, projectKey, status: "done", releasedIn: null },
     data: stampData(stamp.version, stamp.entryId, stamp.releasedAt),
   });
+  changed(projectKey, stamped.count > 0);
   const after = await getTicket(projectKey, id);
   if (stamped.count === 1 && after) return { ok: true, ticket: after };
   if (!after) return { ok: false, reason: "missing", ticket: null };
@@ -463,6 +489,7 @@ export async function importTickets(
     try {
       await prisma.boardTicket.upsert({ where: { id: row.id }, create: { id: row.id, ...data }, update: data });
     } catch (error) {
+      changed(projectKey, imported > 0);
       if (!keyTaken(error)) throw error;
       return {
         ok: false,
@@ -473,6 +500,7 @@ export async function importTickets(
   }
   /* Invariant 14: rows the import created are numbered now, in creation order, after the ones already numbered. */
   await backfillSeqs(projectKey);
+  changed(projectKey, true);
   return { ok: true, imported };
 }
 
@@ -485,6 +513,7 @@ export async function unshipTicket(projectKey: string, idOrShortId: string): Pro
   const id = await resolveTicketId(projectKey, idOrShortId);
   const now = new Date();
   const moved = await prisma.boardTicket.updateMany({ where: { id, projectKey, status: "done" }, data: unshipData(now) });
+  changed(projectKey, moved.count > 0);
   const after = await getTicket(projectKey, id);
   if (moved.count === 1 && after) return { ok: true, ticket: after };
   if (!after) return { ok: false, reason: "missing", ticket: null };

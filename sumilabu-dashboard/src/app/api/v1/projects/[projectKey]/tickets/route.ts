@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-import { isResponse, readJson, requireCaller } from "@/lib/board/http";
+import { isResponse, notModified, readJson, requireCaller, taggedJson } from "@/lib/board/http";
 import { TICKET_KINDS, TICKET_LIMITS, isTicketStatus, keyProblems, type TicketStatus } from "@/lib/board/rules";
-import { createTicket, getTicketByKey, listTickets } from "@/lib/board/server";
+import { boardReadTag, createTicket, getTicketByKey, listTickets } from "@/lib/board/server";
 
 export const runtime = "nodejs";
 
@@ -20,6 +20,10 @@ type Ctx = { params: Promise<{ projectKey: string }> };
  * `?key=` names one ticket (invariant 11), so it answers as `tickets/[id]`
  * does: the ticket, or 404. It refuses a filter beside it, since "not
  * unfinished" and "nobody holds that key" would otherwise be the same 404.
+ *
+ * Every answer carries an ETag from the board's version (`ticketCache.ts`):
+ * a client that sends it back in `If-None-Match` gets a 304 and no body
+ * while nothing on the board has changed, without a database query.
  */
 export async function GET(req: NextRequest, ctx: Ctx) {
   const { projectKey } = await ctx.params;
@@ -33,15 +37,21 @@ export async function GET(req: NextRequest, ctx: Ctx) {
     }
     const problems = keyProblems(key);
     if (problems.length > 0) return NextResponse.json({ ok: false, error: "invalid_key", problems }, { status: 400 });
+    const etag = await boardReadTag(projectKey, `key:${key}`);
+    const unchanged = notModified(req, etag);
+    if (unchanged) return unchanged;
     const ticket = await getTicketByKey(projectKey, key);
-    return ticket ? NextResponse.json({ ok: true, ticket }) : NextResponse.json({ ok: false, error: "missing" }, { status: 404 });
+    return ticket ? taggedJson(etag, { ok: true, ticket }) : NextResponse.json({ ok: false, error: "missing" }, { status: 404 });
   }
   const unfinished = url.searchParams.get("unfinished") === "1";
   const wanted = (url.searchParams.get("status") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
   const bad = wanted.filter((s) => !isTicketStatus(s));
   if (bad.length > 0) return NextResponse.json({ ok: false, error: "invalid_status", details: bad }, { status: 400 });
+  const etag = await boardReadTag(projectKey, `list:${unfinished ? "unfinished" : [...wanted].sort().join(",") || "all"}`);
+  const unchanged = notModified(req, etag);
+  if (unchanged) return unchanged;
   const tickets = await listTickets(projectKey, { unfinished, statuses: wanted as TicketStatus[] });
-  return NextResponse.json({ ok: true, api_version: "v1", tickets });
+  return taggedJson(etag, { ok: true, api_version: "v1", tickets });
 }
 
 /* Generous on the wire so a long body is refused before it is read as a
