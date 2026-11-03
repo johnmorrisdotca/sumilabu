@@ -1,0 +1,1276 @@
+{
+ "schemaVersion": 1,
+ "generatedAt": "2026-11-02T23:00:00Z",
+ "generator": {
+  "name": "invented-sample",
+  "version": "0.0.0"
+ },
+ "methods": {
+  "docs": "README length, a docs site, tested examples and a changelog. Sample.",
+  "overall": "A weighted mean of the others. Sample."
+ },
+ "items": [
+  {
+   "id": "kazoku-ui",
+   "kind": "package",
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/kazoku-ui",
+   "summary": "Family-tree and kinship UI components (sample)",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/kazoku-ui",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/kazoku-ui"
+   },
+   "versions": {
+    "npm": "0.10.1",
+    "repo": "0.10.1",
+    "count": 3
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-10-28",
+    "created": "2026-06-01",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 5
+   },
+   "popularity": {
+    "npmDownloadsWeek": 420,
+    "npmDownloadsMonth": 1680,
+    "stars": 3,
+    "forks": 0,
+    "watchers": 1,
+    "dependentsOutsideFamily": 0,
+    "note": "Counts include the owner's own installs and CI; mirrors could not be separated."
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [
+     "three"
+    ],
+    "family": [
+     "chizu"
+    ],
+    "dev": 10,
+    "packedKb": 100,
+    "unpackedKb": 400
+   },
+   "measures": {
+    "readmeWords": 800,
+    "docsSite": true,
+    "examplesTested": true,
+    "changelog": true,
+    "testFiles": 2,
+    "tests": 40,
+    "e2e": false,
+    "freezeTest": true,
+    "ciRunsLast30": 20,
+    "ciFailuresLast30": 0,
+    "openBugTickets": 0,
+    "openTickets": 3,
+    "lintErrors": 0,
+    "lintWarnings": 0,
+    "typeErrors": 0,
+    "anyCount": 0,
+    "largestFileLines": 300,
+    "auditHigh": 0,
+    "bundleGzipKb": 4
+   },
+   "grades": {
+    "docs": 9,
+    "dependencies": 8,
+    "robustness": 8,
+    "tests": 9,
+    "bugs": 8,
+    "crashes": 9,
+    "code": 8,
+    "lint": 9,
+    "performance": 7,
+    "usefulness": 6,
+    "freshness": 10,
+    "overall": 8
+   },
+   "gradeNotes": {
+    "docs": "Graded 9 on README and docs (sample sentence).",
+    "dependencies": "Graded 8 on runtime dependency count (sample sentence).",
+    "robustness": "Graded 8 on how fragile it is (sample sentence).",
+    "tests": "Graded 9 on tests (sample sentence).",
+    "bugs": "Graded 8 on open bug tickets (sample sentence).",
+    "crashes": "Graded 9 on failures seen in CI (sample sentence).",
+    "code": "Graded 8 on code structure (sample sentence).",
+    "lint": "Graded 9 on lint and type errors (sample sentence).",
+    "performance": "Graded 7 on bundle and render cost (sample sentence).",
+    "usefulness": "Graded 6 on how much it is used (sample sentence).",
+    "freshness": "Graded 10 on recency (sample sentence).",
+    "overall": "Mean of the others, weighted toward tests and freshness."
+   },
+   "facts": [
+    "Sample fact 1 about @johnmorrisdotca/kazoku-ui.",
+    "Sample fact 2 about @johnmorrisdotca/kazoku-ui.",
+    "Sample fact 3 about @johnmorrisdotca/kazoku-ui.",
+    "Sample fact 4 about @johnmorrisdotca/kazoku-ui.",
+    "Sample fact 5 about @johnmorrisdotca/kazoku-ui.",
+    "Sample fact 6 about @johnmorrisdotca/kazoku-ui.",
+    "Sample fact 7 about @johnmorrisdotca/kazoku-ui.",
+    "Sample fact 8 about @johnmorrisdotca/kazoku-ui.",
+    "Sample fact 9 about @johnmorrisdotca/kazoku-ui.",
+    "Sample fact 10 about @johnmorrisdotca/kazoku-ui."
+   ],
+   "flags": []
+  },
+  {
+   "id": "chizu",
+   "kind": "package",
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/chizu",
+   "summary": "Map projections and coastlines for the web (sample)",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/chizu",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/chizu"
+   },
+   "versions": {
+    "npm": "0.4.2",
+    "repo": "0.4.2",
+    "count": 7
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-10-28",
+    "created": "2026-06-01",
+    "daysSinceCommit": 2,
+    "daysSinceRelease": 7
+   },
+   "popularity": {
+    "npmDownloadsWeek": 310,
+    "npmDownloadsMonth": 1240,
+    "stars": 5,
+    "forks": 0,
+    "watchers": 1,
+    "dependentsOutsideFamily": 0,
+    "note": "Counts include the owner's own installs and CI; mirrors could not be separated."
+   },
+   "dependencies": {
+    "runtime": [
+     "d3-geo"
+    ],
+    "optionalPeers": [
+     "three"
+    ],
+    "family": [],
+    "dev": 11,
+    "packedKb": 130,
+    "unpackedKb": 470
+   },
+   "measures": {
+    "readmeWords": 1100,
+    "docsSite": false,
+    "examplesTested": false,
+    "changelog": true,
+    "testFiles": 5,
+    "tests": 77,
+    "e2e": true,
+    "freezeTest": true,
+    "ciRunsLast30": 21,
+    "ciFailuresLast30": 1,
+    "openBugTickets": 1,
+    "openTickets": 4,
+    "lintErrors": 0,
+    "lintWarnings": 3,
+    "typeErrors": 0,
+    "anyCount": 2,
+    "largestFileLines": 560,
+    "auditHigh": 0,
+    "bundleGzipKb": 5.7
+   },
+   "grades": {
+    "docs": 8,
+    "dependencies": 6,
+    "robustness": 7,
+    "tests": 8,
+    "bugs": 7,
+    "crashes": 8,
+    "code": 8,
+    "lint": 8,
+    "performance": 6,
+    "usefulness": 7,
+    "freshness": 9,
+    "overall": 7.5
+   },
+   "gradeNotes": {
+    "docs": "Graded 8 on README and docs (sample sentence).",
+    "dependencies": "Graded 6 on runtime dependency count (sample sentence).",
+    "robustness": "Graded 7 on how fragile it is (sample sentence).",
+    "tests": "Graded 8 on tests (sample sentence).",
+    "bugs": "Graded 7 on open bug tickets (sample sentence).",
+    "crashes": "Graded 8 on failures seen in CI (sample sentence).",
+    "code": "Graded 8 on code structure (sample sentence).",
+    "lint": "Graded 8 on lint and type errors (sample sentence).",
+    "performance": "Graded 6 on bundle and render cost (sample sentence).",
+    "usefulness": "Graded 7 on how much it is used (sample sentence).",
+    "freshness": "Graded 9 on recency (sample sentence).",
+    "overall": "Mean of the others, weighted toward tests and freshness."
+   },
+   "facts": [
+    "Sample fact 1 about @johnmorrisdotca/chizu.",
+    "Sample fact 2 about @johnmorrisdotca/chizu.",
+    "Sample fact 3 about @johnmorrisdotca/chizu.",
+    "Sample fact 4 about @johnmorrisdotca/chizu.",
+    "Sample fact 5 about @johnmorrisdotca/chizu.",
+    "Sample fact 6 about @johnmorrisdotca/chizu.",
+    "Sample fact 7 about @johnmorrisdotca/chizu.",
+    "Sample fact 8 about @johnmorrisdotca/chizu.",
+    "Sample fact 9 about @johnmorrisdotca/chizu.",
+    "Sample fact 10 about @johnmorrisdotca/chizu."
+   ],
+   "flags": []
+  },
+  {
+   "id": "hako-devices",
+   "kind": "package",
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/hako-devices",
+   "summary": "Device drawings, 3D views and names (sample)",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/hako-devices",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/hako-devices"
+   },
+   "versions": {
+    "npm": "1.3.0",
+    "repo": "1.3.0",
+    "count": 11
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-10-28",
+    "created": "2026-06-01",
+    "daysSinceCommit": 1,
+    "daysSinceRelease": 6
+   },
+   "popularity": {
+    "npmDownloadsWeek": 95,
+    "npmDownloadsMonth": 380,
+    "stars": 1,
+    "forks": 0,
+    "watchers": 1,
+    "dependentsOutsideFamily": 0,
+    "note": "Counts include the owner's own installs and CI; mirrors could not be separated."
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [
+     "three"
+    ],
+    "family": [],
+    "dev": 12,
+    "packedKb": 160,
+    "unpackedKb": 540
+   },
+   "measures": {
+    "readmeWords": 1400,
+    "docsSite": true,
+    "examplesTested": false,
+    "changelog": true,
+    "testFiles": 8,
+    "tests": 114,
+    "e2e": false,
+    "freezeTest": true,
+    "ciRunsLast30": 22,
+    "ciFailuresLast30": 2,
+    "openBugTickets": 2,
+    "openTickets": 5,
+    "lintErrors": 14,
+    "lintWarnings": 6,
+    "typeErrors": 0,
+    "anyCount": 4,
+    "largestFileLines": 820,
+    "auditHigh": 0,
+    "bundleGzipKb": 7.4
+   },
+   "grades": {
+    "docs": 7,
+    "dependencies": 9,
+    "robustness": 8,
+    "tests": 6,
+    "bugs": 8,
+    "crashes": 9,
+    "code": 7,
+    "lint": 7,
+    "performance": 5,
+    "usefulness": 8,
+    "freshness": 8,
+    "overall": 7.5
+   },
+   "gradeNotes": {
+    "docs": "Graded 7 on README and docs (sample sentence).",
+    "dependencies": "Graded 9 on runtime dependency count (sample sentence).",
+    "robustness": "Graded 8 on how fragile it is (sample sentence).",
+    "tests": "Graded 6 on tests (sample sentence).",
+    "bugs": "Graded 8 on open bug tickets (sample sentence).",
+    "crashes": "Graded 9 on failures seen in CI (sample sentence).",
+    "code": "Graded 7 on code structure (sample sentence).",
+    "lint": "Graded 7 on lint and type errors (sample sentence).",
+    "performance": "Graded 5 on bundle and render cost (sample sentence).",
+    "usefulness": "Graded 8 on how much it is used (sample sentence).",
+    "freshness": "Graded 8 on recency (sample sentence).",
+    "overall": "Mean of the others, weighted toward tests and freshness."
+   },
+   "facts": [
+    "Sample fact 1 about @johnmorrisdotca/hako-devices.",
+    "Sample fact 2 about @johnmorrisdotca/hako-devices.",
+    "Sample fact 3 about @johnmorrisdotca/hako-devices.",
+    "Sample fact 4 about @johnmorrisdotca/hako-devices.",
+    "Sample fact 5 about @johnmorrisdotca/hako-devices.",
+    "Sample fact 6 about @johnmorrisdotca/hako-devices.",
+    "Sample fact 7 about @johnmorrisdotca/hako-devices.",
+    "Sample fact 8 about @johnmorrisdotca/hako-devices.",
+    "Sample fact 9 about @johnmorrisdotca/hako-devices.",
+    "Sample fact 10 about @johnmorrisdotca/hako-devices."
+   ],
+   "flags": [
+    "needs linting"
+   ]
+  },
+  {
+   "id": "kyogijo",
+   "kind": "package",
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/kyogijo",
+   "summary": "Sports venue maps (sample)",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/kyogijo",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/kyogijo"
+   },
+   "versions": {
+    "npm": "0.2.0",
+    "repo": "0.2.0",
+    "count": 15
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-10-28",
+    "created": "2026-06-01",
+    "daysSinceCommit": 19,
+    "daysSinceRelease": 24
+   },
+   "popularity": {
+    "npmDownloadsWeek": 12,
+    "npmDownloadsMonth": 48,
+    "stars": 0,
+    "forks": 0,
+    "watchers": 1,
+    "dependentsOutsideFamily": 0,
+    "note": "Counts include the owner's own installs and CI; mirrors could not be separated."
+   },
+   "dependencies": {
+    "runtime": [
+     "d3-geo"
+    ],
+    "optionalPeers": [
+     "three"
+    ],
+    "family": [
+     "chizu"
+    ],
+    "dev": 13,
+    "packedKb": 190,
+    "unpackedKb": 610
+   },
+   "measures": {
+    "readmeWords": 1700,
+    "docsSite": false,
+    "examplesTested": true,
+    "changelog": true,
+    "testFiles": 11,
+    "tests": 151,
+    "e2e": true,
+    "freezeTest": false,
+    "ciRunsLast30": 23,
+    "ciFailuresLast30": 3,
+    "openBugTickets": 0,
+    "openTickets": 6,
+    "lintErrors": 0,
+    "lintWarnings": 9,
+    "typeErrors": 0,
+    "anyCount": 6,
+    "largestFileLines": 1080,
+    "auditHigh": 0,
+    "bundleGzipKb": 9.1
+   },
+   "grades": {
+    "docs": 6,
+    "dependencies": 9,
+    "robustness": 7,
+    "tests": 5,
+    "bugs": 7,
+    "crashes": 8,
+    "code": 7,
+    "lint": 6,
+    "performance": 8,
+    "usefulness": 5,
+    "freshness": 6,
+    "overall": 6.7
+   },
+   "gradeNotes": {
+    "docs": "Graded 6 on README and docs (sample sentence).",
+    "dependencies": "Graded 9 on runtime dependency count (sample sentence).",
+    "robustness": "Graded 7 on how fragile it is (sample sentence).",
+    "tests": "Graded 5 on tests (sample sentence).",
+    "bugs": "Graded 7 on open bug tickets (sample sentence).",
+    "crashes": "Graded 8 on failures seen in CI (sample sentence).",
+    "code": "Graded 7 on code structure (sample sentence).",
+    "lint": "Graded 6 on lint and type errors (sample sentence).",
+    "performance": "Graded 8 on bundle and render cost (sample sentence).",
+    "usefulness": "Graded 5 on how much it is used (sample sentence).",
+    "freshness": "Graded 6 on recency (sample sentence).",
+    "overall": "Mean of the others, weighted toward tests and freshness."
+   },
+   "facts": [
+    "Sample fact 1 about @johnmorrisdotca/kyogijo.",
+    "Sample fact 2 about @johnmorrisdotca/kyogijo.",
+    "Sample fact 3 about @johnmorrisdotca/kyogijo.",
+    "Sample fact 4 about @johnmorrisdotca/kyogijo.",
+    "Sample fact 5 about @johnmorrisdotca/kyogijo.",
+    "Sample fact 6 about @johnmorrisdotca/kyogijo.",
+    "Sample fact 7 about @johnmorrisdotca/kyogijo.",
+    "Sample fact 8 about @johnmorrisdotca/kyogijo.",
+    "Sample fact 9 about @johnmorrisdotca/kyogijo.",
+    "Sample fact 10 about @johnmorrisdotca/kyogijo."
+   ],
+   "flags": [
+    "no e2e tests"
+   ]
+  },
+  {
+   "id": "koyomi-calendars",
+   "kind": "package",
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/koyomi-calendars",
+   "summary": "Japanese calendars and holidays (sample)",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/koyomi-calendars",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/koyomi-calendars"
+   },
+   "versions": {
+    "npm": "0.6.0",
+    "repo": "0.6.0",
+    "count": 19
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-09-01",
+    "created": "2026-06-01",
+    "daysSinceCommit": 31,
+    "daysSinceRelease": 36
+   },
+   "popularity": {
+    "npmDownloadsWeek": 64,
+    "npmDownloadsMonth": 256,
+    "stars": 2,
+    "forks": 0,
+    "watchers": 1,
+    "dependentsOutsideFamily": 0,
+    "note": "Counts include the owner's own installs and CI; mirrors could not be separated."
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [
+     "three"
+    ],
+    "family": [],
+    "dev": 14,
+    "packedKb": 220,
+    "unpackedKb": 680
+   },
+   "measures": {
+    "readmeWords": 2000,
+    "docsSite": true,
+    "examplesTested": false,
+    "changelog": true,
+    "testFiles": 14,
+    "tests": 188,
+    "e2e": false,
+    "freezeTest": false,
+    "ciRunsLast30": 24,
+    "ciFailuresLast30": 0,
+    "openBugTickets": 1,
+    "openTickets": 7,
+    "lintErrors": 0,
+    "lintWarnings": 12,
+    "typeErrors": 0,
+    "anyCount": 8,
+    "largestFileLines": 1340,
+    "auditHigh": 0,
+    "bundleGzipKb": 10.8
+   },
+   "grades": {
+    "docs": 8,
+    "dependencies": 10,
+    "robustness": 9,
+    "tests": 9,
+    "bugs": 9,
+    "crashes": 10,
+    "code": 9,
+    "lint": 9,
+    "performance": 9,
+    "usefulness": 6,
+    "freshness": 5,
+    "overall": 8.6
+   },
+   "gradeNotes": {
+    "docs": "Graded 8 on README and docs (sample sentence).",
+    "dependencies": "Graded 10 on runtime dependency count (sample sentence).",
+    "robustness": "Graded 9 on how fragile it is (sample sentence).",
+    "tests": "Graded 9 on tests (sample sentence).",
+    "bugs": "Graded 9 on open bug tickets (sample sentence).",
+    "crashes": "Graded 10 on failures seen in CI (sample sentence).",
+    "code": "Graded 9 on code structure (sample sentence).",
+    "lint": "Graded 9 on lint and type errors (sample sentence).",
+    "performance": "Graded 9 on bundle and render cost (sample sentence).",
+    "usefulness": "Graded 6 on how much it is used (sample sentence).",
+    "freshness": "Graded 5 on recency (sample sentence).",
+    "overall": "Mean of the others, weighted toward tests and freshness."
+   },
+   "facts": [
+    "Sample fact 1 about @johnmorrisdotca/koyomi-calendars.",
+    "Sample fact 2 about @johnmorrisdotca/koyomi-calendars.",
+    "Sample fact 3 about @johnmorrisdotca/koyomi-calendars.",
+    "Sample fact 4 about @johnmorrisdotca/koyomi-calendars.",
+    "Sample fact 5 about @johnmorrisdotca/koyomi-calendars.",
+    "Sample fact 6 about @johnmorrisdotca/koyomi-calendars.",
+    "Sample fact 7 about @johnmorrisdotca/koyomi-calendars.",
+    "Sample fact 8 about @johnmorrisdotca/koyomi-calendars.",
+    "Sample fact 9 about @johnmorrisdotca/koyomi-calendars.",
+    "Sample fact 10 about @johnmorrisdotca/koyomi-calendars."
+   ],
+   "flags": [
+    "not updated for 31 days"
+   ]
+  },
+  {
+   "id": "itsutsu",
+   "kind": "site",
+   "owner": "johnmorrisdotca",
+   "name": "itsutsu.com",
+   "summary": "Five-in-a-row and other games (sample)",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/itsutsu",
+    "site": "https://itsutsu.com"
+   },
+   "versions": {
+    "npm": null,
+    "repo": "0.205.0",
+    "count": 23
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-10-28",
+    "created": "2026-06-01",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 5
+   },
+   "popularity": {
+    "npmDownloadsWeek": null,
+    "npmDownloadsMonth": null,
+    "stars": 2,
+    "forks": 0,
+    "watchers": 1,
+    "dependentsOutsideFamily": null,
+    "note": "Not on npm."
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [],
+    "family": [],
+    "dev": 15,
+    "packedKb": null,
+    "unpackedKb": null
+   },
+   "measures": {
+    "readmeWords": 2300,
+    "docsSite": false,
+    "examplesTested": false,
+    "changelog": true,
+    "testFiles": 17,
+    "tests": 225,
+    "e2e": true,
+    "freezeTest": false,
+    "ciRunsLast30": 25,
+    "ciFailuresLast30": 1,
+    "openBugTickets": 2,
+    "openTickets": 8,
+    "lintErrors": 14,
+    "lintWarnings": 15,
+    "typeErrors": 0,
+    "anyCount": 10,
+    "largestFileLines": 1600,
+    "auditHigh": 0,
+    "bundleGzipKb": null
+   },
+   "grades": {
+    "docs": 5,
+    "dependencies": 5,
+    "robustness": 6,
+    "tests": 7,
+    "bugs": 5,
+    "crashes": 6,
+    "code": 6,
+    "lint": 4,
+    "performance": 5,
+    "usefulness": 8,
+    "freshness": 10,
+    "overall": 6.3
+   },
+   "gradeNotes": {
+    "docs": "Graded 5 on README and docs (sample sentence).",
+    "dependencies": "Graded 5 on runtime dependency count (sample sentence).",
+    "robustness": "Graded 6 on how fragile it is (sample sentence).",
+    "tests": "Graded 7 on tests (sample sentence).",
+    "bugs": "Graded 5 on open bug tickets (sample sentence).",
+    "crashes": "Graded 6 on failures seen in CI (sample sentence).",
+    "code": "Graded 6 on code structure (sample sentence).",
+    "lint": "Graded 4 on lint and type errors (sample sentence).",
+    "performance": "Graded 5 on bundle and render cost (sample sentence).",
+    "usefulness": "Graded 8 on how much it is used (sample sentence).",
+    "freshness": "Graded 10 on recency (sample sentence).",
+    "overall": "Mean of the others, weighted toward tests and freshness."
+   },
+   "facts": [
+    "Sample fact 1 about itsutsu.com.",
+    "Sample fact 2 about itsutsu.com.",
+    "Sample fact 3 about itsutsu.com.",
+    "Sample fact 4 about itsutsu.com.",
+    "Sample fact 5 about itsutsu.com.",
+    "Sample fact 6 about itsutsu.com.",
+    "Sample fact 7 about itsutsu.com.",
+    "Sample fact 8 about itsutsu.com.",
+    "Sample fact 9 about itsutsu.com.",
+    "Sample fact 10 about itsutsu.com."
+   ],
+   "flags": [
+    "needs linting",
+    "largest file 2400 lines"
+   ]
+  },
+  {
+   "id": "umakuma",
+   "kind": "app",
+   "owner": "spxis",
+   "name": "umakuma",
+   "summary": "Japanese study app (sample)",
+   "links": {
+    "repo": "https://github.com/spxis/umakuma"
+   },
+   "versions": {
+    "npm": null,
+    "repo": "1.88.0",
+    "count": 27
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-10-28",
+    "created": "2026-06-01",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 5
+   },
+   "popularity": {
+    "npmDownloadsWeek": null,
+    "npmDownloadsMonth": null,
+    "stars": null,
+    "forks": null,
+    "watchers": null,
+    "dependentsOutsideFamily": null,
+    "note": "Not on npm."
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [],
+    "family": [
+     "chizu"
+    ],
+    "dev": 16,
+    "packedKb": null,
+    "unpackedKb": null
+   },
+   "measures": {
+    "readmeWords": 2600,
+    "docsSite": true,
+    "examplesTested": true,
+    "changelog": true,
+    "testFiles": 20,
+    "tests": 262,
+    "e2e": false,
+    "freezeTest": false,
+    "ciRunsLast30": 26,
+    "ciFailuresLast30": 2,
+    "openBugTickets": 0,
+    "openTickets": 9,
+    "lintErrors": 0,
+    "lintWarnings": 18,
+    "typeErrors": 0,
+    "anyCount": 12,
+    "largestFileLines": 1860,
+    "auditHigh": 0,
+    "bundleGzipKb": null
+   },
+   "grades": {
+    "docs": 6,
+    "dependencies": 5,
+    "robustness": 6,
+    "tests": 8,
+    "bugs": 6,
+    "crashes": 7,
+    "code": 6,
+    "lint": 5,
+    "performance": 6,
+    "usefulness": 9,
+    "freshness": 10,
+    "overall": 6.7
+   },
+   "gradeNotes": {
+    "docs": "Graded 6 on README and docs (sample sentence).",
+    "dependencies": "Graded 5 on runtime dependency count (sample sentence).",
+    "robustness": "Graded 6 on how fragile it is (sample sentence).",
+    "tests": "Graded 8 on tests (sample sentence).",
+    "bugs": "Graded 6 on open bug tickets (sample sentence).",
+    "crashes": "Graded 7 on failures seen in CI (sample sentence).",
+    "code": "Graded 6 on code structure (sample sentence).",
+    "lint": "Graded 5 on lint and type errors (sample sentence).",
+    "performance": "Graded 6 on bundle and render cost (sample sentence).",
+    "usefulness": "Graded 9 on how much it is used (sample sentence).",
+    "freshness": "Graded 10 on recency (sample sentence).",
+    "overall": "Mean of the others, weighted toward tests and freshness."
+   },
+   "facts": [
+    "Sample fact 1 about umakuma.",
+    "Sample fact 2 about umakuma.",
+    "Sample fact 3 about umakuma.",
+    "Sample fact 4 about umakuma.",
+    "Sample fact 5 about umakuma.",
+    "Sample fact 6 about umakuma.",
+    "Sample fact 7 about umakuma.",
+    "Sample fact 8 about umakuma.",
+    "Sample fact 9 about umakuma.",
+    "Sample fact 10 about umakuma."
+   ],
+   "flags": [
+    "largest file 3100 lines"
+   ]
+  },
+  {
+   "id": "wazadb",
+   "kind": "site",
+   "owner": "spxis",
+   "name": "wazadb.com",
+   "summary": "Judo and BJJ technique database (sample)",
+   "links": {
+    "repo": "https://github.com/spxis/wazadb",
+    "site": "https://wazadb.com"
+   },
+   "versions": {
+    "npm": null,
+    "repo": "2.14.3",
+    "count": 31
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-10-28",
+    "created": "2026-06-01",
+    "daysSinceCommit": 4,
+    "daysSinceRelease": 9
+   },
+   "popularity": {
+    "npmDownloadsWeek": null,
+    "npmDownloadsMonth": null,
+    "stars": null,
+    "forks": null,
+    "watchers": null,
+    "dependentsOutsideFamily": null,
+    "note": "Not on npm."
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [],
+    "family": [],
+    "dev": 17,
+    "packedKb": null,
+    "unpackedKb": null
+   },
+   "measures": {
+    "readmeWords": 2900,
+    "docsSite": false,
+    "examplesTested": false,
+    "changelog": true,
+    "testFiles": 23,
+    "tests": 299,
+    "e2e": true,
+    "freezeTest": false,
+    "ciRunsLast30": 27,
+    "ciFailuresLast30": 3,
+    "openBugTickets": 1,
+    "openTickets": 10,
+    "lintErrors": 0,
+    "lintWarnings": 21,
+    "typeErrors": 0,
+    "anyCount": 14,
+    "largestFileLines": 2120,
+    "auditHigh": 0,
+    "bundleGzipKb": null
+   },
+   "grades": {
+    "docs": 5,
+    "dependencies": 6,
+    "robustness": 5,
+    "tests": 4,
+    "bugs": 4,
+    "crashes": 5,
+    "code": 5,
+    "lint": 5,
+    "performance": 6,
+    "usefulness": 7,
+    "freshness": 9,
+    "overall": 5.5
+   },
+   "gradeNotes": {
+    "docs": "Graded 5 on README and docs (sample sentence).",
+    "dependencies": "Graded 6 on runtime dependency count (sample sentence).",
+    "robustness": "Graded 5 on how fragile it is (sample sentence).",
+    "tests": "Graded 4 on tests (sample sentence).",
+    "bugs": "Graded 4 on open bug tickets (sample sentence).",
+    "crashes": "Graded 5 on failures seen in CI (sample sentence).",
+    "code": "Graded 5 on code structure (sample sentence).",
+    "lint": "Graded 5 on lint and type errors (sample sentence).",
+    "performance": "Graded 6 on bundle and render cost (sample sentence).",
+    "usefulness": "Graded 7 on how much it is used (sample sentence).",
+    "freshness": "Graded 9 on recency (sample sentence).",
+    "overall": "Mean of the others, weighted toward tests and freshness."
+   },
+   "facts": [
+    "Sample fact 1 about wazadb.com.",
+    "Sample fact 2 about wazadb.com.",
+    "Sample fact 3 about wazadb.com.",
+    "Sample fact 4 about wazadb.com.",
+    "Sample fact 5 about wazadb.com.",
+    "Sample fact 6 about wazadb.com.",
+    "Sample fact 7 about wazadb.com.",
+    "Sample fact 8 about wazadb.com.",
+    "Sample fact 9 about wazadb.com.",
+    "Sample fact 10 about wazadb.com."
+   ],
+   "flags": [
+    "low test coverage"
+   ]
+  },
+  {
+   "id": "onibako",
+   "kind": "app",
+   "owner": "spxis",
+   "name": "onibako",
+   "summary": "Home NAS media stack (sample)",
+   "links": {
+    "repo": "https://github.com/spxis/onibako"
+   },
+   "versions": {
+    "npm": null,
+    "repo": null,
+    "count": 35
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-09-01",
+    "created": "2026-06-01",
+    "daysSinceCommit": 58,
+    "daysSinceRelease": 63
+   },
+   "popularity": {
+    "npmDownloadsWeek": null,
+    "npmDownloadsMonth": null,
+    "stars": null,
+    "forks": null,
+    "watchers": null,
+    "dependentsOutsideFamily": null,
+    "note": "Not on npm."
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [],
+    "family": [],
+    "dev": 18,
+    "packedKb": null,
+    "unpackedKb": null
+   },
+   "measures": {
+    "readmeWords": 3200,
+    "docsSite": true,
+    "examplesTested": false,
+    "changelog": true,
+    "testFiles": 26,
+    "tests": 336,
+    "e2e": false,
+    "freezeTest": false,
+    "ciRunsLast30": 28,
+    "ciFailuresLast30": 0,
+    "openBugTickets": 2,
+    "openTickets": 11,
+    "lintErrors": 0,
+    "lintWarnings": 24,
+    "typeErrors": 0,
+    "anyCount": 16,
+    "largestFileLines": 2380,
+    "auditHigh": 0,
+    "bundleGzipKb": null
+   },
+   "grades": {
+    "docs": 4,
+    "dependencies": 7,
+    "robustness": 4,
+    "tests": 2,
+    "bugs": 5,
+    "crashes": 4,
+    "code": 4,
+    "lint": 3,
+    "performance": null,
+    "usefulness": 6,
+    "freshness": 3,
+    "overall": 4.2
+   },
+   "gradeNotes": {
+    "docs": "Graded 4 on README and docs (sample sentence).",
+    "dependencies": "Graded 7 on runtime dependency count (sample sentence).",
+    "robustness": "Graded 4 on how fragile it is (sample sentence).",
+    "tests": "Graded 2 on tests (sample sentence).",
+    "bugs": "Graded 5 on open bug tickets (sample sentence).",
+    "crashes": "Graded 4 on failures seen in CI (sample sentence).",
+    "code": "Graded 4 on code structure (sample sentence).",
+    "lint": "Graded 3 on lint and type errors (sample sentence).",
+    "performance": "Nothing to measure here.",
+    "usefulness": "Graded 6 on how much it is used (sample sentence).",
+    "freshness": "Graded 3 on recency (sample sentence).",
+    "overall": "Mean of the others, weighted toward tests and freshness."
+   },
+   "facts": [
+    "Sample fact 1 about onibako.",
+    "Sample fact 2 about onibako.",
+    "Sample fact 3 about onibako.",
+    "Sample fact 4 about onibako.",
+    "Sample fact 5 about onibako.",
+    "Sample fact 6 about onibako.",
+    "Sample fact 7 about onibako.",
+    "Sample fact 8 about onibako.",
+    "Sample fact 9 about onibako.",
+    "Sample fact 10 about onibako."
+   ],
+   "flags": [
+    "not updated for 58 days",
+    "no tests",
+    "needs linting"
+   ]
+  },
+  {
+   "id": "sumilabu-dashboard",
+   "kind": "site",
+   "owner": "johnmorrisdotca",
+   "name": "app.sumilabu.com",
+   "summary": "Telemetry dashboard and ticket board (sample)",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/sumilabu-dashboard",
+    "site": "https://app.sumilabu.com"
+   },
+   "versions": {
+    "npm": null,
+    "repo": null,
+    "count": 39
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-10-28",
+    "created": "2026-06-01",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 5
+   },
+   "popularity": {
+    "npmDownloadsWeek": null,
+    "npmDownloadsMonth": null,
+    "stars": 4,
+    "forks": 0,
+    "watchers": 1,
+    "dependentsOutsideFamily": null,
+    "note": "Not on npm."
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [],
+    "family": [
+     "chizu"
+    ],
+    "dev": 19,
+    "packedKb": null,
+    "unpackedKb": null
+   },
+   "measures": {
+    "readmeWords": 3500,
+    "docsSite": false,
+    "examplesTested": true,
+    "changelog": true,
+    "testFiles": 29,
+    "tests": 373,
+    "e2e": true,
+    "freezeTest": false,
+    "ciRunsLast30": 29,
+    "ciFailuresLast30": 1,
+    "openBugTickets": 0,
+    "openTickets": 12,
+    "lintErrors": 0,
+    "lintWarnings": 27,
+    "typeErrors": 0,
+    "anyCount": 18,
+    "largestFileLines": 2640,
+    "auditHigh": 0,
+    "bundleGzipKb": null
+   },
+   "grades": {
+    "docs": 6,
+    "dependencies": 9,
+    "robustness": 8,
+    "tests": 7,
+    "bugs": 8,
+    "crashes": 8,
+    "code": 8,
+    "lint": 8,
+    "performance": 8,
+    "usefulness": 7,
+    "freshness": 10,
+    "overall": 7.9
+   },
+   "gradeNotes": {
+    "docs": "Graded 6 on README and docs (sample sentence).",
+    "dependencies": "Graded 9 on runtime dependency count (sample sentence).",
+    "robustness": "Graded 8 on how fragile it is (sample sentence).",
+    "tests": "Graded 7 on tests (sample sentence).",
+    "bugs": "Graded 8 on open bug tickets (sample sentence).",
+    "crashes": "Graded 8 on failures seen in CI (sample sentence).",
+    "code": "Graded 8 on code structure (sample sentence).",
+    "lint": "Graded 8 on lint and type errors (sample sentence).",
+    "performance": "Graded 8 on bundle and render cost (sample sentence).",
+    "usefulness": "Graded 7 on how much it is used (sample sentence).",
+    "freshness": "Graded 10 on recency (sample sentence).",
+    "overall": "Mean of the others, weighted toward tests and freshness."
+   },
+   "facts": [
+    "Sample fact 1 about app.sumilabu.com.",
+    "Sample fact 2 about app.sumilabu.com.",
+    "Sample fact 3 about app.sumilabu.com.",
+    "Sample fact 4 about app.sumilabu.com.",
+    "Sample fact 5 about app.sumilabu.com.",
+    "Sample fact 6 about app.sumilabu.com.",
+    "Sample fact 7 about app.sumilabu.com.",
+    "Sample fact 8 about app.sumilabu.com.",
+    "Sample fact 9 about app.sumilabu.com.",
+    "Sample fact 10 about app.sumilabu.com."
+   ],
+   "flags": []
+  }
+ ],
+ "rankings": {
+  "docs": {
+   "best": [
+    "kazoku-ui",
+    "chizu",
+    "koyomi-calendars",
+    "hako-devices",
+    "kyogijo"
+   ],
+   "worst": [
+    "onibako",
+    "wazadb",
+    "itsutsu",
+    "sumilabu-dashboard",
+    "umakuma"
+   ]
+  },
+  "dependencies": {
+   "best": [
+    "koyomi-calendars",
+    "hako-devices",
+    "kyogijo",
+    "sumilabu-dashboard",
+    "kazoku-ui"
+   ],
+   "worst": [
+    "umakuma",
+    "itsutsu",
+    "wazadb",
+    "chizu",
+    "onibako"
+   ]
+  },
+  "robustness": {
+   "best": [
+    "koyomi-calendars",
+    "kazoku-ui",
+    "hako-devices",
+    "sumilabu-dashboard",
+    "chizu"
+   ],
+   "worst": [
+    "onibako",
+    "wazadb",
+    "umakuma",
+    "itsutsu",
+    "kyogijo"
+   ]
+  },
+  "tests": {
+   "best": [
+    "kazoku-ui",
+    "koyomi-calendars",
+    "chizu",
+    "umakuma",
+    "itsutsu"
+   ],
+   "worst": [
+    "onibako",
+    "wazadb",
+    "kyogijo",
+    "hako-devices",
+    "sumilabu-dashboard"
+   ]
+  },
+  "bugs": {
+   "best": [
+    "koyomi-calendars",
+    "kazoku-ui",
+    "hako-devices",
+    "sumilabu-dashboard",
+    "chizu"
+   ],
+   "worst": [
+    "wazadb",
+    "onibako",
+    "itsutsu",
+    "umakuma",
+    "kyogijo"
+   ]
+  },
+  "crashes": {
+   "best": [
+    "koyomi-calendars",
+    "kazoku-ui",
+    "hako-devices",
+    "chizu",
+    "kyogijo"
+   ],
+   "worst": [
+    "onibako",
+    "wazadb",
+    "itsutsu",
+    "umakuma",
+    "sumilabu-dashboard"
+   ]
+  },
+  "code": {
+   "best": [
+    "koyomi-calendars",
+    "kazoku-ui",
+    "chizu",
+    "sumilabu-dashboard",
+    "hako-devices"
+   ],
+   "worst": [
+    "onibako",
+    "wazadb",
+    "umakuma",
+    "itsutsu",
+    "kyogijo"
+   ]
+  },
+  "lint": {
+   "best": [
+    "kazoku-ui",
+    "koyomi-calendars",
+    "chizu",
+    "sumilabu-dashboard",
+    "hako-devices"
+   ],
+   "worst": [
+    "onibako",
+    "itsutsu",
+    "wazadb",
+    "umakuma",
+    "kyogijo"
+   ]
+  },
+  "performance": {
+   "best": [
+    "koyomi-calendars",
+    "kyogijo",
+    "sumilabu-dashboard",
+    "kazoku-ui",
+    "chizu"
+   ],
+   "worst": [
+    "itsutsu",
+    "hako-devices",
+    "wazadb",
+    "umakuma",
+    "chizu"
+   ]
+  },
+  "usefulness": {
+   "best": [
+    "umakuma",
+    "hako-devices",
+    "itsutsu",
+    "chizu",
+    "wazadb"
+   ],
+   "worst": [
+    "kyogijo",
+    "onibako",
+    "koyomi-calendars",
+    "kazoku-ui",
+    "sumilabu-dashboard"
+   ]
+  },
+  "freshness": {
+   "best": [
+    "kazoku-ui",
+    "itsutsu",
+    "umakuma",
+    "sumilabu-dashboard",
+    "chizu"
+   ],
+   "worst": [
+    "onibako",
+    "koyomi-calendars",
+    "kyogijo",
+    "hako-devices",
+    "wazadb"
+   ]
+  },
+  "overall": {
+   "best": [
+    "koyomi-calendars",
+    "kazoku-ui",
+    "sumilabu-dashboard",
+    "chizu",
+    "hako-devices"
+   ],
+   "worst": [
+    "onibako",
+    "wazadb",
+    "itsutsu",
+    "umakuma",
+    "kyogijo"
+   ]
+  },
+  "npmDownloadsWeek": {
+   "best": [
+    "kazoku-ui",
+    "chizu",
+    "hako-devices"
+   ],
+   "worst": [
+    "kyogijo",
+    "koyomi-calendars"
+   ]
+  }
+ }
+}

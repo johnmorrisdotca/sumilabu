@@ -24,3 +24,11 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* The scorecard page is meant to be saved as a PDF: landscape, little margin. */
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 10mm;
+  }
+}

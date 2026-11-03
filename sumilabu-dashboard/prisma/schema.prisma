@@ -319,3 +319,26 @@ model ReportImage {
   bytes       Bytes
   createdAt   DateTime @default(now())
 }
+
+/// One run of John's package scorecard (SUMILABU-6): the collector on his Mac
+/// builds a JSON document (the contract is in docs/scorecard.md) and POSTs it
+/// to /api/v1/scorecard, so a new run reaches the page with no deploy.
+///
+/// Only the newest few runs are kept (SCORECARD_KEEP_RUNS in
+/// lib/scorecard/server.ts); the page needs the latest document and a trend.
+/// `generatedAt` is unique: sending the same run twice replaces it instead of
+/// adding a row.
+model ScorecardRun {
+  id          String   @id @default(cuid())
+  /// When the collector built the document, not when it arrived. The newest
+  /// one is "the latest run".
+  generatedAt DateTime @unique
+  receivedAt  DateTime @default(now())
+  itemCount   Int
+  byteSize    Int
+  /// item id -> overall grade (or null), so the trend can be drawn without
+  /// loading the older runs' whole documents.
+  overall     Json
+  /// The validated document, as the contract describes it.
+  payload     Json
+}

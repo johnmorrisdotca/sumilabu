@@ -1,7 +1,11 @@
 <!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
 <!-- END:nextjs-agent-rules -->
 
 # Making a change and shipping it (read this first)
@@ -209,6 +213,7 @@ workflow runs, so a red push is a red push you could have seen locally.
    | `SETTINGS_TOKENS_JSON` | `lib/board/auth.ts` | Same shape, settings routes only. A site's production deployment holds it and nothing else does. |
    | `REPORTS_TOKENS_JSON` | `lib/board/auth.ts` | Same shape, the reports routes (create/list/get/patch/delete) and `GET /api/v1/health` - but not filing, which needs the board token instead. |
    | `TELEMETRY_DROP_EVENTS` | `lib/telemetry-drop.ts` | Events acknowledged with `{ ok: true, dropped: true }` and not stored: comma list of `event` or `project:event`; `none` stores all. Unset means UmaKuma's `api_route`, `study_review_history` and `reading_signoffs_get_perf`. |
+   | `SCORECARD_TOKEN` | `api/v1/scorecard` | The one bearer key for uploading a package-scorecard run (`docs/scorecard.md`). Unset means the route refuses everyone. Never reuse it for another map. |
    | `CALENDAR_ICS_URL`, `CALENDAR_TOKEN` | `api/v1/calendar/upcoming` | A published iCal feed and the one bearer token the MagTag presents for it. Read through the data cache every 15 minutes; never touches Neon. |
 
    Four token maps, four purposes. Never reuse a value across them: they are
@@ -228,6 +233,11 @@ workflow runs, so a red push is a red push you could have seen locally.
   `lib/dashboard-data.ts` (Next's data cache, one tag, cleared by every
   telemetry write), so a load when nothing has arrived does not wake Neon.
   A made-up `?project=` is answered empty with no query.
+- `src/app/packages/page.tsx`, `src/components/scorecard/`,
+  `src/lib/scorecard/`, `api/v1/scorecard` — the package scorecard
+  (`docs/scorecard.md`): John's Mac uploads a run with `pnpm scorecard:upload`,
+  one `ScorecardRun` row each (newest ten kept), the page reads it through the
+  data cache tag `scorecard`, cleared by the upload. No sign-in, `noindex`.
 - `scripts/prune-telemetry.mjs` (`pnpm db:prune-telemetry`) — retention:
   AppTelemetryEvent 14 days, DeviceEvent 30. A dry run unless `--apply`;
   it never touches the board, reports, devices or sources.

@@ -287,6 +287,7 @@ Production hostnames, all aliases of the one deployment:
 - API contract: `https://api.sumilabu.com/api/openapi.json`
 - Board, settings and reports: `https://api.sumilabu.com/api/v1/projects/…`
 - Health: `https://api.sumilabu.com/api/v1/health`
+- Package scorecard: page `https://app.sumilabu.com/packages`; upload `POST https://app.sumilabu.com/api/v1/scorecard` (bearer `SCORECARD_TOKEN`, JSON ≤ 1 MiB checked against the contract, `pnpm scorecard:upload`) — see `docs/scorecard.md`
 - Calendar (MagTag): `https://api.sumilabu.com/api/v1/calendar/upcoming?limit=4` — bearer `CALENDAR_TOKEN`; `{ ok, now, meetings: [{ title, start, end }] }`, UTC epoch seconds, the next 7 days; 503 `not_configured` without a feed, 502 `feed_unavailable` when the feed cannot be read
 
 ## Device config
