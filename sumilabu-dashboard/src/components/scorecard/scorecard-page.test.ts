@@ -3,11 +3,13 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { parseScorecard } from "@/lib/scorecard/contract";
+import real from "@/lib/scorecard/fixtures/real-trimmed.json";
 import sample from "@/lib/scorecard/fixtures/sample.json";
 import type { ScorecardData } from "@/lib/scorecard/server";
 import { gradeColumns } from "@/lib/scorecard/view";
 
 import { ItemDetail } from "./item-detail";
+import { MethodPanel } from "./method-panel";
 import { RankingsPanel } from "./rankings-panel";
 import { ScorecardView } from "./scorecard-view";
 
@@ -128,5 +130,68 @@ describe("an item's detail", () => {
     expect(out).toContain("Nothing to measure here.");
     expect(out).toContain("not updated for 58 days");
     expect(out).toContain("first run: no trend yet");
+  });
+});
+
+describe("the real run's additions on screen", () => {
+  const realParsed = parseScorecard(real);
+  if (!realParsed.ok) throw new Error("the real run must parse");
+  const rdoc = realParsed.doc;
+  const item = (id: string) => structuredClone(rdoc.items.find((i) => i.id === id)!);
+  const detail = (it: ReturnType<typeof item>, tab?: "numbers") =>
+    html(createElement(ItemDetail, { item: it, columns: gradeColumns(rdoc), trend: [], onBack: () => {}, initialTab: tab }));
+
+  it("draws the 30 daily downloads as a small chart in the Numbers tab", () => {
+    const out = detail(item("tane"), "numbers");
+    expect(out).toContain("Downloads per day, last 30 days: 1,311 in all, busiest day 237.");
+    expect((out.match(/<rect /g) ?? []).length).toBe(30);
+    expect(out).toContain("Stars outside John&#x27;s accounts");
+  });
+
+  it("says why a lint, type or audit reading is blank, once, under the list", () => {
+    const out = detail(item("sumilabu"), "numbers");
+    expect(out).toContain("not read *");
+    expect(out).toContain("* no lockfile, so no cheap install: lint, typecheck and audit not run");
+    expect(out).toContain("Met Vercel&#x27;s bot check");
+  });
+
+  it("has no footnote star when nothing is blank", () => {
+    const out = detail(item("tane"), "numbers");
+    expect(out).not.toContain("not read *");
+    expect(out).not.toContain('data-testid="check-notes"');
+  });
+
+  it("marks a private item as private in the table, the cards and the detail", () => {
+    const d = structuredClone(rdoc);
+    d.items[2].private = true;
+    const data: ScorecardData = { doc: d, receivedAt: "2026-11-03T06:09:00.000Z", trend: [] };
+    const out = html(createElement(ScorecardView, { data, nowIso: "2026-11-03T07:00:00Z" }));
+    expect((out.match(/>private</g) ?? []).length).toBe(2);
+    expect(detail(d.items[2])).toContain(">private<");
+    expect(html(createElement(ScorecardView, { data: { ...data, doc: rdoc }, nowIso: "2026-11-03T07:00:00Z" }))).not.toContain(">private<");
+  });
+
+  it("shows the overall as the two-decimal score and orders by it", () => {
+    const out = html(createElement(ScorecardView, { data: { doc: rdoc, receivedAt: "2026-11-03T06:09:00.000Z", trend: [] }, nowIso: "2026-11-03T07:00:00Z" }));
+    expect(out).toContain("Overall: 9.1 of 10");
+    expect(out.indexOf('data-item="tane"')).toBeLessThan(out.indexOf('data-item="jirai"'));
+  });
+
+  it("lists what was skipped, with the reasons, and how the run went, on the method tab", () => {
+    const out = html(createElement(MethodPanel, { doc: rdoc }));
+    expect(out).toContain("Left out of this run (3)");
+    expect(out).toContain("johnmorrisdotca/hotaru-releases");
+    expect(out).toContain("the public release host for hotaru&#x27;s signed packs, not a package or a site");
+    expect(out).toContain("This run took 57 s");
+    expect(out).toContain("ticket boards read: 3 of 3");
+    expect(out).toContain("Use outside John&#x27;s accounts");
+    expect(out).not.toContain("<details");
+  });
+
+  it("puts the extra rankings in the chip row, with their own words and units", () => {
+    const columns = gradeColumns(rdoc);
+    const chips = html(createElement(RankingsPanel, { doc: rdoc, columns, rankId: "packedKb", onPick: () => {}, onOpen: () => {} }));
+    for (const label of ["Downloads, 30 days", "Number of tests", "Tests (grade)", "Dependency count", "Days since commit", "Packed size", "Open bug tickets", "README words"]) expect(chips).toContain(`>${label}<`);
+    expect(chips).toContain("58.9 KB");
   });
 });

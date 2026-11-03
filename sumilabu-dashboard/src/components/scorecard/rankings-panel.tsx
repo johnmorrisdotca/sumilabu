@@ -1,12 +1,14 @@
 import type { Scorecard, ScorecardItem } from "@/lib/scorecard/contract";
-import { formatMeasure, gradeLabel, measureLabel, rankValue, rankingFor, rankingIds, type GradeColumn } from "@/lib/scorecard/view";
+import { COLLECTOR_MEASURE_RANKINGS, RANK_METHOD, formatRankValue, rankLabel, rankValue, rankingFor, rankingIds, type GradeColumn } from "@/lib/scorecard/view";
 
 import { GradeCell } from "./grade-cell";
 
 type Props = { doc: Scorecard; columns: GradeColumn[]; rankId: string; onPick: (id: string) => void; onOpen: (id: string) => void };
 
+/** A ranking of a grade is drawn as grade cells; of anything else, as its number. */
 function isGrade(doc: Scorecard, id: string): boolean {
-  return doc.items.some((i) => id in i.grades);
+  if (id.startsWith("grade:")) return true;
+  return !COLLECTOR_MEASURE_RANKINGS.includes(id) && doc.items.some((i) => id in i.grades);
 }
 
 function List({ title, tone, items, doc, rankId, onOpen }: { title: string; tone: string; items: ScorecardItem[]; doc: Scorecard; rankId: string; onOpen: (id: string) => void }) {
@@ -25,7 +27,7 @@ function List({ title, tone, items, doc, rankId, onOpen }: { title: string; tone
                 <button type="button" onClick={() => onOpen(item.id)} className="min-w-0 flex-1 truncate rounded py-1.5 text-left text-sm text-stone-900 underline decoration-stone-300 underline-offset-2 hover:decoration-stone-700">
                   {item.name}
                 </button>
-                {isGrade(doc, rankId) ? <GradeCell value={typeof value === "number" ? value : null} /> : <span className="font-mono text-sm tabular-nums text-stone-700">{formatMeasure(typeof value === "undefined" ? null : value)}</span>}
+                {isGrade(doc, rankId) ? <GradeCell value={typeof value === "number" ? value : null} /> : <span className="font-mono text-sm tabular-nums text-stone-700">{formatRankValue(value, rankId)}</span>}
               </li>
             );
           })}
@@ -38,7 +40,7 @@ function List({ title, tone, items, doc, rankId, onOpen }: { title: string; tone
 export function RankingsPanel({ doc, columns, rankId, onPick, onOpen }: Props) {
   const ids = rankingIds(doc, columns);
   const ranking = rankingFor(doc, rankId);
-  const name = isGrade(doc, rankId) ? gradeLabel(rankId) : measureLabel(rankId);
+  const name = rankLabel(rankId);
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-3" data-testid="rankings-panel">
       <div role="group" aria-label="Rank by" className="flex flex-wrap gap-2">
@@ -50,11 +52,11 @@ export function RankingsPanel({ doc, columns, rankId, onPick, onOpen }: Props) {
             onClick={() => onPick(id)}
             className={`rounded-full border px-3 py-1.5 text-sm transition ${id === rankId ? "border-stone-900 bg-stone-900 text-stone-50" : "border-stone-300 bg-white/80 text-stone-700 hover:border-stone-500"}`}
           >
-            {isGrade(doc, id) ? gradeLabel(id) : measureLabel(id)}
+            {rankLabel(id)}
           </button>
         ))}
       </div>
-      {doc.methods[rankId] ? <p className="text-sm text-stone-600"><span className="font-semibold">{name}:</span> {doc.methods[rankId]}</p> : null}
+      {(doc.methods[rankId] ?? doc.methods[RANK_METHOD[rankId] ?? ""]) ? <p className="text-sm text-stone-600"><span className="font-semibold">{name}:</span> {doc.methods[rankId] ?? doc.methods[RANK_METHOD[rankId] ?? ""]}</p> : null}
       <div className="grid gap-3 md:grid-cols-2">
         <List title={`Best: ${name}`} tone="text-emerald-700" items={ranking.best} doc={doc} rankId={rankId} onOpen={onOpen} />
         <List title={`Worst: ${name}`} tone="text-red-700" items={ranking.worst} doc={doc} rankId={rankId} onOpen={onOpen} />

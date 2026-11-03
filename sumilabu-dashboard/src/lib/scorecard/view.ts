@@ -41,6 +41,13 @@ export function gradeLabel(id: string): string {
   return GRADE_ORDER.find((g) => g.id === id)?.long ?? (id === "overall" ? "Overall" : titleCase(id));
 }
 
+/** The overall to show and sort by: the collector's two-decimal score when it wrote one, else the whole-number grade. */
+export function overallValue(item: ScorecardItem): number | null {
+  const score = item.measures.overallScore;
+  if (typeof score === "number") return score;
+  return item.grades.overall ?? null;
+}
+
 export function itemVersion(item: ScorecardItem): string | null {
   return item.versions.npm ?? item.versions.repo ?? null;
 }
@@ -69,6 +76,8 @@ function sortValue(item: ScorecardItem, key: SortKey): string | number | null {
       return item.popularity.npmDownloadsWeek;
     case "stars":
       return item.popularity.stars;
+    case "grade:overall":
+      return overallValue(item);
     default:
       return item.grades[key.slice("grade:".length)] ?? null;
   }
@@ -120,32 +129,85 @@ export function filterItems(items: readonly ScorecardItem[], filters: Filters): 
 
 export type Ranking = { best: ScorecardItem[]; worst: ScorecardItem[] };
 
-/** Where a measure's number lives: a grade, a measure, or a popularity count. */
-export function rankValue(item: ScorecardItem, id: string): number | boolean | string | null {
-  if (id in item.grades) return item.grades[id] ?? null;
-  if (id in item.measures) return item.measures[id] ?? null;
+const GRADE_PREFIX = "grade:";
+/** Ranking ids the collector ranks by a reading, not a grade, even when a grade has the same name (`tests`). */
+export const COLLECTOR_MEASURE_RANKINGS = ["downloads", "dependencyCount", "daysSinceCommit", "tests", "packedKb", "openBugTickets", "readmeWords"];
+
+export type RankValue = number | boolean | string | null;
+
+/** Where a ranking's number lives: the grade, a named reading, a popularity count, or a measure of the same name. */
+export function rankValue(item: ScorecardItem, id: string): RankValue {
+  /* "grade:tests" is the Tests grade; plain "tests" is the collector's ranking by number of tests. */
+  if (id.startsWith(GRADE_PREFIX)) return item.grades[id.slice(GRADE_PREFIX.length)] ?? null;
+  switch (id) {
+    case "overall":
+      return overallValue(item);
+    case "downloads":
+      return item.popularity.npmDownloadsMonth ?? item.popularity.npmDownloadsWeek;
+    case "dependencyCount":
+      return item.dependencies.runtime.length + item.dependencies.requiredPeers.length;
+    case "daysSinceCommit":
+      return item.dates.daysSinceCommit;
+    case "packedKb":
+      return item.dependencies.packedKb;
+  }
+  if (id in item.grades && !COLLECTOR_MEASURE_RANKINGS.includes(id)) return item.grades[id] ?? null;
+  const m = item.measures[id];
+  if (m !== undefined) return Array.isArray(m) ? null : m;
   const pop = item.popularity as Record<string, unknown>;
-  if (typeof pop[id] === "number") return pop[id] as number;
-  return null;
+  return typeof pop[id] === "number" ? (pop[id] as number) : null;
+}
+
+const RANK_UNITS: Record<string, string> = { packedKb: " KB", daysSinceCommit: " d", downloads: " /30 d" };
+
+export function formatRankValue(value: RankValue, id: string): string {
+  const text = formatMeasure(value);
+  return typeof value === "number" ? `${text}${RANK_UNITS[id] ?? ""}` : text;
+}
+
+const RANK_LABELS: Record<string, string> = {
+  "grade:tests": "Tests (grade)",
+  tests: "Number of tests",
+  downloads: "Downloads, 30 days",
+  dependencyCount: "Dependency count",
+  daysSinceCommit: "Days since commit",
+  packedKb: "Packed size",
+  openBugTickets: "Open bug tickets",
+  readmeWords: "README words",
+};
+
+/** Which entry of `methods` explains a ranking, when its id is not the method's id. */
+export const RANK_METHOD: Record<string, string> = { "grade:tests": "tests", downloads: "npmDownloads", dependencyCount: "dependencies", daysSinceCommit: "freshness", packedKb: "performance", openBugTickets: "tickets", readmeWords: "docs" };
+
+export function rankLabel(id: string): string {
+  if (RANK_LABELS[id]) return RANK_LABELS[id];
+  return GRADE_ORDER.some((g) => g.id === id) || id === "overall" ? gradeLabel(id) : measureLabel(id);
 }
 
 /** The collector's own ranking when it wrote one, else the top and bottom five by the grade; ids it names that no item has are skipped. */
 export function rankingFor(doc: Scorecard, id: string, size = 5): Ranking {
   const byId = new Map(doc.items.map((i) => [i.id, i]));
+  const gradeId = id.startsWith(GRADE_PREFIX) ? id.slice(GRADE_PREFIX.length) : null;
+  if (gradeId !== null) return computedRanking(doc, gradeId, size);
   const given = doc.rankings[id];
   if (given) {
     const pick = (ids: string[]) => ids.map((x) => byId.get(x)).filter((x): x is ScorecardItem => Boolean(x)).slice(0, size);
     return { best: pick(given.best), worst: pick(given.worst) };
   }
-  const graded = doc.items.filter((i) => typeof i.grades[id] === "number");
-  const sorted = sortItems(graded, `grade:${id}`, "desc");
+  return computedRanking(doc, id, size);
+}
+
+function computedRanking(doc: Scorecard, gradeId: string, size: number): Ranking {
+  const graded = doc.items.filter((i) => typeof i.grades[gradeId] === "number");
+  const sorted = sortItems(graded, `grade:${gradeId}`, "desc");
   return { best: sorted.slice(0, size), worst: sorted.slice(-size).reverse() };
 }
 
-/** Every id that has a ranking: the collector's, plus each grade column. */
+/** Every id that has a ranking: each grade column (the Tests grade as `grade:tests`, since the collector's `tests` ranks the number of tests), then the collector's reading rankings. */
 export function rankingIds(doc: Scorecard, columns: readonly GradeColumn[]): string[] {
-  const ids = [...columns.map((c) => c.id), ...Object.keys(doc.rankings).filter((k) => !columns.some((c) => c.id === k))];
-  return ids;
+  const gradeIds = columns.map((c) => (c.id === "tests" ? `${GRADE_PREFIX}tests` : c.id));
+  const extra = Object.keys(doc.rankings).filter((k) => !gradeIds.includes(k));
+  return [...gradeIds, ...orderKeys(extra, COLLECTOR_MEASURE_RANKINGS)];
 }
 
 /** Four steps the colour scale is cut into; the cell also prints the number, so colour is never the only signal. */
@@ -196,7 +258,7 @@ export function runIsStale(generatedAt: string, nowIso: string): boolean {
 
 /** The mean of the overall grades that exist, one decimal; null when none. */
 export function averageOverall(items: readonly ScorecardItem[]): number | null {
-  const values = items.map((i) => i.grades.overall).filter((v): v is number => typeof v === "number");
+  const values = items.map(overallValue).filter((v): v is number => typeof v === "number");
   if (values.length === 0) return null;
   return Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 10) / 10;
 }
@@ -206,7 +268,7 @@ export function trendOf(trend: ReadonlyArray<{ overall: Record<string, number | 
   return trend.map((t) => t.overall[itemId]).filter((v): v is number => typeof v === "number");
 }
 
-export function formatMeasure(value: number | boolean | string | null): string {
+export function formatMeasure(value: RankValue): string {
   if (value === null) return "not read";
   if (typeof value === "boolean") return value ? "yes" : "no";
   if (typeof value === "number") return Number.isInteger(value) ? value.toLocaleString("en-US") : String(value);
@@ -216,25 +278,57 @@ export function formatMeasure(value: number | boolean | string | null): string {
 /* Postgres keeps JSON in its own key order (jsonb sorts by length, then
    alphabet), so every list drawn from an object's keys is put in an order here. */
 const MEASURES: ReadonlyArray<readonly [string, string]> = [
+  ["overallScore", "Overall score"],
   ["readmeWords", "README words"],
+  ["readmeSections", "README sections"],
   ["docsSite", "Docs site"],
+  ["docsPages", "Docs pages"],
+  ["docsGuidesJa", "Japanese guides"],
   ["examplesTested", "Examples tested"],
   ["changelog", "Changelog"],
+  ["sourceFiles", "Source files"],
+  ["sourceLines", "Source lines"],
   ["testFiles", "Test files"],
+  ["testLines", "Test lines"],
   ["tests", "Tests"],
   ["e2e", "End-to-end tests"],
   ["freezeTest", "Freeze test"],
   ["ciRunsLast30", "CI runs, 30 days"],
   ["ciFailuresLast30", "CI failures, 30 days"],
+  ["ciLastFailedOnMain", "Last CI run on main failed"],
   ["openBugTickets", "Open bug tickets"],
   ["openTickets", "Open tickets"],
+  ["crashTickets", "Crash tickets"],
+  ["lintConfig", "Linter set up"],
+  ["linter", "Linter"],
+  ["formatter", "Formatter set up"],
   ["lintErrors", "Lint errors"],
   ["lintWarnings", "Lint warnings"],
+  ["lintNote", "Lint note"],
+  ["typescript", "TypeScript"],
+  ["tsFraction", "TypeScript share of source"],
+  ["tsStrict", "Strict mode"],
   ["typeErrors", "Type errors"],
   ["anyCount", "Uses of any"],
+  ["anyPer1k", "Uses of any per 1,000 lines"],
+  ["largestFile", "Largest file"],
   ["largestFileLines", "Largest file, lines"],
+  ["filesOver600", "Files over 600 lines"],
+  ["todoCount", "TODO comments"],
+  ["consoleLogs", "console.log calls"],
   ["auditHigh", "High-severity audit findings"],
+  ["auditModerate", "Moderate audit findings"],
+  ["auditDevHigh", "High findings in dev tools"],
   ["bundleGzipKb", "Bundle, KB gzipped"],
+  ["bundleEntry", "Bundle entry"],
+  ["familyUsers", "Family items using it"],
+  ["behindRepo", "Published version behind the repo"],
+  ["demoStatus", "Demo HTTP status"],
+  ["demoMs", "Demo response, ms"],
+  ["siteStatus", "Site HTTP status"],
+  ["siteMs", "Site response, ms"],
+  ["siteKb", "Site page, KB"],
+  ["siteChallenged", "Met Vercel's bot check"],
 ];
 
 export function measureLabel(id: string): string {
@@ -256,3 +350,36 @@ export function orderKeys(keys: readonly string[], preferred: readonly string[])
 export const measureOrder = MEASURES.map(([k]) => k);
 export const gradeOrder = [...GRADE_ORDER.map((g) => g.id), "overall"];
 export const LINK_ORDER = ["repo", "npm", "demo", "site"];
+
+const METHOD_LABELS: Record<string, string> = {
+  npmDownloads: "npm downloads",
+  outsideUse: "Use outside John's accounts",
+  ciRuns: "CI runs",
+  tickets: "Tickets",
+  codeReadings: "Code readings",
+  rankings: "Rankings",
+};
+
+export function methodLabel(id: string): string {
+  return METHOD_LABELS[id] ?? gradeLabel(id);
+}
+
+/** Measures with a reading that can be blank for a reason the collector wrote down in `checkNotes`. */
+export const CHECKED_MEASURES = ["lintErrors", "lintWarnings", "typeErrors", "auditHigh", "auditModerate", "auditDevHigh"];
+
+/** Readings drawn some other way (a chart, a note), left out of the plain list of numbers. */
+export const NOT_LISTED_MEASURES = ["downloadsDaily", "checkNotes"];
+
+/** The `checkNotes` of an item as sentences, whatever else is in the measure. */
+export function checkNotesOf(item: ScorecardItem): string[] {
+  const notes = item.measures.checkNotes;
+  return Array.isArray(notes) ? notes.filter((n): n is string => typeof n === "string") : [];
+}
+
+/** The 30 daily npm counts, oldest first, or null when there are none to draw. */
+export function dailyDownloads(item: ScorecardItem): number[] | null {
+  const d = item.measures.downloadsDaily;
+  if (!Array.isArray(d)) return null;
+  const nums = d.filter((n): n is number => typeof n === "number");
+  return nums.length >= 2 ? nums : null;
+}

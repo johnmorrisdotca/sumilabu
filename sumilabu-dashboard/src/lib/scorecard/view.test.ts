@@ -97,8 +97,10 @@ describe("rankingFor", () => {
     expect([...r.best, ...r.worst].some((i) => i.id === "onibako")).toBe(false);
   });
 
-  it("lists a ranking that is not a grade, after the grades", () => {
-    expect(rankingIds(doc, gradeColumns(doc)).at(-1)).toBe("npmDownloadsWeek");
+  it("lists the Tests grade as grade:tests and the collector's other rankings after the grades", () => {
+    const ids = rankingIds(doc, gradeColumns(doc));
+    expect(ids).toContain("grade:tests");
+    expect(ids.slice(-2)).toEqual(["tests", "npmDownloadsWeek"]);
   });
 });
 

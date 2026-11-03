@@ -58,7 +58,7 @@ describe("parseScorecard", () => {
     ["an http link", (d: any) => (d.items[0].links.site = "http://example.com"), "items.0.links.site"],
     ["an item id with a space", (d: any) => (d.items[0].id = "bad id"), "items.0.id"],
     ["a duplicate item id", (d: any) => (d.items[1].id = d.items[0].id), "items"],
-    ["a fact over 400 characters", (d: any) => (d.items[0].facts[0] = "x".repeat(401)), "items.0.facts.0"],
+    ["a fact over 600 characters", (d: any) => (d.items[0].facts[0] = "x".repeat(601)), "items.0.facts.0"],
     ["a missing grades object", (d: any) => delete d.items[2].grades, "items.2.grades"],
     ["items that are not a list", (d: any) => (d.items = {}), "items"],
   ])("refuses %s, and names where", (_name, mutate, where) => {

@@ -48,3 +48,34 @@ export function TrendSpark({ points }: { points: number[] }) {
     </span>
   );
 }
+
+/** "private" next to a name: its CI, demo or downloads may be blank because they cannot be read from outside. */
+export function PrivateBadge() {
+  return (
+    <span title="Private repository: CI, demo or download figures may be blank" className="ml-1 rounded-full border border-stone-300 bg-stone-100 px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wider text-stone-600">
+      private
+    </span>
+  );
+}
+
+/** Thirty daily counts as bars, oldest first. Zero days are drawn as a hairline, so a gap reads as a gap. */
+export function DailyBars({ counts }: { counts: number[] }) {
+  const w = 180;
+  const h = 40;
+  const max = Math.max(1, ...counts);
+  const slot = w / counts.length;
+  const total = counts.reduce((a, b) => a + b, 0);
+  return (
+    <figure className="mt-3">
+      <svg width="100%" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" role="img" aria-label={`npm downloads per day over the last ${counts.length} days: ${total} in all, busiest day ${max}`} className="h-10 w-full">
+        {counts.map((c, i) => {
+          const bar = Math.max(1, (c / max) * (h - 2));
+          return <rect key={i} x={i * slot + 0.5} y={h - bar} width={Math.max(1, slot - 1)} height={bar} fill={c === 0 ? "#d6d3d1" : "#44403c"} />;
+        })}
+      </svg>
+      <figcaption className="mt-1 text-xs text-stone-500">
+        Downloads per day, last {counts.length} days: {total.toLocaleString("en-US")} in all, busiest day {max.toLocaleString("en-US")}.
+      </figcaption>
+    </figure>
+  );
+}

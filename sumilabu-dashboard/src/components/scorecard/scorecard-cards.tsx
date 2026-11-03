@@ -1,7 +1,7 @@
 import type { ScorecardItem } from "@/lib/scorecard/contract";
-import { daysSinceUpdate, formatCount, formatDays, itemVersion, type GradeColumn } from "@/lib/scorecard/view";
+import { daysSinceUpdate, formatCount, formatDays, itemVersion, overallValue, type GradeColumn } from "@/lib/scorecard/view";
 
-import { GradeCell } from "./grade-cell";
+import { GradeCell, PrivateBadge } from "./grade-cell";
 
 /**
  * The same rows as the table, for a phone: a table with a dozen grade columns
@@ -25,6 +25,7 @@ export function ScorecardCards({ items, columns, onOpen }: { items: ScorecardIte
                 <button type="button" onClick={() => onOpen(item.id)} className="max-w-full break-words rounded py-1 text-left text-base font-semibold text-stone-900 underline decoration-stone-300 underline-offset-2">
                   {item.name}
                 </button>
+                {item.private ? <PrivateBadge /> : null}
                 <p className="text-xs text-stone-600">
                   {item.kind} · {item.owner} · {itemVersion(item) ? `v${itemVersion(item)}` : "no version"}
                 </p>
@@ -37,7 +38,7 @@ export function ScorecardCards({ items, columns, onOpen }: { items: ScorecardIte
               </div>
               {overall ? (
                 <div className="flex shrink-0 flex-col items-center gap-0.5">
-                  <GradeCell value={item.grades.overall ?? null} large label="Overall" />
+                  <GradeCell value={overallValue(item)} large label="Overall" />
                   <span className="text-[10px] uppercase tracking-wider text-stone-500">overall</span>
                 </div>
               ) : null}

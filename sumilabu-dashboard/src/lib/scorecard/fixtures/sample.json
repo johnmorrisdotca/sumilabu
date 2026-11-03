@@ -1119,18 +1119,18 @@
   },
   "tests": {
    "best": [
-    "kazoku-ui",
-    "koyomi-calendars",
-    "chizu",
+    "sumilabu-dashboard",
+    "onibako",
+    "wazadb",
     "umakuma",
     "itsutsu"
    ],
    "worst": [
-    "onibako",
-    "wazadb",
-    "kyogijo",
+    "kazoku-ui",
+    "chizu",
     "hako-devices",
-    "sumilabu-dashboard"
+    "kyogijo",
+    "koyomi-calendars"
    ]
   },
   "bugs": {

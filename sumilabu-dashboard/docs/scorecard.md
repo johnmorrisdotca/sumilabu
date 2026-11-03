@@ -69,6 +69,10 @@ Then `pnpm scorecard:upload` after each collector run, and sign in at
 
 Every string is shown as text, never HTML; a link must be https; unknown fields
 are dropped; at most 200 items; see `src/lib/scorecard/contract.ts` for every cap.
+The additions in the notes below (`skipped`, `run`, `private`, `starsOutside`,
+`downloadsDaily`, `checkNotes` and the rest) are all accepted; `downloadsDaily`
+and `checkNotes` are the only measures that may be lists (numbers, sentences).
+A document without them still parses.
 
 ---
 
@@ -133,3 +137,16 @@ Rules
 - A measure nobody could read is null, never a guess. Every grade has a note.
 - "Robustness" is the opposite of fragile. "Crashes" counts real failures seen (CI runs, freeze tests, tickets about crashes), not opinions.
 - Downloads from npm include the owner's own installs and CI; say so in `popularity.note`.
+
+## Notes
+
+**2026-11-02, collector 1.0.0 (Mac Studio).** Additions only; every field above keeps its shape and meaning, so a page written to the shape above still works.
+
+- Top level: `skipped` (`[{ "repo": "spxis/bootstrap", "reason": "a fork of someone else's project" }]`, the repositories left out and why) and `run` (`{ seconds, githubRateLimited, boardsRead: { <board>: true|false }, installsRun }`). John asked what was skipped; the page can show both.
+- Item: `private` (true for a private repository). Shown so the page can say why CI, demos or downloads are blank.
+- `popularity`: `starsOutside` and `forksOutside`, the stars and forks from accounts other than johnmorrisdotca and spxis. John asked for use "besides my 2 users"; `stars` and `forks` stay the totals.
+- `dependencies`: `requiredPeers` (non-optional peers, counted in the dependencies grade).
+- `measures`: extra raw readings beside the listed ones: `readmeSections`, `docsPages`, `docsGuidesJa`, `sourceFiles`, `sourceLines`, `testLines`, `crashTickets`, `ciLastFailedOnMain`, `lintConfig` (false = no linter set up), `formatter`, `lintNote`, `typescript`, `tsFraction`, `tsStrict`, `anyPer1k`, `largestFile`, `filesOver600`, `todoCount`, `consoleLogs`, `auditModerate`, `bundleEntry`, `familyUsers` (how many family items use it), `behindRepo`, `demoStatus`, `demoMs`, `siteStatus`, `siteMs`, `siteKb`, `siteChallenged` (true when Vercel's bot check met the request), `downloadsDaily` (30 daily npm counts, oldest first, for a sparkline) and `checkNotes` (why lint, typecheck or audit is blank). `bundleGzipKb` is the gzip size of the main entry plus every file it imports statically, read from the published tarball.
+- `facts` holds 10 to 14 sentences (a moved-repository note may come first).
+- `rankings`: besides every grade id, `downloads`, `dependencyCount`, `daysSinceCommit`, `tests`, `packedKb`, `openBugTickets` and `readmeWords`. For grades best is highest; for those measures best is the end John wants (most downloads, fewest dependencies, most recent, most tests, smallest, fewest bugs, longest README). Five ids each side.
+- `methods` keys: every grade id plus `npmDownloads`, `outsideUse`, `ciRuns`, `tickets`, `codeReadings`, `rankings`.

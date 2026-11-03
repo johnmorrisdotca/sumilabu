@@ -11,9 +11,6 @@ import {
   defaultDir,
   filterItems,
   gradeColumns,
-  gradeLabel,
-  gradeOrder,
-  orderKeys,
   runIsStale,
   sortItems,
   trendOf,
@@ -23,6 +20,7 @@ import {
 } from "@/lib/scorecard/view";
 
 import { DETAIL_TABS, ItemDetail, type DetailTab } from "./item-detail";
+import { MethodPanel } from "./method-panel";
 import { RankingsPanel } from "./rankings-panel";
 import { ScorecardCards } from "./scorecard-cards";
 import { ScorecardTable } from "./scorecard-table";
@@ -215,21 +213,7 @@ export function ScorecardView({ data, nowIso }: { data: ScorecardData | null; no
           {tab === "rankings" ? <RankingsPanel doc={doc} columns={columns} rankId={rankId} onPick={pickRank} onOpen={open} /> : null}
 
           {tab === "method" ? (
-            <section className="rounded-2xl border border-stone-300/80 bg-white/90 p-4 shadow-sm" data-testid="method-panel">
-              <p className="mb-3 text-sm text-stone-600">Collector {doc.generator.name} {doc.generator.version}. Every grade runs from 1 (worst) to 10 (best).</p>
-              {Object.keys(doc.methods).length === 0 ? (
-                <p className="text-sm text-stone-500">This run did not describe its methods.</p>
-              ) : (
-                <dl className="grid gap-x-6 gap-y-3 md:grid-cols-2">
-                  {orderKeys(Object.keys(doc.methods), gradeOrder).map((id) => (
-                    <div key={id}>
-                      <dt className="text-sm font-semibold">{gradeLabel(id)}</dt>
-                      <dd className="text-sm leading-5 text-stone-600">{doc.methods[id]}</dd>
-                    </div>
-                  ))}
-                </dl>
-              )}
-            </section>
+            <MethodPanel doc={doc} />
           ) : null}
         </>
       )}

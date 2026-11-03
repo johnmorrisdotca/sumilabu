@@ -1,7 +1,7 @@
 import type { ScorecardItem } from "@/lib/scorecard/contract";
-import { defaultDir, daysSinceUpdate, formatCount, formatDays, itemVersion, type GradeColumn, type SortDir, type SortKey } from "@/lib/scorecard/view";
+import { defaultDir, daysSinceUpdate, formatCount, formatDays, itemVersion, overallValue, type GradeColumn, type SortDir, type SortKey } from "@/lib/scorecard/view";
 
-import { GradeCell } from "./grade-cell";
+import { GradeCell, PrivateBadge } from "./grade-cell";
 
 type Props = {
   items: ScorecardItem[];
@@ -27,14 +27,14 @@ function staleClass(days: number | null): string {
 }
 
 export function ScorecardTable({ items, columns, sortKey, sortDir, onSort, onOpen }: Props) {
-  const header = (key: SortKey, label: string, title?: string, align: "left" | "center" = "left") => {
+  const header = (key: SortKey, label: string, title?: string, align: "left" | "center" = "left", pinned = false) => {
     const active = sortKey === key;
     return (
       <th
         key={key}
         scope="col"
         aria-sort={active ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
-        className={`px-1 py-2 text-[11px] font-semibold uppercase tracking-[0.04em] text-stone-500 ${align === "center" ? "text-center" : "text-left"}`}
+        className={`px-1 py-2 text-[11px] font-semibold uppercase tracking-[0.04em] text-stone-500 ${align === "center" ? "text-center" : "text-left"} ${pinned ? "sticky right-0 z-10 border-l border-stone-300/80 bg-stone-100" : ""}`}
       >
         <button
           type="button"
@@ -55,7 +55,7 @@ export function ScorecardTable({ items, columns, sortKey, sortDir, onSort, onOpe
 
   return (
     <div className="hidden overflow-x-auto rounded-2xl border border-stone-300/80 bg-white/90 shadow-sm md:block print:block print:overflow-visible print:shadow-none" data-testid="scorecard-table">
-      <table className="w-full min-w-[1100px] border-collapse text-sm print:min-w-0 print:text-[9px]">
+      <table className="w-full min-w-[1000px] border-collapse text-sm print:min-w-0 print:text-[9px]">
         <thead className="border-b border-stone-300/80 bg-stone-100/90">
           <tr>
             <th scope="col" aria-sort={sortKey === "name" ? (sortDir === "asc" ? "ascending" : "descending") : "none"} className="sticky left-0 z-10 bg-stone-100 px-1 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.04em] text-stone-500">
@@ -73,7 +73,7 @@ export function ScorecardTable({ items, columns, sortKey, sortDir, onSort, onOpe
             {header("days", "Updated", "Days since the last commit or release")}
             {header("downloads", "Dl/wk", "npm downloads in the last week (includes the owner's own installs)")}
             {header("stars", "Stars")}
-            {columns.map((c) => header(`grade:${c.id}`, c.label, `Sort by ${c.long}`, "center"))}
+            {columns.map((c) => header(`grade:${c.id}`, c.label, `Sort by ${c.long}`, "center", c.id === "overall"))}
           </tr>
         </thead>
         <tbody>
@@ -85,6 +85,7 @@ export function ScorecardTable({ items, columns, sortKey, sortDir, onSort, onOpe
                   <button type="button" onClick={() => onOpen(item.id)} className="max-w-[12rem] truncate rounded px-1 py-1 text-left text-stone-900 underline decoration-stone-300 underline-offset-2 hover:decoration-stone-700" title={`Open ${item.name}`}>
                     {shortName(item.name)}
                   </button>
+                  {item.private ? <PrivateBadge /> : null}
                   {item.flags.length > 0 ? <span className="ml-1 text-xs text-amber-700" title={item.flags.join(", ")}>⚑{item.flags.length}</span> : null}
                 </th>
                 <td className="px-1.5 py-1.5 text-stone-600">{KIND_WORD[item.kind]}</td>
@@ -94,8 +95,8 @@ export function ScorecardTable({ items, columns, sortKey, sortDir, onSort, onOpe
                 <td className="px-1.5 py-1.5 tabular-nums text-stone-700">{formatCount(item.popularity.npmDownloadsWeek)}</td>
                 <td className="px-1.5 py-1.5 tabular-nums text-stone-700">{formatCount(item.popularity.stars)}</td>
                 {columns.map((c) => (
-                  <td key={c.id} className="px-0.5 py-1.5 text-center" data-grade={c.id}>
-                    <GradeCell value={item.grades[c.id] ?? null} label={c.long} />
+                  <td key={c.id} className={`px-0.5 py-1.5 text-center ${c.id === "overall" ? "sticky right-0 z-10 border-l border-stone-200 bg-white" : ""}`} data-grade={c.id}>
+                    <GradeCell value={c.id === "overall" ? overallValue(item) : (item.grades[c.id] ?? null)} label={c.long} />
                   </td>
                 ))}
               </tr>

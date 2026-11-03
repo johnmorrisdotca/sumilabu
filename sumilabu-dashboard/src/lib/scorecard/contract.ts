@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { overallValue } from "./view";
+
 /*
  * The package scorecard document (SUMILABU-6). The collector on John's Mac
  * writes it; docs/scorecard.md is the written contract and this is that
@@ -28,7 +30,14 @@ function isHttps(value: string): boolean {
 
 const httpsLink = z.string().max(300).refine(isHttps, "must be an https address");
 const grade = z.number().min(1).max(10).nullable();
-const measureValue = z.union([z.number().finite(), z.boolean(), short(200), z.null()]);
+/* A reading is a number, a yes or no, a short text, or (downloadsDaily's 30 counts, checkNotes' sentences) a list of them. */
+const measureValue = z.union([
+  z.number().finite(),
+  z.boolean(),
+  short(200),
+  z.array(z.union([z.number().finite(), short(300)])).max(400),
+  z.null(),
+]);
 const stringList = (maxItems: number, maxLength: number) => z.array(short(maxLength)).max(maxItems).default([]);
 
 const versions = z.object({ npm: short(40).nullable().default(null), repo: short(40).nullable().default(null), count: num });
@@ -45,12 +54,16 @@ const popularity = z.object({
   stars: num,
   forks: num,
   watchers: num,
+  /** Stars and forks from accounts other than John's own two; `stars` and `forks` stay the totals. */
+  starsOutside: num,
+  forksOutside: num,
   dependentsOutsideFamily: num,
   note: short(800).default(""),
 });
 const dependencies = z.object({
   runtime: stringList(100, 100),
   optionalPeers: stringList(100, 100),
+  requiredPeers: stringList(100, 100),
   family: stringList(100, 100),
   dev: num,
   packedKb: num,
@@ -60,6 +73,8 @@ const dependencies = z.object({
 const item = z.object({
   id: z.string().regex(/^[A-Za-z0-9._@/-]{1,100}$/, "an id is a repo name"),
   kind: z.enum(["package", "site", "app"]),
+  /** A private repository: CI, demos or downloads may be blank because they cannot be read from outside. */
+  private: z.boolean().default(false),
   owner: short(60),
   name: short(120),
   summary: short(400).default(""),
@@ -71,8 +86,16 @@ const item = z.object({
   measures: z.record(short(40), measureValue).refine((v) => Object.keys(v).length <= 80, "at most 80 measures").default({}),
   grades: z.record(short(30), grade).refine((v) => Object.keys(v).length <= 30, "at most 30 grades"),
   gradeNotes: z.record(short(30), short(600)).default({}),
-  facts: stringList(30, 400),
+  facts: stringList(30, 600),
   flags: stringList(30, 200),
+});
+
+const skipped = z.object({ repo: short(120), reason: short(300) });
+const run = z.object({
+  seconds: num,
+  githubRateLimited: z.boolean().default(false),
+  boardsRead: z.record(short(60), z.boolean()).refine((v) => Object.keys(v).length <= 60, "at most 60 boards").default({}),
+  installsRun: z.boolean().default(false),
 });
 
 const ranking = z.object({ best: z.array(short(100)).max(60).default([]), worst: z.array(short(100)).max(60).default([]) });
@@ -87,6 +110,10 @@ export const scorecardSchema = z.object({
     .max(MAX_ITEMS)
     .refine((items) => new Set(items.map((i) => i.id)).size === items.length, "item ids must be unique"),
   rankings: z.record(short(40), ranking).refine((v) => Object.keys(v).length <= 80, "at most 80 rankings").default({}),
+  /** The repositories left out of the run and why. */
+  skipped: z.array(skipped).max(300).default([]),
+  /** How the run went: time, rate limits, which ticket boards were read. */
+  run: run.nullable().default(null),
 });
 
 export type ScorecardItem = z.output<typeof item>;
@@ -102,7 +129,7 @@ export function parseScorecard(input: unknown): ParseResult {
   return { ok: false, problems };
 }
 
-/** item id -> overall grade, the small thing kept per run for the trend. */
+/** item id -> overall, the small thing kept per run for the trend. */
 export function overallByItem(doc: Scorecard): Record<string, number | null> {
-  return Object.fromEntries(doc.items.map((i) => [i.id, i.grades.overall ?? null]));
+  return Object.fromEntries(doc.items.map((i) => [i.id, overallValue(i)]));
 }

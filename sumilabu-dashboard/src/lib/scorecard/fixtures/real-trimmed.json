@@ -1,0 +1,679 @@
+{
+ "schemaVersion": 1,
+ "generatedAt": "2026-11-03T06:08:10Z",
+ "generator": {
+  "name": "package-scorecard",
+  "version": "1.0.0"
+ },
+ "methods": {
+  "docs": "1 point to start, plus up to 4 for README length (200, 500, 1,000 and 2,000 words of prose), 1 for six or more README sections, 2 for a documentation site (or 1 for a docs/ folder with pages), 1 for a CHANGELOG and 1 when the usage examples are tested.",
+  "dependencies": "10 minus 2 × log2(1 + n), where n counts runtime dependencies and required peers (a family package counts half), minus 1 above 1 MB unpacked, 2 above 5 MB and 3 above 20 MB. Optional peers and dev tools do not count. Sites are read from every package.json in the repository the same way, so apps score low by nature.",
+  "robustness": "The opposite of fragile: the average of the tests grade, the crashes grade and a type-safety score (10, minus 4 when the code is not mostly TypeScript, 2 when it is not strict, 1 or 2 for `any` density, 2 for type errors, 1 for a high or critical advisory in runtime dependencies; dev-tool advisories do not count).",
+  "tests": "1 point to start, plus up to 5 for the number of tests (1, 30, 100, 300, 1,000), up to 2 for test code against source code (25 % and 60 % of lines), 1 for browser or end-to-end tests and 1 for a freeze test or tested usage examples. Tests are counted in the source, not run.",
+  "bugs": "10 minus 1.5 for each open bug ticket on the item's Sumilabu board (a ticket marked FIX, or a title saying bug, broken, wrong, crash, froze or fails). Null when its board could not be read.",
+  "crashes": "Real failures seen: 10, minus the share of GitHub Actions runs in the last 30 days that failed (× 10), minus 2 for each open crash, freeze or error ticket. With no Actions runs to look at (private repositories run their checks on the Mac) the grade is capped at 8.",
+  "code": "10, minus 1 to 3 for the largest source file (over 600, 1,000 and 1,500 lines), 1 when over 5 % of files pass 600 lines, 1 or 2 for `any` density (over 0.5 and 2 per 1,000 TypeScript lines), 2 when the code is not mostly TypeScript, 1 when TypeScript is not strict, 1 or 2 for type errors, 1 for console.log calls (over 1 per 1,000 lines) and 1 for TODO/FIXME notes (over 2 per 1,000 lines).",
+  "lint": "ESLint or Biome, whichever the repository uses, run with its own config in a clean clone: 10 with no problems, 9, 8 or 7 for up to 20, 100 or more warnings, 6, 4 or 2 for up to 10, 100 or more errors, minus 1 with no formatter config. 2 when no linter is set up. Null when it could not run cheaply.",
+  "performance": "Packages: gzip size of the main entry and every file it imports statically, read from the published tarball (10 at 5 KB or less, then 9, 8, 7, 6, 5, 4 at 10, 20, 40, 80, 160, 320 KB, else 3), minus 1 above 10 MB unpacked; no benchmarks are run. Sites: one request to the home page (10 within 0.3 s, 9 within 0.6 s, 8 within 1 s, 7 within 1.5 s, 5 within 2.5 s, 4 within 4 s, else 2), minus 1 or 2 for a page over 500 KB or 1 MB. One sample, so it moves from run to run. A site behind Vercel's bot check cannot be timed by a script and is left blank.",
+  "usefulness": "Judgement, stated: a purpose score (1 to 5, what it does and how many people need that, written in the collector's config with a reason), plus how many of the family's own items use it (1, 2 to 4, 5 or more give 1, 2, 3), plus 1 or 2 when its monthly npm downloads are above the family's median or top third. Sites: purpose, plus real users (0 to 3, with the reason), plus 2 when the site answered.",
+  "freshness": "Days since the last commit on the default branch: 10 within 7 days, 9 within 14, 8 within 30, 6 within 60, 5 within 90, 3 within 180, 2 within a year, else 1. Packages lose 1 when the repository's version is ahead of npm and 1 when the last npm release is over 30 days old.",
+  "overall": "Weighted mean of the grades that could be judged: docs, tests and robustness × 1.5; code, bugs, crashes, dependencies and usefulness × 1; lint, performance and freshness × 0.5. Rounded; the unrounded mean is measures.overallScore and orders the overall ranking.",
+  "npmDownloads": "From api.npmjs.org: the daily counts of the last 30 days in one request (the week is the last 7 of them), so they end yesterday. These count every download: John's own installs, CI and demo builds, registry mirrors and bots. They cannot be split, so they overstate outside use, often by a lot for a new package.",
+  "outsideUse": "What can show use beyond John: dependents on npm from deps.dev (counted for the newest version it has indexed; null when it has none), and stars and forks by accounts other than johnmorrisdotca and spxis.",
+  "ciRuns": "GitHub Actions runs of the last 30 days through gh api; failures are failure, timed_out and startup_failure. Private repositories run no Actions (the money rule), so theirs are null.",
+  "tickets": "Open tickets on Sumilabu: the item's own board, or the shared modules and spx-stats boards for tickets whose title starts with the item's name and a colon.",
+  "codeReadings": "From a shallow clone of the default branch: tracked source files outside build, vendor and fixture folders; test files by name and folder; tests by counting it(…) and test(…) calls; `any` by pattern in TypeScript; README words exclude code blocks.",
+  "rankings": "For each grade, best is the highest and worst the lowest (ties broken by the unrounded overall score). For downloads, dependencyCount, daysSinceCommit, tests, packedKb, openBugTickets and readmeWords, best is the side John would want (most downloads, fewest dependencies, most recent, most tests, smallest, fewest bugs, longest README) and worst the other end. Five each side; items with no reading are left out."
+ },
+ "items": [
+  {
+   "id": "tane",
+   "kind": "package",
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/tane",
+   "summary": "Tane 種 — Seeded random numbers for JavaScript: reproducible streams, shuffle, pick, sample, weighted choice, daily seeds and saved positions. Zero dependencies.",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/tane",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/tane",
+    "demo": "https://johnmorrisdotca.github.io/tane/"
+   },
+   "versions": {
+    "npm": "1.3.1",
+    "repo": "1.3.1",
+    "count": 9
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-10-31",
+    "created": "2026-09-30",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 2
+   },
+   "popularity": {
+    "npmDownloadsWeek": 555,
+    "npmDownloadsMonth": 1311,
+    "stars": 0,
+    "forks": 0,
+    "watchers": 0,
+    "starsOutside": 0,
+    "forksOutside": 0,
+    "dependentsOutsideFamily": 0,
+    "note": "npm downloads include John's own installs, CI and demo builds, registry mirrors and bots, and cannot be split. deps.dev lists 0 direct dependents of 1.3.1. Watchers include John's own account. Stars and forks outside count only accounts other than johnmorrisdotca and spxis."
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [
+     "react"
+    ],
+    "family": [],
+    "dev": 9,
+    "packedKb": 58.9,
+    "unpackedKb": 210.1,
+    "requiredPeers": []
+   },
+   "measures": {
+    "readmeWords": 5210,
+    "readmeSections": 58,
+    "docsSite": true,
+    "docsPages": 23,
+    "docsGuidesJa": 10,
+    "examplesTested": true,
+    "changelog": true,
+    "sourceFiles": 24,
+    "sourceLines": 3821,
+    "testFiles": 28,
+    "testLines": 4220,
+    "tests": 247,
+    "e2e": true,
+    "freezeTest": false,
+    "ciRunsLast30": 34,
+    "ciFailuresLast30": 5,
+    "ciLastFailedOnMain": false,
+    "openBugTickets": 0,
+    "openTickets": 0,
+    "crashTickets": 0,
+    "lintConfig": true,
+    "formatter": false,
+    "lintErrors": 0,
+    "lintWarnings": 0,
+    "linter": "biome",
+    "lintNote": null,
+    "typeErrors": 0,
+    "typescript": true,
+    "tsFraction": 0.67,
+    "tsStrict": true,
+    "anyCount": 1,
+    "anyPer1k": 0.4,
+    "largestFile": "src/element.ts",
+    "largestFileLines": 469,
+    "filesOver600": 0,
+    "todoCount": 0,
+    "consoleLogs": 0,
+    "auditHigh": 0,
+    "auditModerate": 0,
+    "auditDevHigh": 2,
+    "bundleGzipKb": 17.7,
+    "bundleEntry": "dist/index.js",
+    "familyUsers": 1,
+    "behindRepo": false,
+    "demoStatus": 200,
+    "demoMs": 93,
+    "siteStatus": null,
+    "siteMs": null,
+    "siteKb": null,
+    "siteChallenged": null,
+    "downloadsDaily": [
+     51,
+     10,
+     160,
+     0,
+     57,
+     62,
+     37,
+     36,
+     35,
+     35,
+     0,
+     0,
+     0,
+     52,
+     36,
+     53,
+     0,
+     0,
+     0,
+     30,
+     25,
+     27,
+     50,
+     61,
+     27,
+     69,
+     44,
+     67,
+     237,
+     50
+    ],
+    "checkNotes": [],
+    "overallScore": 9.09
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 10,
+    "tests": 8,
+    "bugs": 10,
+    "crashes": 9,
+    "code": 10,
+    "lint": 9,
+    "performance": 8,
+    "usefulness": 7,
+    "freshness": 10,
+    "robustness": 9,
+    "overall": 9
+   },
+   "gradeNotes": {
+    "docs": "README of 5,210 words in 58 sections, a documentation site, a changelog, usage examples tested.",
+    "dependencies": "0 outside runtime dependencies and 0 from the family, 210 KB unpacked.",
+    "tests": "247 tests in 28 files, test code 110 % of source lines, browser tests.",
+    "bugs": "0 open bug tickets of 0 open on the board.",
+    "crashes": "5 of 34 Actions runs failed in 30 days, 0 open crash or freeze tickets.",
+    "code": "3,821 lines of strict TypeScript, no file over 469 lines, little any.",
+    "lint": "Biome: 0 errors and 0 warnings, no formatter config.",
+    "performance": "Main entry and its static imports 17.7 KB gzipped; size only, no benchmark.",
+    "usefulness": "Judgement: seeded random numbers, a building block for any game or test (purpose 5/5); used by 1 family item; 1,311 npm downloads a month.",
+    "freshness": "last commit today.",
+    "robustness": "Average of tests 8, crashes 9 and type safety 9.",
+    "overall": "Weighted mean 9.1; strongest docs (10), weakest usefulness (7)."
+   },
+   "flags": [],
+   "facts": [
+    "Licence: MIT.",
+    "0 open tickets, 0 of them bugs.",
+    "The demo answers (0.1 s).",
+    "Typed, ESM only.",
+    "Published with npm provenance (trusted publishing from GitHub Actions).",
+    "247 tests, 64.6 per 1,000 lines of source, browser tests included.",
+    "Last CI result on 2026-11-02: CI, success.",
+    "Packed size 59 KB, 17 % of the family's median (353 KB).",
+    "9 releases since 2026-09-30, 4 in the last 30 days.",
+    "555 npm downloads last week against a family median of 384 (own installs and CI included).",
+    "No high or critical advisories in what it ships or runs (2 in dev tools only).",
+    "Biggest risk: no sign of anyone outside the family using it yet.",
+    "Next thing to fix: raise its weakest grade, usefulness (7)."
+   ],
+   "private": false
+  },
+  {
+   "id": "jirai",
+   "kind": "package",
+   "owner": "johnmorrisdotca",
+   "name": "@johnmorrisdotca/jirai",
+   "summary": "Jirai 地雷 — Minesweeper with no-guess boards: square, orthogonal, hexagonal and wraparound fields, seeded safe openings, bounded generation, explained hints and accessible English/Japanese play.…",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/jirai",
+    "npm": "https://www.npmjs.com/package/@johnmorrisdotca/jirai",
+    "demo": "https://johnmorrisdotca.github.io/jirai/"
+   },
+   "versions": {
+    "npm": "0.5.1",
+    "repo": "0.5.1",
+    "count": 9
+   },
+   "dates": {
+    "lastCommit": "2026-11-02",
+    "lastRelease": "2026-10-31",
+    "created": "2026-10-05",
+    "daysSinceCommit": 0,
+    "daysSinceRelease": 2
+   },
+   "popularity": {
+    "npmDownloadsWeek": 264,
+    "npmDownloadsMonth": 1315,
+    "stars": 0,
+    "forks": 0,
+    "watchers": 0,
+    "starsOutside": 0,
+    "forksOutside": 0,
+    "dependentsOutsideFamily": 0,
+    "note": "npm downloads include John's own installs, CI and demo builds, registry mirrors and bots, and cannot be split. deps.dev lists 0 direct dependents of 0.5.1. Watchers include John's own account. Stars and forks outside count only accounts other than johnmorrisdotca and spxis."
+   },
+   "dependencies": {
+    "runtime": [],
+    "optionalPeers": [
+     "react"
+    ],
+    "family": [],
+    "dev": 9,
+    "packedKb": 89.2,
+    "unpackedKb": 378.1,
+    "requiredPeers": []
+   },
+   "measures": {
+    "readmeWords": 4913,
+    "readmeSections": 47,
+    "docsSite": true,
+    "docsPages": 24,
+    "docsGuidesJa": 11,
+    "examplesTested": true,
+    "changelog": true,
+    "sourceFiles": 42,
+    "sourceLines": 5031,
+    "testFiles": 23,
+    "testLines": 2318,
+    "tests": 125,
+    "e2e": true,
+    "freezeTest": false,
+    "ciRunsLast30": 50,
+    "ciFailuresLast30": 6,
+    "ciLastFailedOnMain": false,
+    "openBugTickets": 0,
+    "openTickets": 0,
+    "crashTickets": 0,
+    "lintConfig": true,
+    "formatter": false,
+    "lintErrors": 0,
+    "lintWarnings": 0,
+    "linter": "biome",
+    "lintNote": null,
+    "typeErrors": 0,
+    "typescript": true,
+    "tsFraction": 0.68,
+    "tsStrict": true,
+    "anyCount": 0,
+    "anyPer1k": 0,
+    "largestFile": "src/element.ts",
+    "largestFileLines": 414,
+    "filesOver600": 0,
+    "todoCount": 0,
+    "consoleLogs": 0,
+    "auditHigh": 0,
+    "auditModerate": 0,
+    "auditDevHigh": 1,
+    "bundleGzipKb": 16.5,
+    "bundleEntry": "dist/index.js",
+    "familyUsers": 1,
+    "behindRepo": false,
+    "demoStatus": 200,
+    "demoMs": 117,
+    "siteStatus": null,
+    "siteMs": null,
+    "siteKb": null,
+    "siteChallenged": null,
+    "downloadsDaily": [
+     0,
+     0,
+     819,
+     0,
+     95,
+     47,
+     4,
+     11,
+     0,
+     4,
+     0,
+     0,
+     0,
+     16,
+     6,
+     14,
+     0,
+     0,
+     0,
+     4,
+     5,
+     4,
+     22,
+     33,
+     5,
+     1,
+     13,
+     19,
+     176,
+     17
+    ],
+    "checkNotes": [
+     "1 type errors about missing built files set apart"
+    ],
+    "overallScore": 8.86
+   },
+   "grades": {
+    "docs": 10,
+    "dependencies": 10,
+    "tests": 7,
+    "bugs": 10,
+    "crashes": 9,
+    "code": 10,
+    "lint": 9,
+    "performance": 8,
+    "usefulness": 6,
+    "freshness": 10,
+    "robustness": 9,
+    "overall": 9
+   },
+   "gradeNotes": {
+    "docs": "README of 4,913 words in 47 sections, a documentation site, a changelog, usage examples tested.",
+    "dependencies": "0 outside runtime dependencies and 0 from the family, 378 KB unpacked.",
+    "tests": "125 tests in 23 files, test code 46 % of source lines, browser tests.",
+    "bugs": "0 open bug tickets of 0 open on the board.",
+    "crashes": "6 of 50 Actions runs failed in 30 days, 0 open crash or freeze tickets.",
+    "code": "5,031 lines of strict TypeScript, no file over 414 lines, little any.",
+    "lint": "Biome: 0 errors and 0 warnings, no formatter config.",
+    "performance": "Main entry and its static imports 16.5 KB gzipped; size only, no benchmark.",
+    "usefulness": "Judgement: no-guess Minesweeper boards (purpose 3/5); used by 1 family item; 1,315 npm downloads a month.",
+    "freshness": "last commit today.",
+    "robustness": "Average of tests 7, crashes 9 and type safety 10.",
+    "overall": "Weighted mean 8.9; strongest docs (10), weakest usefulness (6)."
+   },
+   "flags": [],
+   "facts": [
+    "Licence: MIT.",
+    "0 open tickets, 0 of them bugs.",
+    "The demo answers (0.1 s).",
+    "Typed, ESM only.",
+    "Published with npm provenance (trusted publishing from GitHub Actions).",
+    "125 tests, 24.8 per 1,000 lines of source, browser tests included.",
+    "Last CI result on 2026-11-02: CI, success.",
+    "Packed size 89 KB, 25 % of the family's median (353 KB).",
+    "9 releases since 2026-10-05, 9 in the last 30 days.",
+    "264 npm downloads last week against a family median of 384 (own installs and CI included).",
+    "No high or critical advisories in what it ships or runs (1 in dev tools only).",
+    "Biggest risk: no sign of anyone outside the family using it yet.",
+    "Next thing to fix: raise its weakest grade, usefulness (6)."
+   ],
+   "private": false
+  },
+  {
+   "id": "sumilabu",
+   "kind": "site",
+   "owner": "johnmorrisdotca",
+   "name": "Sumilabu (app.sumilabu.com)",
+   "summary": "Sumilabu, the dashboard and ticket boards at app.sumilabu.com plus firmware for small display boards.",
+   "links": {
+    "repo": "https://github.com/johnmorrisdotca/sumilabu",
+    "site": "https://app.sumilabu.com"
+   },
+   "versions": {
+    "npm": null,
+    "repo": null,
+    "count": 0
+   },
+   "dates": {
+    "lastCommit": "2026-10-31",
+    "lastRelease": null,
+    "created": "2026-04-16",
+    "daysSinceCommit": 3,
+    "daysSinceRelease": null
+   },
+   "popularity": {
+    "npmDownloadsWeek": null,
+    "npmDownloadsMonth": null,
+    "stars": 1,
+    "forks": 0,
+    "watchers": 0,
+    "starsOutside": 0,
+    "forksOutside": 0,
+    "dependentsOutsideFamily": null,
+    "note": "Not on npm. Visitor and member numbers were not read. Watchers include John's own account; stars and forks outside count only accounts other than johnmorrisdotca and spxis."
+   },
+   "dependencies": {
+    "runtime": [
+     "@prisma/client",
+     "next",
+     "react",
+     "react-dom",
+     "zod"
+    ],
+    "optionalPeers": [],
+    "family": [],
+    "dev": 10,
+    "packedKb": null,
+    "unpackedKb": null,
+    "requiredPeers": []
+   },
+   "measures": {
+    "readmeWords": 693,
+    "readmeSections": 10,
+    "docsSite": false,
+    "docsPages": 0,
+    "docsGuidesJa": 0,
+    "examplesTested": false,
+    "changelog": false,
+    "sourceFiles": 99,
+    "sourceLines": 11491,
+    "testFiles": 22,
+    "testLines": 2813,
+    "tests": 218,
+    "e2e": false,
+    "freezeTest": false,
+    "ciRunsLast30": 6,
+    "ciFailuresLast30": 1,
+    "ciLastFailedOnMain": null,
+    "openBugTickets": 0,
+    "openTickets": 6,
+    "crashTickets": 0,
+    "lintConfig": true,
+    "formatter": false,
+    "lintErrors": null,
+    "lintWarnings": null,
+    "linter": null,
+    "lintNote": "no lockfile, so no cheap install: lint, typecheck and audit not run",
+    "typeErrors": null,
+    "typescript": true,
+    "tsFraction": 0.57,
+    "tsStrict": null,
+    "anyCount": 0,
+    "anyPer1k": 0,
+    "largestFile": "firmware/main.py",
+    "largestFileLines": 2259,
+    "filesOver600": 2,
+    "todoCount": 0,
+    "consoleLogs": 0,
+    "auditHigh": null,
+    "auditModerate": null,
+    "auditDevHigh": null,
+    "bundleGzipKb": null,
+    "bundleEntry": null,
+    "familyUsers": 0,
+    "behindRepo": false,
+    "demoStatus": null,
+    "demoMs": null,
+    "siteStatus": 429,
+    "siteMs": 369,
+    "siteKb": 39.7,
+    "siteChallenged": true,
+    "downloadsDaily": null,
+    "checkNotes": [
+     "no lockfile, so no cheap install: lint, typecheck and audit not run"
+    ],
+    "overallScore": 6.55
+   },
+   "grades": {
+    "docs": 4,
+    "dependencies": 5,
+    "tests": 4,
+    "bugs": 10,
+    "crashes": 8,
+    "code": 7,
+    "lint": null,
+    "performance": null,
+    "usefulness": 8,
+    "freshness": 10,
+    "robustness": 7,
+    "overall": 7
+   },
+   "gradeNotes": {
+    "docs": "README of 693 words in 10 sections, no docs site, no changelog, usage examples not tested.",
+    "dependencies": "5 outside runtime dependencies and 0 from the family.",
+    "tests": "218 tests in 22 files, test code 24 % of source lines, no browser tests.",
+    "bugs": "0 open bug tickets of 6 open on the board.",
+    "crashes": "1 of 6 Actions runs failed in 30 days, 0 open crash or freeze tickets.",
+    "code": "Lost points for: largest file 2,259 lines.",
+    "lint": "Lint could not run cheaply: no lockfile, so no cheap install: lint, typecheck and audit not run.",
+    "performance": "The site is up but met a scripted request with Vercel's bot check (429, challenge), so the real page could not be timed.",
+    "usefulness": "Judgement: purpose 4/5, real users 2/3 (every project's ticket board runs on it, used by John and both Macs every day), the site is up (behind a bot check).",
+    "freshness": "last commit 3 days ago.",
+    "robustness": "Average of tests 4, crashes 8 and type safety 10.",
+    "overall": "Weighted mean 6.5; strongest bugs (10), weakest tests (4)."
+   },
+   "flags": [
+    "a 2259-line file"
+   ],
+   "facts": [
+    "Licence: MIT.",
+    "6 open tickets, 0 of them bugs.",
+    "The site is up; it answers scripted requests with Vercel's bot check, so its speed was not timed.",
+    "57 % of its source lines are TypeScript.",
+    "218 tests, 19.0 per 1,000 lines of source.",
+    "Repository created 2026-04-16, 0 version tags.",
+    "Last CI result on 2026-11-02: Deploy dashboard to Vercel, success.",
+    "11,491 lines of source in 99 files (family median 12,212).",
+    "Largest source file: firmware/main.py (2,259 lines).",
+    "Biggest risk: a 2259-line file is hard to change safely.",
+    "Next thing to fix: write more documentation (README depth, a docs site, tested examples)."
+   ],
+   "private": false
+  }
+ ],
+ "rankings": {
+  "overall": {
+   "best": [
+    "tane",
+    "jirai"
+   ],
+   "worst": [
+    "sumilabu"
+   ]
+  },
+  "docs": {
+   "best": [
+    "tane",
+    "jirai"
+   ],
+   "worst": [
+    "sumilabu"
+   ]
+  },
+  "dependencies": {
+   "best": [
+    "tane",
+    "jirai"
+   ],
+   "worst": []
+  },
+  "robustness": {
+   "best": [
+    "tane",
+    "jirai"
+   ],
+   "worst": [
+    "sumilabu"
+   ]
+  },
+  "tests": {
+   "best": [],
+   "worst": []
+  },
+  "bugs": {
+   "best": [
+    "tane",
+    "jirai"
+   ],
+   "worst": []
+  },
+  "crashes": {
+   "best": [],
+   "worst": []
+  },
+  "code": {
+   "best": [
+    "tane",
+    "jirai"
+   ],
+   "worst": []
+  },
+  "lint": {
+   "best": [
+    "tane"
+   ],
+   "worst": []
+  },
+  "performance": {
+   "best": [],
+   "worst": []
+  },
+  "usefulness": {
+   "best": [],
+   "worst": []
+  },
+  "freshness": {
+   "best": [
+    "tane",
+    "jirai"
+   ],
+   "worst": []
+  },
+  "downloads": {
+   "best": [],
+   "worst": []
+  },
+  "dependencyCount": {
+   "best": [
+    "tane",
+    "jirai"
+   ],
+   "worst": []
+  },
+  "daysSinceCommit": {
+   "best": [
+    "tane",
+    "jirai"
+   ],
+   "worst": [
+    "sumilabu"
+   ]
+  },
+  "packedKb": {
+   "best": [
+    "tane"
+   ],
+   "worst": []
+  },
+  "openBugTickets": {
+   "best": [
+    "tane",
+    "jirai"
+   ],
+   "worst": []
+  },
+  "readmeWords": {
+   "best": [],
+   "worst": [
+    "sumilabu"
+   ]
+  }
+ },
+ "skipped": [
+  {
+   "repo": "johnmorrisdotca/.github",
+   "reason": "the account's profile and shared GitHub settings, not a package"
+  },
+  {
+   "repo": "johnmorrisdotca/johnmorrisdotca",
+   "reason": "the account's profile README, not a package"
+  },
+  {
+   "repo": "johnmorrisdotca/hotaru-releases",
+   "reason": "the public release host for hotaru's signed packs, not a package or a site"
+  }
+ ],
+ "run": {
+  "seconds": 57,
+  "githubRateLimited": false,
+  "boardsRead": {
+   "modules": true,
+   "kazoku-ui": true,
+   "sumilabu": true
+  },
+  "installsRun": true
+ }
+}
