@@ -618,6 +618,12 @@ export default async function Home({ searchParams }: PageProps) {
                 </a>
               );
             })}
+            <a
+              href="/packages"
+              className="rounded-full border border-stone-300 bg-white/80 px-4 py-2 text-sm text-stone-700 transition hover:border-stone-500 hover:bg-white"
+            >
+              Packages
+            </a>
           </nav>
         </header>
 
