@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 export const TOOLBAR_LINKS = [
   { href: "/", label: "Dashboard" },
   { href: "/packages", label: "Packages" },
+  { href: "/packages/map", label: "Package map" },
   { href: "/api/openapi.json", label: "API", external: true },
 ] as const;
 
