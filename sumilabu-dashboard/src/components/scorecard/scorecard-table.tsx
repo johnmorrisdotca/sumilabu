@@ -88,13 +88,13 @@ export function ScorecardTable({ items, columns, sortKey, sortDir, onSort, onOpe
         key={key}
         scope="col"
         aria-sort={active ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
-        className={`px-1 py-2 text-[11px] font-semibold uppercase tracking-[0.04em] text-stone-500 dark:text-stone-400 ${align === "center" ? "text-center" : "text-left"} ${pinned ? "sticky right-0 z-10 border-l border-stone-300/80 dark:border-stone-700 bg-stone-100" : ""}`}
+        className={`px-1 py-2 text-[11px] font-semibold uppercase tracking-[0.04em] text-stone-500 dark:text-stone-400 ${align === "center" ? "text-center" : "text-left"} ${pinned ? "sticky right-0 z-10 border-l border-stone-300/80 dark:border-stone-700 bg-stone-100 dark:bg-stone-800" : ""}`}
       >
         <button
           type="button"
           title={title ?? `Sort by ${label}`}
           onClick={() => onSort(key, active ? (sortDir === "asc" ? "desc" : "asc") : defaultDir(key))}
-          className={`inline-flex items-center gap-0.5 rounded px-1 py-1 uppercase hover:bg-stone-200/70 dark:hover:bg-stone-700 ${active ? "text-stone-900" : ""}`}
+          className={`inline-flex items-center gap-0.5 rounded px-1 py-1 uppercase hover:bg-stone-200/70 dark:hover:bg-stone-700 ${active ? "text-stone-900 dark:text-stone-50" : ""}`}
         >
           {label}
           <span aria-hidden className="w-3 text-[10px]">{active ? (sortDir === "asc" ? "▲" : "▼") : ""}</span>
