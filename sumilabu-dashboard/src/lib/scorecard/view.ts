@@ -113,15 +113,16 @@ export function defaultDir(key: SortKey): SortDir {
   return key === "name" || key === "kind" || key === "owner" ? "asc" : "desc";
 }
 
-export type Filters = { kind: "all" | ScorecardItem["kind"]; owner: "all" | string; query: string; flaggedOnly: boolean };
-export const NO_FILTERS: Filters = { kind: "all", owner: "all", query: "", flaggedOnly: false };
+export type Filters = { kind: "all" | ScorecardItem["kind"]; owner: "all" | string; query: string; flaggedOnly: boolean; favouritesOnly: boolean };
+export const NO_FILTERS: Filters = { kind: "all", owner: "all", query: "", flaggedOnly: false, favouritesOnly: false };
 
-export function filterItems(items: readonly ScorecardItem[], filters: Filters): ScorecardItem[] {
+export function filterItems(items: readonly ScorecardItem[], filters: Filters, favourites: ReadonlySet<string> = new Set()): ScorecardItem[] {
   const q = filters.query.trim().toLowerCase();
   return items.filter((item) => {
     if (filters.kind !== "all" && item.kind !== filters.kind) return false;
     if (filters.owner !== "all" && item.owner !== filters.owner) return false;
     if (filters.flaggedOnly && item.flags.length === 0) return false;
+    if (filters.favouritesOnly && !favourites.has(item.id)) return false;
     if (q && !`${item.name} ${item.id} ${item.summary}`.toLowerCase().includes(q)) return false;
     return true;
   });
