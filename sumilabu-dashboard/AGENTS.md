@@ -214,7 +214,12 @@ workflow runs, so a red push is a red push you could have seen locally.
    | `REPORTS_TOKENS_JSON` | `lib/board/auth.ts` | Same shape, the reports routes (create/list/get/patch/delete) and `GET /api/v1/health` - but not filing, which needs the board token instead. |
    | `TELEMETRY_DROP_EVENTS` | `lib/telemetry-drop.ts` | Events acknowledged with `{ ok: true, dropped: true }` and not stored: comma list of `event` or `project:event`; `none` stores all. Unset means UmaKuma's `api_route`, `study_review_history` and `reading_signoffs_get_perf`. |
    | `SCORECARD_TOKEN` | `api/v1/scorecard` | The one bearer key for uploading a package-scorecard run (`docs/scorecard.md`). Unset means the route refuses everyone. Never reuse it for another map. |
-   | `SCORECARD_VIEW_KEY` | `app/packages` | The key John types to open `/packages`; its cookie is an HMAC made with it. Unset means the page 404s for everyone. Never the same value as `SCORECARD_TOKEN`. |
+   | `AUTH_SECRET` | `lib/auth/options.ts`, `session.ts` | Encrypts the pages' session cookie (next-auth JWT). At least 32 characters, or nobody can sign in. Keychain item `sumilabu AUTH_SECRET`; changing it signs John out. |
+   | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | `lib/auth/options.ts` | The Web OAuth client under john@spxis.com's Google Cloud. Keychain items `sumilabu GOOGLE_CLIENT_ID` / `…_SECRET`. Unset: the sign-in page says it is not set up. |
+   | `SUMILABU_ADMIN_EMAILS` | `lib/auth/admins.ts` | Comma list of the Google addresses that may open pages. Checked at the sign-in and on every page request. Unset or empty: nobody. |
+   | `NEXTAUTH_URL` | next-auth, `lib/auth/session.ts` | `https://app.sumilabu.com` in production: the host Google sends John back to, and why the cookie is `__Secure-`. Locally `http://localhost:<port>`. |
+   | `SUMILABU_GOOGLE_TEST_ISSUER` | `lib/auth/options.ts` | A loopback fake of Google for `scripts/auth-e2e/` only; read only when `NODE_ENV` is `development` or `test`. Never set on Vercel. |
+   | `SCORECARD_VIEW_KEY` | nothing | The old view key for `/packages`, retired 2026-11-03 for Google sign-in. Unread; delete it from Vercel and the keychain at leisure. |
    | `CALENDAR_ICS_URL`, `CALENDAR_TOKEN` | `api/v1/calendar/upcoming` | A published iCal feed and the one bearer token the MagTag presents for it. Read through the data cache every 15 minutes; never touches Neon. |
 
    Four token maps, four purposes. Never reuse a value across them: they are
@@ -227,9 +232,58 @@ workflow runs, so a red push is a red push you could have seen locally.
    entry for the project key in the URL; use `itsutsu-dev` / `umakuma-dev`,
    the projects that exist so nothing local ever touches a real board.
 
+# Who may use the site
+
+SumiLabu was open to anyone until 2026-11-03 (SUMILABU-7): the dashboard
+showed every device, project and app source to whoever typed the address.
+Since then:
+
+- **Every page is John's.** `src/proxy.ts` runs before every page, on every
+  host, and lets through only a request with a next-auth session cookie for a
+  Google-verified address on `SUMILABU_ADMIN_EMAILS`. Anyone else is sent to
+  `/signin` before any render or database read (a bot's visit costs one cookie
+  decryption and never wakes Neon). A Google account not on the list is
+  refused at the callback, gets no cookie, and lands on `/not-allowed`. The
+  gate is closed by default: a path is public only if it is in
+  `PUBLIC_PATHS` (`lib/auth/gate.ts`: the sign-in, the refusal, the favicon,
+  the logo, `robots.txt`) or under `/api/auth/` (next-auth). **A new page is
+  private without anybody doing anything**; still start it with
+  `await requireAdmin()` before its first read, the second lock in case a
+  matcher changes.
+- **Pages live on `app.sumilabu.com`.** On `sumilabu.com`, `www.` and
+  `api.sumilabu.com`, a page (and `/api/auth/…`) redirects there
+  (`next.config.ts`), so there is one session cookie and one Google redirect
+  URI. The token API answers on every host, unredirected.
+- **Agents and apps never use a page.** They use the API with their project's
+  bearer token: board, settings and reports keys per project
+  (`BOARD_TOKENS_JSON` and the rest), telemetry keys, `SCORECARD_TOKEN`,
+  `CALENDAR_TOKEN`. On each Mac a project's board key is
+  `~/.config/sumilabu-board/<project>`, mode 600, which that project's
+  `pnpm task` reads (hotaru and the newer projects); UmaKuma and Itsutsu read
+  `SUMILABU_BOARD_TOKEN` and its siblings from their own environment. The
+  gate leaves `/api/…` (except `/api/auth/…`) alone because each route checks
+  its own token; `src/app/api/api-access.test.ts` is the audit that keeps
+  that true. The only API routes with no token are `/api/health` (reachable
+  or not, nothing else), `/api/openapi` and `/api/openapi.json` (a constant)
+  and next-auth's.
+- **No user table.** The session is next-auth's encrypted JWT cookie (30
+  days), made with `AUTH_SECRET`; nothing about a visitor is stored.
+- **Setting it up** (once, John): in the Google Cloud console under
+  john@spxis.com, a Web application OAuth client with the Authorized redirect
+  URI `https://app.sumilabu.com/api/auth/callback/google`; then
+  `pnpm auth:setup <the downloaded client_secret….json> --delete-source`,
+  which keeps the client and a new `AUTH_SECRET` in the keychain and adds
+  `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `AUTH_SECRET`,
+  `SUMILABU_ADMIN_EMAILS` and `NEXTAUTH_URL` to Vercel production. They take
+  effect at the next deploy. Without them the site fails closed: the sign-in
+  page says it is not set up and nobody gets in.
+- **Locally**: `.env.local` needs the same five (`NEXTAUTH_URL` =
+  `http://localhost:<port>`, and that callback added to the OAuth client),
+  or run `pnpm auth:e2e`, which needs no Google at all.
+
 # Repo map
 
-- `src/app/page.tsx` — the dashboard. `force-dynamic`: every load is a server
+- `src/app/page.tsx` — the dashboard, behind the gate. `force-dynamic`: every load is a server
   render and a paid function call, but its database reads come from
   `lib/dashboard-data.ts` (Next's data cache, one tag, cleared by every
   telemetry write), so a load when nothing has arrived does not wake Neon.
@@ -238,7 +292,25 @@ workflow runs, so a red push is a red push you could have seen locally.
   `src/lib/scorecard/`, `api/v1/scorecard` — the package scorecard
   (`docs/scorecard.md`): John's Mac uploads a run with `pnpm scorecard:upload`,
   one `ScorecardRun` row each (newest ten kept), the page reads it through the
-  data cache tag `scorecard`, cleared by the upload. Private: view key + HttpOnly cookie, `noindex`, no data read before the cookie is checked.
+  data cache tag `scorecard`, cleared by the upload. Private like every page (Google sign-in), `noindex`, no data read before the session is checked.
+- `src/proxy.ts`, `src/lib/auth/` — the page gate and Google sign-in (see
+  "Who may use the site" below): `gate.ts` the decision, `session.ts` the
+  cookie check shared by the gate and the pages, `current.ts`
+  (`requireAdmin()`, the first line of every private page), `options.ts`
+  next-auth's configuration, `admins.ts` the allowlist. `src/app/signin`,
+  `src/app/not-allowed`, `src/app/api/auth/[...nextauth]`,
+  `src/components/auth/` (the admin toolbar in the root layout, the sign-in
+  and sign-out buttons). The host redirect is `redirects()` in
+  `next.config.ts`.
+- `src/app/api/api-access.test.ts` — every API route, its methods and what
+  guards it. A new route, or a new method on one, fails here until its row
+  is written.
+- `scripts/google-auth-setup.sh` (`pnpm auth:setup`) — John's one command
+  that puts the Google client and the session key in the keychain and on
+  Vercel production. `scripts/auth-e2e/` (`pnpm auth:e2e`) — the local
+  end-to-end run: throwaway Postgres in Docker, a fake Google, `next dev`,
+  then a production build with `next start`, and a headless Chrome that
+  signs in and takes pictures.
 - `scripts/prune-telemetry.mjs` (`pnpm db:prune-telemetry`) — retention:
   AppTelemetryEvent 14 days, DeviceEvent 30. A dry run unless `--apply`;
   it never touches the board, reports, devices or sources.

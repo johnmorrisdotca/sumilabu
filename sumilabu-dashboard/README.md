@@ -33,6 +33,7 @@ cp env/.env.example .env.local
 - `DASHBOARD_UTC_OFFSET_HOURS` (optional, default `-8`)
 - `BOARD_TOKENS_JSON`, `BOARD_TOKENS_EXTRA_JSON`, `SETTINGS_TOKENS_JSON`, `REPORTS_TOKENS_JSON` (the board; see below)
 - `CALENDAR_ICS_URL`, `CALENDAR_TOKEN` (optional, the MagTag's calendar)
+- `AUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `SUMILABU_ADMIN_EMAILS`, `NEXTAUTH_URL` (the pages' Google sign-in; see "Who may use it" below)
 
 3. Push Prisma schema to a throwaway database (Prisma's CLI reads `.env`, not
    `.env.local`; never production, which the deploy workflow alone changes):
@@ -58,6 +59,27 @@ pnpm check
 
 `AGENTS.md` beside this file is the full guide: setup, tests, conventions,
 schema changes, and how a push becomes a production release.
+
+## Who may use it
+
+- **Pages** (`/`, `/packages`, and any page added later) are John's alone:
+  Google sign-in with an address on `SUMILABU_ADMIN_EMAILS`. Anyone else gets
+  the sign-in page, or "Not allowed" after signing in with another Google
+  account, and never any data. Pages are served on `app.sumilabu.com`; on
+  `sumilabu.com`, `www.` and `api.sumilabu.com` a page redirects there.
+- **Agents and apps** never use a page. They call the API with a bearer token
+  for their own project, and the API answers on every host name, as it always
+  has. A project's board key lives on each Mac at
+  `~/.config/sumilabu-board/<project>` (mode 600), which that project's
+  `pnpm task` reads (hotaru and the newer projects); UmaKuma and Itsutsu read
+  theirs (`SUMILABU_BOARD_TOKEN` and friends) from their own environment.
+  Devices use `INGEST_API_TOKEN` / `PROJECT_TOKENS_JSON`, the scorecard upload
+  `SCORECARD_TOKEN`, the MagTag `CALENDAR_TOKEN`.
+- Public, with no data: `/api/health` (reachable or not), `/api/openapi` and
+  `/api/openapi.json` (the contract), and next-auth's `/api/auth/…`.
+
+`src/app/api/api-access.test.ts` lists every API route, its methods and what
+guards it, and fails when a route appears that the list does not name.
 
 ## API contracts
 
@@ -263,6 +285,7 @@ Environment, set in Vercel Project Settings (the database URLs as Sensitive):
 - `BOARD_TOKENS_JSON`, `SETTINGS_TOKENS_JSON`, `REPORTS_TOKENS_JSON`
 - `TELEMETRY_DROP_EVENTS` (optional; see `AGENTS.md`)
 - `CALENDAR_ICS_URL`, `CALENDAR_TOKEN` (the MagTag's meetings)
+- `AUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `SUMILABU_ADMIN_EMAILS` (Sensitive) and `NEXTAUTH_URL=https://app.sumilabu.com`: the pages' Google sign-in, all five put there by `pnpm auth:setup <client_secret….json>` (`AGENTS.md`, "Who may use the site")
 - `EXPECTED_HEARTBEAT_SECONDS` (optional, default `1800`)
 - `STALE_AFTER_SECONDS` (optional, default `5400`)
 - `DASHBOARD_UTC_OFFSET_HOURS` (optional, default `-8`)
@@ -280,14 +303,14 @@ Dashboard project filtering:
 
 Production hostnames, all aliases of the one deployment:
 
-- Dashboard UI: `https://app.sumilabu.com`
+- Dashboard UI: `https://app.sumilabu.com` (Google sign-in, John only; pages on the other names redirect here)
 - Canonical telemetry ingest: `https://api.sumilabu.com/api/v1/telemetry/events`
 - Legacy firmware telemetry ingest: `https://api.sumilabu.com/api/device-stats`
 - Compatibility app/server telemetry ingest: `https://api.sumilabu.com/api/app-telemetry`
 - API contract: `https://api.sumilabu.com/api/openapi.json`
 - Board, settings and reports: `https://api.sumilabu.com/api/v1/projects/…`
 - Health: `https://api.sumilabu.com/api/v1/health`
-- Package scorecard: private page `https://app.sumilabu.com/packages` (view key `SCORECARD_VIEW_KEY`); upload `POST https://app.sumilabu.com/api/v1/scorecard` (bearer `SCORECARD_TOKEN`, JSON ≤ 1 MiB checked against the contract, `pnpm scorecard:upload`) — see `docs/scorecard.md`
+- Package scorecard: private page `https://app.sumilabu.com/packages` (Google sign-in, like every page); upload `POST https://app.sumilabu.com/api/v1/scorecard` (bearer `SCORECARD_TOKEN`, JSON ≤ 1 MiB checked against the contract, `pnpm scorecard:upload`) — see `docs/scorecard.md`
 - Calendar (MagTag): `https://api.sumilabu.com/api/v1/calendar/upcoming?limit=4` — bearer `CALENDAR_TOKEN`; `{ ok, now, meetings: [{ title, start, end }] }`, UTC epoch seconds, the next 7 days; 503 `not_configured` without a feed, 502 `feed_unavailable` when the feed cannot be read
 
 ## Device config
