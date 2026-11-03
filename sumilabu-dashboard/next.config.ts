@@ -1,6 +1,29 @@
 import type { NextConfig } from "next";
 
+/*
+ * Pages live on one host (SUMILABU-7). sumilabu.com, www and api.sumilabu.com
+ * are aliases of the same deployment, so without this the session cookie (one
+ * per host) and Google's redirect address (one per host, registered by hand)
+ * would each need every name. Every page, and next-auth's own routes, on the
+ * other names go to app.sumilabu.com; the token API (`/api/…` except
+ * `/api/auth/…`) answers on every name exactly as before, so a device posting
+ * to sumilabu.com or a release tool calling api.sumilabu.com never sees a
+ * redirect. A config redirect is matched on the Host header by Vercel's own
+ * router, before any function runs, so it costs no invocation.
+ */
+export const PAGES_HOST = "app.sumilabu.com";
+export const OTHER_HOSTS = ["sumilabu.com", "www.sumilabu.com", "api.sumilabu.com"];
+export const NOT_TOKEN_API = "/:path((?!api/(?!auth/)).*)";
+
 const nextConfig: NextConfig = {
+  async redirects() {
+    return OTHER_HOSTS.map((host) => ({
+      source: NOT_TOKEN_API,
+      has: [{ type: "host" as const, value: host }],
+      destination: `https://${PAGES_HOST}/:path`,
+      permanent: false,
+    }));
+  },
   /*
    * What no server function needs of Prisma: about eighty megabytes of every
    * function that touches the database.

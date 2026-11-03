@@ -1,7 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 
 import { AutoRefreshControl } from "@/components/auto-refresh-control";
 import { HeartbeatRadar } from "@/components/heartbeat-radar";
@@ -11,7 +9,7 @@ import { EMPTY_PROJECT_DATA, getProjectData, getProjectLists } from "@/lib/dashb
 import { globalHeartbeat, heartbeatThresholds, isFresh, type HeartbeatThresholds } from "@/lib/heartbeat-thresholds";
 import { formatDateTimeAtOffset, formatHourMinuteAtOffset } from "@/lib/timezone";
 import { LiveClock } from "@/components/live-clock";
-import { VIEW_COOKIE, viewCookieValid } from "@/lib/scorecard/access";
+import { requireAdmin } from "@/lib/auth/current";
 
 export const dynamic = "force-dynamic";
 
@@ -466,9 +464,10 @@ type PageProps = {
 };
 
 export default async function Home({ searchParams }: PageProps) {
-  /* Private: the dashboard shows devices and telemetry, so only the holder of the view key sees it.
-     Without a valid cookie nothing is read; the key form lives at /packages. */
-  if (!viewCookieValid((await cookies()).get(VIEW_COOKIE)?.value)) redirect("/packages");
+  /* Private (SUMILABU-7): devices, projects and app sources are John's alone. The gate in proxy.ts
+     already sent a stranger to /signin; this second check comes before any read, so nothing here
+     can wake Neon or reach the HTML without a signed-in admin. */
+  await requireAdmin();
   const params = (await searchParams) || {};
   const selectedProject = sanitizeProjectParam(params.project);
   const localTimezoneLabel = `UTC${DASHBOARD_UTC_OFFSET_HOURS >= 0 ? "+" : ""}${DASHBOARD_UTC_OFFSET_HOURS}`;
@@ -624,12 +623,6 @@ export default async function Home({ searchParams }: PageProps) {
                 </a>
               );
             })}
-            <a
-              href="/packages"
-              className="rounded-full border border-stone-300 bg-white/80 px-4 py-2 text-sm text-stone-700 transition hover:border-stone-500 hover:bg-white"
-            >
-              Packages
-            </a>
           </nav>
         </header>
 

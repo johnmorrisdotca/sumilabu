@@ -30,25 +30,18 @@ and app John owns from 1 to 10 (ticket SUMILABU-6). A collector on John's Mac
 
 ## Who can see the page
 
-`/packages` is private to John, behind a second key, `SCORECARD_VIEW_KEY`, kept
-apart from the upload key (a leaked view key reads and cannot write; a leaked
-upload key writes and cannot read).
+`/packages` is private to John, like every page of the site: Google sign-in
+with an address on `SUMILABU_ADMIN_EMAILS` (SUMILABU-7, 2026-11-03; how it
+works is in `AGENTS.md`, "Who may use the site"). The gate in `src/proxy.ts`
+sends anyone else to `/signin` before the page runs, and the page itself checks
+the session again before it reads anything, so a signed-out response holds
+nothing about the scorecard in its HTML or RSC payload and never wakes Neon.
+There is no API route that returns the scorecard. Sign out is in the admin
+toolbar at the top of every page. The page stays `noindex`.
 
-- No `SCORECARD_VIEW_KEY` on the deployment: `/packages` is a 404 for everyone.
-- No valid cookie: only a small key form. The data is read *after* the cookie
-  is checked, so nothing about the scorecard is in the HTML or the RSC payload
-  of that response, and there is no API route that returns it.
-- A right key (`POST /packages/session`, same-origin only, compared in constant
-  time) sets `scorecard_view`: HttpOnly, Secure, SameSite=Strict, Path=/packages,
-  30 days. It holds an expiry and an HMAC of it made with the key, never the
-  key; the server checks the expiry too, and changing the key at Vercel signs
-  everyone out. A wrong key waits one second and gets the same redirect each
-  time; nothing is counted or stored, no timer runs.
-- "Sign out" on the page clears the cookie. The page stays `noindex`.
-
-To read the key when signing in on a new browser, without printing it:
-
-    security find-generic-password -s "sumilabu SCORECARD_VIEW_KEY" -w | pbcopy
+The view key that opened it until then (`SCORECARD_VIEW_KEY`, its form and
+`POST /packages/session`) is gone; nothing reads that variable any more, and it
+can be deleted from Vercel and the keychain whenever convenient.
 
 ## Setting it up, once
 
@@ -56,14 +49,14 @@ Schema (additive, one new table): it goes live with the deploy workflow's
 `db push`; the SQL is `prisma/manual-migrations/20261102_scorecard_run.sql`.
 Back production up first (AGENTS.md, "Making a change and shipping it", step 4).
 
-The two keys, one command (makes each, keeps it in the keychain, puts it on Vercel
-as a sensitive production variable, the values only ever on standard input; run
-before the deploy so the first deployment has them):
+The upload key, one command (makes it, keeps it in the keychain, puts it on Vercel
+as a sensitive production variable, the value only ever on standard input; run
+before the deploy so the first deployment has it):
 
-    for n in SCORECARD_TOKEN SCORECARD_VIEW_KEY; do T=$(openssl rand -hex 32) && printf 'add-generic-password -U -s "sumilabu %s" -a "%s" -w "%s"\n' "$n" "$USER" "$T" | security -i && printf '%s' "$T" | vercel env add "$n" production --sensitive --project sumilabu-dashboard --scope spxis-projects-0d6306b4 || break; done
+    for n in SCORECARD_TOKEN; do T=$(openssl rand -hex 32) && printf 'add-generic-password -U -s "sumilabu %s" -a "%s" -w "%s"\n' "$n" "$USER" "$T" | security -i && printf '%s' "$T" | vercel env add "$n" production --sensitive --project sumilabu-dashboard --scope spxis-projects-0d6306b4 || break; done
 
-Then `pnpm scorecard:upload` after each collector run, and sign in at
-`/packages` with the key from the keychain (command above).
+Then `pnpm scorecard:upload` after each collector run, and open `/packages`
+signed in with Google.
 
 ## Rules for the document
 

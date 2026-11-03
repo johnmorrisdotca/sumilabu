@@ -1,78 +1,66 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { VIEW_COOKIE, makeViewCookie } from "@/lib/scorecard/access";
+import { COOKIE_NAME, TEST_ADMINS, TEST_SECRET, jar, sessionToken } from "@/lib/auth/testSession";
 import { parseScorecard } from "@/lib/scorecard/contract";
 import sample from "@/lib/scorecard/fixtures/sample.json";
 
-const KEY = "page-test-view-key";
-const { getScorecard, cookieValue, notFound } = vi.hoisted(() => ({
+const { getScorecard, cookieJar, redirect } = vi.hoisted(() => ({
   getScorecard: vi.fn(),
-  cookieValue: { current: undefined as string | undefined },
-  notFound: vi.fn(() => {
-    throw new Error("NEXT_NOT_FOUND");
+  cookieJar: { current: {} as Record<string, string> },
+  redirect: vi.fn((to: string) => {
+    throw new Error(`NEXT_REDIRECT ${to}`);
   }),
 }));
 
 vi.mock("@/lib/scorecard/data", () => ({ getScorecard }));
-vi.mock("next/navigation", () => ({ notFound }));
-vi.mock("next/headers", () => ({
-  cookies: async () => ({ get: (name: string) => (name === VIEW_COOKIE && cookieValue.current ? { name, value: cookieValue.current } : undefined) }),
-}));
+vi.mock("next/navigation", () => ({ redirect }));
+vi.mock("next/headers", () => ({ cookies: async () => jar(cookieJar.current) }));
 
 const parsed = parseScorecard(sample);
 if (!parsed.ok) throw new Error("sample must parse");
 const data = { doc: parsed.doc, receivedAt: "2026-11-02T23:05:00.000Z", trend: [] };
 
 const { default: Page, metadata, dynamic } = await import("./page");
-const render = async (searchParams?: { denied?: string }) => renderToStaticMarkup(await Page({ searchParams: Promise.resolve(searchParams ?? {}) }));
-const names = parsed.doc.items.flatMap((i) => [i.id, i.name, i.summary]);
+const render = async () => renderToStaticMarkup(await Page());
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.stubEnv("SCORECARD_VIEW_KEY", KEY);
-  cookieValue.current = undefined;
+  vi.stubEnv("AUTH_SECRET", TEST_SECRET);
+  vi.stubEnv("SUMILABU_ADMIN_EMAILS", TEST_ADMINS);
+  vi.stubEnv("NEXTAUTH_URL", "");
+  vi.stubEnv("VERCEL", "");
+  cookieJar.current = {};
   getScorecard.mockResolvedValue(data);
 });
+afterEach(() => vi.unstubAllEnvs());
 
 describe("the /packages page is private", () => {
-  it("does not exist when the deployment has no view key, and reads nothing", async () => {
-    vi.stubEnv("SCORECARD_VIEW_KEY", "");
-    cookieValue.current = makeViewCookie(KEY);
-    await expect(render()).rejects.toThrow("NEXT_NOT_FOUND");
-    expect(getScorecard).not.toHaveBeenCalled();
-  });
-
   it.each([
-    ["no cookie", undefined],
-    ["a wrong cookie", "123.abc"],
-    ["a cookie made with another key", makeViewCookie("another-key")],
-    ["an expired cookie", makeViewCookie(KEY, Date.now() - 31 * 24 * 3600 * 1000)],
-  ])("shows only the key form with %s, and never touches the data", async (_label, cookie) => {
-    cookieValue.current = cookie;
-    const html = await render();
-    expect(html).toContain('data-testid="key-form"');
-    expect(html).toContain('action="/packages/session"');
+    ["no session", async () => ({})],
+    ["a forged cookie", async () => ({ [COOKIE_NAME]: "forged" })],
+    ["a session for an address not on the list", async () => ({ [COOKIE_NAME]: await sessionToken("stranger@gmail.com") })],
+    ["an expired session", async () => ({ [COOKIE_NAME]: await sessionToken("john@spxis.com", { maxAge: -60 }) })],
+  ])("sends %s to the sign-in before reading anything", async (_label, cookies) => {
+    cookieJar.current = await cookies();
+    await expect(render()).rejects.toThrow("NEXT_REDIRECT /signin");
     expect(getScorecard).not.toHaveBeenCalled();
-    for (const text of names) expect(html).not.toContain(text);
-    expect(html).not.toContain("average overall");
-    expect(html).not.toContain("Sign out");
   });
 
-  it("says a key was not accepted after a wrong one, in the same words whatever was wrong", async () => {
-    expect(await render({ denied: "1" })).toContain("That key was not accepted.");
-    expect(await render()).not.toContain("not accepted");
+  it("is nobody's when the deployment has no secret", async () => {
+    cookieJar.current = { [COOKIE_NAME]: await sessionToken("john@spxis.com") };
+    vi.stubEnv("AUTH_SECRET", "");
+    await expect(render()).rejects.toThrow("NEXT_REDIRECT /signin");
+    expect(getScorecard).not.toHaveBeenCalled();
   });
 
-  it("draws the scorecard, and a Sign out button, for a valid cookie", async () => {
-    cookieValue.current = makeViewCookie(KEY);
+  it("draws the scorecard for the signed-in admin", async () => {
+    cookieJar.current = { [COOKIE_NAME]: await sessionToken("john@johnmorris.ca") };
     const html = await render();
     expect(getScorecard).toHaveBeenCalledTimes(1);
     expect(html).toContain("Package scorecard");
-    expect(html).toContain("Sign out");
-    expect(html).toContain('value="signout"');
     expect(html).toContain("kazoku-ui");
-    expect(html).not.toContain('data-testid="key-form"');
+    expect(html).toContain(parsed.doc.items[0].name);
   });
 
   it("stays noindex and dynamic", () => {
