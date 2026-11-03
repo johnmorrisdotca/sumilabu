@@ -68,7 +68,11 @@ const vercelCalls = (log: string) =>
       return { args, stdin: stdin.replace(/\n$/, "") };
     });
 
-describe("scripts/google-auth-setup.sh", () => {
+/* The script runs on John's Mac only (the keychain, and plutil to read the
+   downloaded JSON), so on Linux CI, where plutil does not exist, it is skipped. */
+const HAS_PLUTIL = spawnSync("sh", ["-c", "command -v plutil"], { encoding: "utf8" }).status === 0;
+
+describe.skipIf(!HAS_PLUTIL)("scripts/google-auth-setup.sh (macOS)", () => {
   it("keeps the client in the keychain and adds all five settings to Vercel production, every value on stdin only", () => {
     const s = setup();
     const r = run(s.bin, [s.file]);
