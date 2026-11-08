@@ -43,6 +43,8 @@ export const REPORT_LIMITS = {
   reporterRef: 200,
   reporterName: 80,
   adminNote: 4000,
+  /** The most a report may file as its ticket's detail: the ticket cap was 4,000 when filing was written and a report's own words still end there. */
+  ticketDetail: 4000,
 } as const;
 
 export type ReportDraft = {

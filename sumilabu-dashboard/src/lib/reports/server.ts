@@ -6,6 +6,7 @@ import { draftProblems as ticketDraftProblems, type TicketKind } from "@/lib/boa
 import { REPORT_IMAGE_BUDGETS, decodeReportImage, type ReportImageType } from "./image";
 import {
   FILEABLE_FROM,
+  REPORT_LIMITS,
   REPORT_RATE_LIMITS,
   adminNoteProblems,
   canPatchMove,
@@ -264,6 +265,7 @@ export async function fileReport(projectKey: string, id: string, overrides: File
 
   const draft = derivedDraft(row, overrides);
   const problems = ticketDraftProblems(draft);
+  if (draft.detail.length > REPORT_LIMITS.ticketDetail) problems.push(`The detail is at most ${REPORT_LIMITS.ticketDetail.toLocaleString("en-US")} characters.`);
   if (problems.length > 0) return { ok: false, reason: "invalid", problems };
 
   try {

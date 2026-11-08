@@ -43,7 +43,7 @@ Every row has these. The middle columns give each repository's name for them.
 | `id` | `id` (cuid) | `id` (cuid) | UmaKuma cites the id. Every write addresses the id. |
 | `key` | none | `key` (kebab) | Itsutsu's citable name. Optional, unique per project, never changed. See invariant 11. |
 | `title` | `title` | `title` | 8 to 120 characters. |
-| `detail` | `detail` | `detail` | At most 4,000 characters. |
+| `detail` | `detail` | `detail` | At most 16,000 characters. |
 | `kind` | `kind` | `kind` | See table above. |
 | `area` | `area` | none | Per project. Itsutsu has no areas and needs none. |
 | `status` | `status` | `status` | See table above. |
@@ -127,11 +127,15 @@ Numbered so a ticket and a test can cite them.
    | Field | Cap |
    |---|---|
    | title | 8 to 120 |
-   | detail | 4,000 |
+   | detail | 16,000 (4,000 until 2026-11-08, SUMILABU-18) |
    | askedBy | 60 |
    | claimedBy | 80 |
    | key | 80 |
    | area | 80, checked in code only - the column carries no `@db.VarChar` |
+
+   Only a ticket's detail moved. A setting's value, a report's body and a
+   report's admin note stay at 4,000, and a report filed as a ticket still
+   carries at most 4,000 characters of detail (`REPORT_LIMITS.ticketDetail`).
 
 7. **Quick wins order.** Priority descending (`high`, `normal`, `low`, then
    ungraded), then effort ascending (`small`, `medium`, `large`, then
@@ -310,7 +314,7 @@ export function draftProblems(draft: { title: string; detail: string; askedBy: s
   const title = draft.title.trim();
   if (title.length < 8) problems.push("Say what is wanted in at least 8 characters.");
   if (title.length > 120) problems.push("A title is at most 120 characters; the rest belongs in the detail.");
-  if (draft.detail.length > 4000) problems.push("The detail is at most 4,000 characters.");
+  if (draft.detail.length > 16000) problems.push("The detail is at most 16,000 characters.");
   if (draft.askedBy.trim().length > 60) problems.push("A name is at most 60 characters.");
   return problems;
 }

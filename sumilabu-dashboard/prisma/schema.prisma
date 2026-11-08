@@ -171,7 +171,7 @@ model BoardTicket {
   /// first backfill has numbered a row that predates this column.
   seq        Int?
   title      String    @db.VarChar(120)
-  detail     String?   @db.VarChar(4000)
+  detail     String?   @db.VarChar(16000)
   /// Per project; a project with no areas leaves it null.
   area       String?
   kind       String    @default("feature")

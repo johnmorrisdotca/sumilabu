@@ -227,6 +227,15 @@ describe("filing a report", () => {
     const ticket = await prisma.boardTicket.findFirst({ where: { id: filed.json.ticketId! } });
     expect((ticket as { title: string }).title).toBe("Map broken on phones");
   });
+
+  it("still caps the filed detail at 4,000 characters, whatever a ticket's own cap is", async () => {
+    const made = (await create(UK, draft)).json.report!;
+    const refused = await file(UK, made.id, { detail: "d".repeat(4001) });
+    expect(refused.status).toBe(422);
+    expect(await prisma.boardTicket.count({ where: { projectKey: UK } })).toBe(0);
+    expect((await file(UK, made.id, { detail: "d".repeat(16001) })).status).toBe(400);
+    expect((await file(UK, made.id, { detail: "d".repeat(4000) })).status).toBe(200);
+  });
 });
 
 describe("importing a client's existing reports table", () => {

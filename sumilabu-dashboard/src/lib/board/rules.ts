@@ -26,7 +26,7 @@ export type TicketEffort = (typeof TICKET_EFFORTS)[number];
 export const TICKET_LIMITS = {
   titleMin: 8,
   title: 120,
-  detail: 4000,
+  detail: 16000,
   askedBy: 60,
   claimedBy: 80,
   releasedIn: 40,

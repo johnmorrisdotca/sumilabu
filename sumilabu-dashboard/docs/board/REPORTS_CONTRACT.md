@@ -119,7 +119,9 @@ transaction: either both writes land, or neither does. A report already
 `filed` or `closed` refuses, 409 `not_fileable`, and creates no ticket. The
 body may override `title`, `detail` and `kind`; anything omitted is derived
 from the report (`body` becomes the ticket's `detail`, along with the page,
-version and reporter name/ref; `kind` defaults to `fix`).
+version and reporter name/ref; `kind` defaults to `fix`). A filed ticket's
+`detail` is at most 4,000 characters, as it always was, though a ticket's own
+cap is now 16,000.
 
 **Filing needs the board token, not the reports token.** Filing a report is
 creating a board ticket, so the same guarantee that keeps a leaked board key

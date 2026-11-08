@@ -4,6 +4,7 @@ import { z } from "zod";
 import { TOKEN_SCOPES } from "@/lib/board/auth";
 import { isResponse, readJson, requireCaller } from "@/lib/board/http";
 import { TICKET_KINDS, TICKET_LIMITS } from "@/lib/board/rules";
+import { REPORT_LIMITS } from "@/lib/reports/rules";
 import { fileResponse } from "@/lib/reports/http";
 import { fileReport } from "@/lib/reports/server";
 
@@ -13,7 +14,7 @@ type Ctx = { params: Promise<{ projectKey: string; id: string }> };
 
 const fileSchema = z.object({
   title: z.string().max(TICKET_LIMITS.title * 4).optional(),
-  detail: z.string().max(TICKET_LIMITS.detail * 4).optional(),
+  detail: z.string().max(REPORT_LIMITS.ticketDetail * 4).optional(),
   kind: z.enum(TICKET_KINDS).optional(),
 });
 

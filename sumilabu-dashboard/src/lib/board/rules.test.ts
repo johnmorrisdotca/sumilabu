@@ -60,7 +60,7 @@ describe("the board gate", () => {
   });
 
   it("holds the caps the contract names", () => {
-    expect(TICKET_LIMITS).toMatchObject({ titleMin: 8, title: 120, detail: 4000, askedBy: 60, claimedBy: 80, key: 80, area: 80 });
+    expect(TICKET_LIMITS).toMatchObject({ titleMin: 8, title: 120, detail: 16000, askedBy: 60, claimedBy: 80, key: 80, area: 80 });
     expect(LEASE_MS).toBe(6 * 60 * 60 * 1000);
   });
 
@@ -109,7 +109,8 @@ describe("drafts and ordering", () => {
   it("refuses in words a person can act on", () => {
     expect(draftProblems({ title: "short" })).toHaveLength(1);
     expect(draftProblems({ title: "x".repeat(121) })).toHaveLength(1);
-    expect(draftProblems({ title: "A fine title", detail: "d".repeat(4001) })).toHaveLength(1);
+    expect(draftProblems({ title: "A fine title", detail: "d".repeat(16000) })).toEqual([]);
+    expect(draftProblems({ title: "A fine title", detail: "d".repeat(16001) })).toEqual(["The detail is at most 16,000 characters."]);
     expect(draftProblems({ title: "A fine title", askedBy: "n".repeat(61) })).toHaveLength(1);
     expect(draftProblems({ title: "A fine title", detail: "ok", askedBy: "John" })).toEqual([]);
   });

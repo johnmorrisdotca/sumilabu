@@ -178,6 +178,37 @@ describe("importing keys (invariant 11)", () => {
   });
 });
 
+describe("the detail cap (invariant 6)", () => {
+  it("takes 16,000 characters on a create, a revision and an import, and refuses 16,001 on each", async () => {
+    expect(TICKET_LIMITS.detail).toBe(16000);
+    const full = "d".repeat(16000);
+    const over = "d".repeat(16001);
+
+    const made = await create(ITS, { title: "A ticket with a long plan", detail: full });
+    expect(made.status).toBe(201);
+    expect(made.json.ticket!.detail).toBe(full);
+    const refusedCreate = await create(ITS, { title: "A ticket with a longer plan", detail: over });
+    expect(refusedCreate.status).toBe(422);
+    expect(refusedCreate.json.problems).toEqual(["The detail is at most 16,000 characters."]);
+
+    const id = made.json.ticket!.id;
+    expect((await patch(ITS, id, { detail: "d".repeat(4001) })).status).toBe(200);
+    expect((await patch(ITS, id, { detail: full })).status).toBe(200);
+    expect((await patch(ITS, id, { detail: over })).status).toBe(422);
+    expect((await getTicket(ITS, id)).json.ticket!.detail).toBe(full);
+
+    expect((await importRows(ITS, [row("its-long-1", { detail: full })])).status).toBe(200);
+    const refusedImport = await importRows(ITS, [row("its-long-2", { detail: over })]);
+    expect(refusedImport.status).toBe(422);
+    expect(refusedImport.json.problems).toEqual(["its-long-2: The detail is at most 16,000 characters."]);
+  });
+
+  it("is refused as a payload, before it is read as a draft, at four times the cap", async () => {
+    expect((await create(ITS, { title: "A ticket with a huge plan", detail: "d".repeat(64001) })).status).toBe(400);
+    expect((await create(ITS, { title: "A ticket with a large plan", detail: "d".repeat(64000) })).status).toBe(422);
+  });
+});
+
 describe("revising a ticket's words (invariant 12)", () => {
   it("writes a title and detail within the caps, records the actor, and does not move the row", async () => {
     const made = (await create(ITS, { title: "Show a player's XP history", detail: "First words" })).json.ticket!;
