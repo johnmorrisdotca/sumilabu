@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { TICKET_LIMITS } from "@/lib/board/rules";
+
 import { overallValue } from "./view";
 
 /*
@@ -128,7 +130,7 @@ const ticket = z.object({
   done: day,
   url: httpsLink.nullable().default(null),
   claimedBy: short(80).nullable().default(null),
-  detail: short(4000).nullable().default(null),
+  detail: short(TICKET_LIMITS.detail).nullable().default(null),
 });
 const ticketsBlock = z.object({
   boards: stringList(20, 60),
