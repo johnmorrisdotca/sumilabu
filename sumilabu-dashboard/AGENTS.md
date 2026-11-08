@@ -343,7 +343,7 @@ Since then:
   tests install (it keeps the contract: an entry lives until its tag is
   revalidated).
 - `src/lib/board/rules.ts` — `docs/board/BOARD_RULES.md` as code; `server.ts`
-  the writes; `auth.ts` the token maps (board, settings and reports scopes);
+  the writes; `notes.ts` notes and the edit history's reads (invariants 15, 16); `auth.ts` the token maps (board, settings and reports scopes);
   `http.ts` the shared responses; `memoryPrisma.ts` the ticket in-memory
   stand-in the route tests run against; `memoryStore.ts` the generic row
   store `reports/memoryPrisma.ts` also builds on (board's own double

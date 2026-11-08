@@ -201,6 +201,8 @@ model BoardTicket {
   movedAt    DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   images     BoardTicketImage[]
+  edits      BoardTicketEdit[]
+  notes      BoardTicketNote[]
 
   /// Postgres treats nulls as distinct, so any number of unkeyed rows coexist.
   @@unique([projectKey, key])
@@ -219,6 +221,38 @@ model BoardTicketCounter {
   projectKey String   @id
   last       Int      @default(0)
   updatedAt  DateTime @updatedAt
+}
+
+/// One row for each of title and detail that a PATCH changed (BOARD_RULES.md
+/// invariant 15): who, when, the old text and the new. Written in the same
+/// transaction as the change; deleted with its ticket by the foreign key.
+model BoardTicketEdit {
+  id         String      @id @default(cuid())
+  ticketId   String
+  ticket     BoardTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  projectKey String
+  /// "title" or "detail".
+  field      String      @db.VarChar(10)
+  oldValue   String?     @db.VarChar(16000)
+  newValue   String?     @db.VarChar(16000)
+  editedBy   String      @db.VarChar(80)
+  createdAt  DateTime    @default(now())
+
+  @@index([ticketId, createdAt])
+}
+
+/// A note on a ticket (BOARD_RULES.md invariant 16): appended, never edited
+/// or deleted, allowed on every status including done. Capped like a detail.
+model BoardTicketNote {
+  id         String      @id @default(cuid())
+  ticketId   String
+  ticket     BoardTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  projectKey String
+  body       String      @db.VarChar(16000)
+  by         String      @db.VarChar(80)
+  createdAt  DateTime    @default(now())
+
+  @@index([ticketId, createdAt])
 }
 
 /// A screenshot attached to a ticket (BOARD_RULES.md, "Ticket images"). A

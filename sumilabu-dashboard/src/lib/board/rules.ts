@@ -27,6 +27,8 @@ export const TICKET_LIMITS = {
   titleMin: 8,
   title: 120,
   detail: 16000,
+  /** A note is capped like a detail, in code and as @db.VarChar (invariant 16). */
+  note: 16000,
   askedBy: 60,
   claimedBy: 80,
   releasedIn: 40,
@@ -271,6 +273,35 @@ export function textData(
     editedBy: actor,
     editedAt: now,
   };
+}
+
+/**
+ * Invariant 16. A note needs a character that is not a space and fits the
+ * cap. The cap is checked on what was sent, as a detail's is, and the note is
+ * stored trimmed.
+ */
+export function noteProblems(body: string): string[] {
+  if (body.trim().length === 0) return ["A note needs at least one character that is not a space."];
+  if (body.length > TICKET_LIMITS.note) return [`A note is at most ${TICKET_LIMITS.note.toLocaleString("en-US")} characters.`];
+  return [];
+}
+
+/**
+ * Invariant 15. The history rows a revision writes: one for each of `title`
+ * and `detail` that it carries and that differs from what was stored. `written`
+ * is what `textData` wrote, so a detail cleared to nothing is a null, not "".
+ */
+export const EDIT_FIELDS = ["title", "detail"] as const;
+export type EditField = (typeof EDIT_FIELDS)[number];
+
+export function editedWords(
+  before: { title: string; detail: string | null },
+  written: { title?: string; detail?: string | null },
+): { field: EditField; oldValue: string | null; newValue: string | null }[] {
+  return EDIT_FIELDS.flatMap((field) => {
+    const next = written[field];
+    return next === undefined || next === before[field] ? [] : [{ field, oldValue: before[field], newValue: next }];
+  });
 }
 
 /** Invariant 7. Ungraded sorts last on both axes. */

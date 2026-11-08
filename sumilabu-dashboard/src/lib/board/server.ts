@@ -8,6 +8,7 @@ import {
   TEXT_EDITABLE_FROM,
   canMove,
   draftProblems,
+  editedWords,
   foreignIdProblems,
   formatShortId,
   heldNow,
@@ -202,6 +203,37 @@ export type MoveOutcome =
   | { ok: true; ticket: BoardTicketView }
   | { ok: false; reason: "missing" | "illegal" | "held" | "done"; ticket: BoardTicketView | null; heldBy?: string | null };
 
+/**
+ * Invariant 15. A write that may change the title or detail, kept with its
+ * history: one transaction that locks the row, reads the words as they stand,
+ * runs `write` (the same conditional write as before, now on the transaction)
+ * and, when it landed, writes a `BoardTicketEdit` row for each of title and
+ * detail that differs. The row lock is what makes "as they stand" true: a
+ * second revision waits, and reads what the first wrote. A write that carries
+ * neither field needs no transaction and takes none.
+ */
+async function writeWithHistory(
+  projectKey: string,
+  id: string,
+  text: TicketText | undefined,
+  actor: string,
+  now: Date,
+  write: (db: Pick<Prisma.TransactionClient, "boardTicket">) => Promise<{ count: number }>,
+): Promise<{ count: number }> {
+  if (!text || (text.title === undefined && text.detail === undefined)) return write(prisma);
+  return prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT "id" FROM "BoardTicket" WHERE "id" = ${id} AND "projectKey" = ${projectKey} FOR UPDATE`;
+    const before = await tx.boardTicket.findFirst({ where: { id, projectKey }, select: { title: true, detail: true } });
+    const result = await write(tx);
+    if (result.count === 1 && before) {
+      for (const edit of editedWords(before, textData(text, actor, now))) {
+        await tx.boardTicketEdit.create({ data: { ticketId: id, projectKey, ...edit, editedBy: actor } });
+      }
+    }
+    return result;
+  }, SEQ_TX_OPTIONS);
+}
+
 /** Invariant 12. The fields a PATCH revises; an omitted field is left as it is. */
 export type TicketText = { title?: string; detail?: string | null; area?: string | null; askedBy?: string | null; kind?: TicketKind };
 
@@ -225,10 +257,12 @@ export async function moveTicket(
   if (!before || !isTicketStatus(before.status)) return { ok: false, reason: "missing", ticket: null };
   if (!canMove(before.status, to)) return { ok: false, reason: "illegal", ticket: await getTicket(projectKey, id) };
 
-  const moved = await prisma.boardTicket.updateMany({
-    where: moveWhere(id, projectKey, before.status, actor, now),
-    data: { ...moveData(to, actor, now), ...(text ? textData(text, actor, now) : {}) },
-  });
+  const moved = await writeWithHistory(projectKey, id, text, actor, now, (db) =>
+    db.boardTicket.updateMany({
+      where: moveWhere(id, projectKey, before.status as TicketStatus, actor, now),
+      data: { ...moveData(to, actor, now), ...(text ? textData(text, actor, now) : {}) },
+    }),
+  );
   changed(projectKey, moved.count > 0);
   const after = await getTicket(projectKey, id);
   if (moved.count === 1 && after) return { ok: true, ticket: after };
@@ -244,10 +278,13 @@ export async function moveTicket(
  */
 export async function reviseTicket(projectKey: string, idOrShortId: string, text: TicketText, actor: string): Promise<MoveOutcome> {
   const id = await resolveTicketId(projectKey, idOrShortId);
-  const revised = await prisma.boardTicket.updateMany({
-    where: { id, projectKey, status: { in: [...TEXT_EDITABLE_FROM] } },
-    data: textData(text, actor, new Date()),
-  });
+  const now = new Date();
+  const revised = await writeWithHistory(projectKey, id, text, actor, now, (db) =>
+    db.boardTicket.updateMany({
+      where: { id, projectKey, status: { in: [...TEXT_EDITABLE_FROM] } },
+      data: textData(text, actor, now),
+    }),
+  );
   changed(projectKey, revised.count > 0);
   const after = await getTicket(projectKey, id);
   if (revised.count === 1 && after) return { ok: true, ticket: after };

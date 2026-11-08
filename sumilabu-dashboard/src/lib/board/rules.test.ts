@@ -16,6 +16,7 @@ import {
   byQuickWin,
   canMove,
   draftProblems,
+  editedWords,
   foreignIdProblems,
   formatShortId,
   heldNow,
@@ -23,6 +24,7 @@ import {
   keyProblems,
   moveData,
   moveWhere,
+  noteProblems,
   parseShortId,
   shipData,
   textData,
@@ -60,7 +62,7 @@ describe("the board gate", () => {
   });
 
   it("holds the caps the contract names", () => {
-    expect(TICKET_LIMITS).toMatchObject({ titleMin: 8, title: 120, detail: 16000, askedBy: 60, claimedBy: 80, key: 80, area: 80 });
+    expect(TICKET_LIMITS).toMatchObject({ titleMin: 8, title: 120, detail: 16000, note: 16000, askedBy: 60, claimedBy: 80, key: 80, area: 80 });
     expect(LEASE_MS).toBe(6 * 60 * 60 * 1000);
   });
 
@@ -193,6 +195,29 @@ describe("keys and revisions", () => {
     expect(textData({ area: "  " }, "its-builder", now)).toEqual({ area: null, editedBy: "its-builder", editedAt: now });
     expect(textData({ askedBy: "  a player  " }, "its-builder", now)).toEqual({ askedBy: "a player", editedBy: "its-builder", editedAt: now });
     expect(textData({ kind: "fix" }, "its-builder", now)).toEqual({ kind: "fix", editedBy: "its-builder", editedAt: now });
+  });
+});
+
+/* Invariants 15 and 16. */
+describe("notes and edit history", () => {
+  it("caps a note like a detail and wants a character that is not a space", () => {
+    expect(TICKET_LIMITS.note).toBe(TICKET_LIMITS.detail);
+    expect(noteProblems("n".repeat(16000))).toEqual([]);
+    expect(noteProblems("n".repeat(16001))).toEqual(["A note is at most 16,000 characters."]);
+    expect(noteProblems("")).toHaveLength(1);
+    expect(noteProblems(" \n\t ")).toHaveLength(1);
+  });
+
+  it("names a history row for each of title and detail that the write changed, and for no other", () => {
+    const before = { title: "Old title here", detail: "Old detail" as string | null };
+    expect(editedWords(before, textData({ title: "New title here", detail: "New detail" }, "a", new Date()))).toEqual([
+      { field: "title", oldValue: "Old title here", newValue: "New title here" },
+      { field: "detail", oldValue: "Old detail", newValue: "New detail" },
+    ]);
+    expect(editedWords(before, textData({ title: "  Old title here  ", detail: "Old detail" }, "a", new Date()))).toEqual([]);
+    expect(editedWords(before, textData({ detail: "" }, "a", new Date()))).toEqual([{ field: "detail", oldValue: "Old detail", newValue: null }]);
+    expect(editedWords({ title: "Old title here", detail: null }, textData({ detail: "  " }, "a", new Date()))).toEqual([]);
+    expect(editedWords(before, textData({ area: "x", askedBy: "y", kind: "fix" }, "a", new Date()))).toEqual([]);
   });
 });
 

@@ -280,6 +280,41 @@ Numbered so a ticket and a test can cite them.
     - **Reports.** A ticket a report is filed into is numbered like any
       other.
 
+15. **Every change to a title or detail is kept.** A `PATCH` (or a `bulk`
+    row) that changes `title` or `detail` writes one `BoardTicketEdit` row for
+    each of the two that differs from what was stored: the ticket, the field,
+    the old text, the new text (a detail cleared to nothing is a null),
+    `editedBy` and the time. The rows are written in the same transaction as
+    the change, after the row is locked and read, so a revision that does not
+    land leaves no row, a row that cannot be written takes the revision with
+    it, and two revisions at once each record the words they replaced. A grade,
+    a move without words, words equal to what is stored, and a refused write
+    (`done`, a hold, a cap) write none. `GET tickets/{id}/history` answers
+    `{ ok: true, edits: [{ id, field, oldValue, newValue, editedBy, editedAt }] }`,
+    oldest first, 404 `missing` for a ticket not in the project, with the
+    board token like every read and an `ETag` like the ticket's own. History
+    goes with its ticket by the foreign key. Nothing else about a revision
+    changes: caps (invariant 6), actor (invariant 5), `done` frozen
+    (invariant 12) and every status, claim and release column are as before.
+
+16. **A ticket takes notes, which are appended and never changed.**
+    `POST tickets/{id}/notes` takes `{ body }` and an actor (invariant 5) and
+    answers 201 `{ ok: true, note: { id, ticketId, body, by, createdAt } }`;
+    `GET tickets/{id}/notes` answers `{ ok: true, notes: [...] }`, oldest
+    first, with an `ETag`. A note has at least one character that is not a
+    space and at most 16,000 (`TICKET_LIMITS.note`, and `@db.VarChar(16000)`
+    on `BoardTicketNote.body`, for the reason in invariant 6); it is stored
+    trimmed, 422 in words otherwise, 400 `invalid_payload` past four times the
+    cap. `by` is the actor. There is no route to edit or delete a note.
+
+    A note is allowed on a ticket in any status, `done` included. Invariant 12
+    freezes a done row's words because they are what the release is recorded
+    as carrying; a note adds beside them and rewrites nothing, and the row's
+    status, stamp, `editedBy` and `movedAt` are untouched. Correcting what a
+    shipped ticket said is a note, or a new row that cites it. Adding a note
+    renews the board's version (see "Reading cheaply"). Notes go with their
+    ticket by the foreign key.
+
 ## Reference shapes
 
 The lease and claim rules, as UmaKuma has them in `src/lib/ticketClaims.ts`.
@@ -331,6 +366,10 @@ export function draftProblems(draft: { title: string; detail: string; askedBy: s
 - A `done` row's title and detail are frozen with its stamp (invariant 12).
   The alternative was letting a shipped row be reworded, which Itsutsu's own
   board allowed before the move to the service.
+- A `done` row takes notes (invariant 16). John agreed 2026-11-08: a note
+  adds without rewriting the release record. The alternative was refusing
+  notes on `done` as words are, which would leave a shipped ticket no place
+  for what is learned after the release.
 
 ## Tokens and projects
 
@@ -398,13 +437,13 @@ only grades needs nobody named. A `key` on any entry is refused, 400
 
 ### Reading cheaply
 
-Every `200` of `GET tickets` (any filter, or `?key=`) and `GET tickets/{id}`
-carries an `ETag`; a client that sends it back as `If-None-Match` gets `304`
+Every `200` of `GET tickets` (any filter, or `?key=`), `GET tickets/{id}`,
+`GET tickets/{id}/notes` and `GET tickets/{id}/history` carries an `ETag`; a client that sends it back as `If-None-Match` gets `304`
 with no body while nothing on that board has changed, and the service
 answers it without a database query (SUMILABU-15). The tag is worked out
 from the board's version, which every write to that board (a create, a move,
 a revision, a grade, a ship, a stamp, an unship, an import, a report filed
-as a ticket) renews, and from the clock, so a hold whose lease runs out
+as a ticket, a note) renews, and from the clock, so a hold whose lease runs out
 (invariant 3) changes it with no write. A tag is opaque: compare it, never
 parse it. It names no caller and no token, and the answers are
 `Cache-Control: private, no-cache`, so no shared cache keeps one. A client
@@ -412,6 +451,13 @@ should keep its last answer and its tag per board and per query, ask with
 the tag, and never poll: a `304` is cheap, not free (it is still a call).
 A client that needs one ticket by its short id asks `GET tickets/{shortId}`
 rather than listing the board to find it.
+
+The version is the board's, not the read's, on purpose: any write that a
+cached read could show clears it, so no read can be answered `304` after the
+thing it shows changed. A new table that a read shows is covered by calling
+`forgetBoard` after its writes, which is a rule for its writer, not for its
+reader. A write that changed nothing (a refused note, an unchanged revision
+that wrote no row) leaves the version alone.
 
 ### Ticket images
 

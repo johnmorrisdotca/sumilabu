@@ -135,45 +135,74 @@ export function memoryPrisma() {
     },
     async deleteMany({ where }: { where?: Where } = {}) {
       const before = rows.length;
+      const gone = rows.filter((row) => matches(row, where)).map((row) => row.id as string);
       rows = rows.filter((row) => !matches(row, where));
+      /* The foreign keys' cascade, for the tables that hang off a ticket. */
+      if (gone.length > 0) {
+        await boardTicketImage.deleteMany({ where: { ticketId: { in: gone } } });
+        await boardTicketEdit.deleteMany({ where: { ticketId: { in: gone } } });
+        await boardTicketNote.deleteMany({ where: { ticketId: { in: gone } } });
+      }
       return { count: before - rows.length };
     },
   };
 
-  /* Ticket images (images.ts). The foreign key's cascade is not mirrored:
-     nothing the routes do deletes a ticket. */
+  /* Ticket images (images.ts). */
   const boardTicketImage = createRowStore({ defaults: { addedBy: null }, idPrefix: "image" });
+
+  /* The edit history (invariant 15) and the notes (invariant 16): appended, read oldest first. */
+  const boardTicketEdit = createRowStore({ defaults: { oldValue: null, newValue: null }, idPrefix: "edit" });
+  const boardTicketNote = createRowStore({ defaults: {}, idPrefix: "note" });
 
   /* The per-project counter (seq.ts) and the interactive transaction around it. */
   const boardTicketCounter = createCounterStore();
   const serialize = createTransactionLock();
 
-  /** The one raw statement the code makes: seq.ts's set-based numbering (memoryStore.ts, `numberUnsettled`). */
-  const executeRaw = (strings: TemplateStringsArray, ...values: unknown[]) => numberUnsettled(boardTicket, strings, values);
+  /**
+   * seq.ts's set-based numbering (memoryStore.ts, `numberUnsettled`), and the
+   * locks a write takes (`FOR UPDATE`, `pg_advisory_xact_lock`): transactions
+   * here already run one at a time, so a lock has nothing left to do.
+   */
+  const executeRaw = (strings: TemplateStringsArray, ...values: unknown[]) =>
+    /FOR UPDATE|pg_advisory_xact_lock/.test(strings.join("?")) ? Promise.resolve(0) : numberUnsettled(boardTicket, strings, values);
+  const queryRaw = (strings: TemplateStringsArray, ...values: unknown[]) => executeRaw(strings, ...values).then(() => []);
 
   type Tx = {
     boardTicket: typeof boardTicket;
     boardTicketCounter: typeof boardTicketCounter;
     boardTicketImage: typeof boardTicketImage;
+    boardTicketEdit: typeof boardTicketEdit;
+    boardTicketNote: typeof boardTicketNote;
     $executeRaw: typeof executeRaw;
+    $queryRaw: typeof queryRaw;
   };
+
+  const tx: Tx = { boardTicket, boardTicketCounter, boardTicketImage, boardTicketEdit, boardTicketNote, $executeRaw: executeRaw, $queryRaw: queryRaw };
 
   return {
     boardTicket,
     boardTicketImage,
+    boardTicketEdit,
+    boardTicketNote,
     boardTicketCounter,
     $executeRaw: executeRaw,
+    $queryRaw: queryRaw,
     /** Transactions run one at a time and roll back whole on a throw, as Postgres's row lock and rollback do. */
     $transaction<T>(fn: ((tx: Tx) => Promise<T>) | readonly unknown[]): Promise<T> {
       if (typeof fn !== "function") throw new Error("memory $transaction: pass a callback");
       return serialize(async () => {
-        const tickets = [...rows];
+        /* Rows are copied: a write changes a row in place, and a rollback must give back the old one. */
+        const tickets = rows.map((row) => ({ ...row }));
         const counters = boardTicketCounter._snapshot();
+        const edits = boardTicketEdit._snapshot();
+        const notes = boardTicketNote._snapshot();
         try {
-          return await fn({ boardTicket, boardTicketCounter, boardTicketImage, $executeRaw: executeRaw });
+          return await fn(tx);
         } catch (error) {
           rows = tickets;
           boardTicketCounter._restore(counters);
+          boardTicketEdit._restore(edits);
+          boardTicketNote._restore(notes);
           throw error;
         }
       });
