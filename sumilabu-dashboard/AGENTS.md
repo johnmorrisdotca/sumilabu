@@ -53,15 +53,21 @@ Run every step in order. Do not skip one because the change "is small".
    2. **Back up production first**, outside the repository (a dump in the
       repo could be committed to a public repository):
 
-          mkdir -p ~/Projects/backups/sumilabu
-          pg_dump "$(neonctl connection-string --project-id square-snow-29043019 --org-id org-old-wave-97887412)" \
+          mkdir -p ~/Projects/backups/sumilabu ~/Library/CloudStorage/Dropbox/Backups/sumilabu
+          /opt/homebrew/opt/postgresql@17/bin/pg_dump "$(neonctl connection-string --project-id square-snow-29043019 --org-id org-old-wave-97887412)" \
             -Fc -f ~/Projects/backups/sumilabu/$(date +%Y-%m-%d)-before-<what>.dump
           ls -l ~/Projects/backups/sumilabu   # the new file is there and not empty
+          cp -p ~/Projects/backups/sumilabu/$(date +%Y-%m-%d)-before-<what>.dump ~/Library/CloudStorage/Dropbox/Backups/sumilabu/
 
       Every SPXIS project keeps its backups in `~/Projects/backups/<project>/`,
-      named date first, outside every checkout (John, 2026-10-08). Without
-      `--org-id`, `neonctl` stops to ask which organization and the dump
-      gets nothing.
+      named date first, outside every checkout (John, 2026-10-08), with a
+      second copy in Dropbox `/Backups/<project>/`, because the first copy is
+      on one laptop only (John, 2026-11-08). Without `--org-id`, `neonctl`
+      stops to ask which organization and the dump gets nothing. Neon runs
+      Postgres 17, and a `pg_dump` older than the server refuses ("server
+      version mismatch"), so call the 17 one by its path
+      (`brew install postgresql@17`) rather than whichever is first on the
+      PATH.
 
       If the backup fails, stop and tell John.
    3. Do **not** run `pnpm db:push` against production. The workflow pushes
