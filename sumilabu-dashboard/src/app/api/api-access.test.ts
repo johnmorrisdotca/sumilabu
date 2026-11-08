@@ -35,6 +35,8 @@ const ROUTES: Record<string, { methods: string[]; guard: Guard }> = {
   "v1/projects/[projectKey]/tickets/[ticketId]/unship": { methods: ["POST"], guard: { kind: "token", checks: "requireCaller", tokens: "BOARD_TOKENS_JSON[project]" } },
   "v1/projects/[projectKey]/tickets/[ticketId]/stamp": { methods: ["POST"], guard: { kind: "token", checks: "requireCaller", tokens: "BOARD_TOKENS_JSON[project]" } },
   "v1/projects/[projectKey]/tickets/[ticketId]/history": { methods: ["GET"], guard: { kind: "token", checks: "requireCaller", tokens: "BOARD_TOKENS_JSON[project]" } },
+  "v1/projects/[projectKey]/tickets/[ticketId]/links": { methods: ["POST"], guard: { kind: "token", checks: "requireCaller", tokens: "BOARD_TOKENS_JSON[project]" } },
+  "v1/projects/[projectKey]/tickets/[ticketId]/links/[otherId]": { methods: ["DELETE"], guard: { kind: "token", checks: "requireCaller", tokens: "BOARD_TOKENS_JSON[project]" } },
   "v1/projects/[projectKey]/tickets/[ticketId]/notes": { methods: ["GET", "POST"], guard: { kind: "token", checks: "requireCaller", tokens: "BOARD_TOKENS_JSON[project]" } },
   "v1/projects/[projectKey]/tickets/[ticketId]/images": { methods: ["GET", "POST"], guard: { kind: "token", checks: "requireCaller", tokens: "BOARD_TOKENS_JSON[project]" } },
   "v1/projects/[projectKey]/tickets/[ticketId]/images/[imageId]": { methods: ["GET"], guard: { kind: "token", checks: "requireCaller", tokens: "BOARD_TOKENS_JSON[project]" } },

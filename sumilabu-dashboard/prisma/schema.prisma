@@ -200,9 +200,17 @@ model BoardTicket {
   /// Changes only on a status move. Grading is not movement.
   movedAt    DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
+  /// The ticket this one sits under, in the same project (BOARD_RULES.md
+  /// invariant 17). Null for a ticket under none. Never itself or one of its
+  /// own descendants; checked in code, under a project lock.
+  parentId   String?
+  parent     BoardTicket?  @relation("TicketParent", fields: [parentId], references: [id], onDelete: SetNull)
+  children   BoardTicket[] @relation("TicketParent")
   images     BoardTicketImage[]
   edits      BoardTicketEdit[]
   notes      BoardTicketNote[]
+  linksLow   BoardTicketLink[] @relation("LinkLow")
+  linksHigh  BoardTicketLink[] @relation("LinkHigh")
 
   /// Postgres treats nulls as distinct, so any number of unkeyed rows coexist.
   @@unique([projectKey, key])
@@ -211,6 +219,7 @@ model BoardTicket {
   @@index([projectKey, status, movedAt(sort: Desc)])
   @@index([projectKey, claimedBy])
   @@index([projectKey, createdAt(sort: Desc)])
+  @@index([parentId])
 }
 
 /// The last number a project's tickets have used (invariant 14). A row of
@@ -253,6 +262,24 @@ model BoardTicketNote {
   createdAt  DateTime    @default(now())
 
   @@index([ticketId, createdAt])
+}
+
+/// A "related" link between two tickets of one project (BOARD_RULES.md
+/// invariant 18). One row for the pair, the lower id first, so A to B and B
+/// to A are the same link and the unique index keeps it single. Read both
+/// ways; added and removed on a ticket in any status, `done` included.
+model BoardTicketLink {
+  id         String      @id @default(cuid())
+  projectKey String
+  lowId      String
+  low        BoardTicket @relation("LinkLow", fields: [lowId], references: [id], onDelete: Cascade)
+  highId     String
+  high       BoardTicket @relation("LinkHigh", fields: [highId], references: [id], onDelete: Cascade)
+  by         String      @db.VarChar(80)
+  createdAt  DateTime    @default(now())
+
+  @@unique([lowId, highId])
+  @@index([highId])
 }
 
 /// A screenshot attached to a ticket (BOARD_RULES.md, "Ticket images"). A

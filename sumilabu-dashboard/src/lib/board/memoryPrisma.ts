@@ -20,7 +20,7 @@ type Where = Record<string, unknown>;
 type Select = Record<string, boolean>;
 
 const DEFAULTS: TicketRow = {
-  projectKey: "default", key: null, seq: null, detail: null, area: null, kind: "feature", status: "open", priority: null, effort: null,
+  projectKey: "default", key: null, seq: null, parentId: null, detail: null, area: null, kind: "feature", status: "open", priority: null, effort: null,
   askedBy: null, claimedBy: null, claimedAt: null, releasedIn: null, releasedEntry: null, releasedAt: null, editedBy: null, editedAt: null,
 };
 
@@ -142,6 +142,8 @@ export function memoryPrisma() {
         await boardTicketImage.deleteMany({ where: { ticketId: { in: gone } } });
         await boardTicketEdit.deleteMany({ where: { ticketId: { in: gone } } });
         await boardTicketNote.deleteMany({ where: { ticketId: { in: gone } } });
+        await boardTicketLink.deleteMany({ where: { OR: [{ lowId: { in: gone } }, { highId: { in: gone } }] } });
+        for (const row of rows) if (typeof row.parentId === "string" && gone.includes(row.parentId)) row.parentId = null;
       }
       return { count: before - rows.length };
     },
@@ -153,6 +155,16 @@ export function memoryPrisma() {
   /* The edit history (invariant 15) and the notes (invariant 16): appended, read oldest first. */
   const boardTicketEdit = createRowStore({ defaults: { oldValue: null, newValue: null }, idPrefix: "edit" });
   const boardTicketNote = createRowStore({ defaults: {}, idPrefix: "note" });
+  /* Related links (invariant 18): the unique index on the ordered pair. */
+  const boardTicketLink = createRowStore({
+    defaults: {},
+    idPrefix: "link",
+    assertUnique(candidate, links, self) {
+      for (const link of links) {
+        if (link !== self && link.lowId === candidate.lowId && link.highId === candidate.highId) throw uniqueViolation(["lowId", "highId"]);
+      }
+    },
+  });
 
   /* The per-project counter (seq.ts) and the interactive transaction around it. */
   const boardTicketCounter = createCounterStore();
@@ -184,6 +196,7 @@ export function memoryPrisma() {
     boardTicketImage,
     boardTicketEdit,
     boardTicketNote,
+    boardTicketLink,
     boardTicketCounter,
     $executeRaw: executeRaw,
     $queryRaw: queryRaw,

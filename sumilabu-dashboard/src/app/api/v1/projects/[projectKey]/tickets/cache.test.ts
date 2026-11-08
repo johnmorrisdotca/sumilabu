@@ -21,7 +21,9 @@ import { GET as list, POST as createRoute } from "./route";
  *   - a list, a ticket or a key read asked with its ETag, nothing changed:
  *     0 queries, a 304 and no body;
  *   - the same read without an ETag: at most 2 queries (the board's version
- *     when it is not cached, then the read itself);
+ *     when it is not cached, then the read itself); one ticket's read by id
+ *     or short id also reads its family and its links (SUMILABU-20), so up to
+ *     4, and none of them grows with the size of the board;
  *   - a write clears exactly its own board's version, never another's, and
  *     the data cache holds one small entry per board (one 8 KB write unit);
  *   - a lease running out changes the ETag with no write and no query;
@@ -113,7 +115,7 @@ describe("an unchanged board costs no database query", () => {
     const tags = new Map<string, string>();
     for (const [name, read] of reads) {
       let first: Response | undefined;
-      expect(await cost(async () => (first = await read())), name).toBeLessThanOrEqual(2);
+      expect(await cost(async () => (first = await read())), name).toBeLessThanOrEqual(name === "id" || name === "short" ? 4 : 2);
       expect(first!.status, name).toBe(200);
       tags.set(name, first!.headers.get("etag")!);
     }

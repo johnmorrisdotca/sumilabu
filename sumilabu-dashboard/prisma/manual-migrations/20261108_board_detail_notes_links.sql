@@ -1,5 +1,5 @@
--- BoardTicket.detail to 16,000 characters (SUMILABU-18), and the tables for
--- notes and edit history (SUMILABU-19; BOARD_RULES.md invariants 6, 15, 16).
+-- The board gets longer details, notes, edit history, parents and related links
+-- (SUMILABU-18, 19 and 20; BOARD_RULES.md invariants 6 and 15 to 18).
 --
 -- This repository applies prisma/schema.prisma with `pnpm db:push` and keeps no
 -- prisma/migrations history, so Prisma never reads this file. It is the SQL
@@ -8,11 +8,13 @@
 -- run this against production by hand.
 --
 -- Additive only: a wider VARCHAR (every stored value kept, no table rewrite in
--- Postgres) and two new tables with an index each. Take the backup in AGENTS.md
--- step 4 first all the same.
+-- Postgres), one nullable column with its index and a self-referencing foreign
+-- key (every existing row gets a null parent), and three new tables with their
+-- indexes. Take the backup in AGENTS.md step 4 first all the same.
 
 -- AlterTable
-ALTER TABLE "BoardTicket" ALTER COLUMN "detail" SET DATA TYPE VARCHAR(16000);
+ALTER TABLE "BoardTicket" ADD COLUMN     "parentId" TEXT,
+ALTER COLUMN "detail" SET DATA TYPE VARCHAR(16000);
 
 -- CreateTable
 CREATE TABLE "BoardTicketEdit" (
@@ -40,15 +42,45 @@ CREATE TABLE "BoardTicketNote" (
     CONSTRAINT "BoardTicketNote_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "BoardTicketLink" (
+    "id" TEXT NOT NULL,
+    "projectKey" TEXT NOT NULL,
+    "lowId" TEXT NOT NULL,
+    "highId" TEXT NOT NULL,
+    "by" VARCHAR(80) NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "BoardTicketLink_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE INDEX "BoardTicketEdit_ticketId_createdAt_idx" ON "BoardTicketEdit"("ticketId", "createdAt");
 
 -- CreateIndex
 CREATE INDEX "BoardTicketNote_ticketId_createdAt_idx" ON "BoardTicketNote"("ticketId", "createdAt");
 
+-- CreateIndex
+CREATE INDEX "BoardTicketLink_highId_idx" ON "BoardTicketLink"("highId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "BoardTicketLink_lowId_highId_key" ON "BoardTicketLink"("lowId", "highId");
+
+-- CreateIndex
+CREATE INDEX "BoardTicket_parentId_idx" ON "BoardTicket"("parentId");
+
+-- AddForeignKey
+ALTER TABLE "BoardTicket" ADD CONSTRAINT "BoardTicket_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "BoardTicket"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
 -- AddForeignKey
 ALTER TABLE "BoardTicketEdit" ADD CONSTRAINT "BoardTicketEdit_ticketId_fkey" FOREIGN KEY ("ticketId") REFERENCES "BoardTicket"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "BoardTicketNote" ADD CONSTRAINT "BoardTicketNote_ticketId_fkey" FOREIGN KEY ("ticketId") REFERENCES "BoardTicket"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "BoardTicketLink" ADD CONSTRAINT "BoardTicketLink_lowId_fkey" FOREIGN KEY ("lowId") REFERENCES "BoardTicket"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "BoardTicketLink" ADD CONSTRAINT "BoardTicketLink_highId_fkey" FOREIGN KEY ("highId") REFERENCES "BoardTicket"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 

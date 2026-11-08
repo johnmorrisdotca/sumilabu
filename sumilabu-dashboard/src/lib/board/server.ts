@@ -20,12 +20,14 @@ import {
   textData,
   textProblems,
   unshipData,
+  wouldCycle,
   type TicketEffort,
   type TicketKind,
   type TicketMoveTarget,
   type TicketPriority,
   type TicketStatus,
 } from "./rules";
+import { relatedShortIds, shortIds } from "./links";
 import { SEQ_TX_OPTIONS, backfillSeqs, nextSeq, resolveTicketId, settledRow } from "./seq";
 import { boardEtag, cachedBoardVersion, forgetBoard } from "./ticketCache";
 
@@ -39,6 +41,8 @@ export type BoardTicketView = {
   seq: number | null;
   /** Invariant 14. `SPX-142`: the project's prefix and `seq`. Every route also takes it in place of `id`. */
   shortId: string | null;
+  /** Invariant 17. The cuid of the ticket this one sits under, or null. The single-ticket read also names it as a short id. */
+  parentId: string | null;
   title: string;
   detail: string | null;
   area: string | null;
@@ -62,7 +66,7 @@ export type BoardTicketView = {
 };
 
 type Row = {
-  id: string; projectKey: string; key: string | null; seq: number | null; title: string; detail: string | null; area: string | null; kind: string;
+  id: string; projectKey: string; key: string | null; seq: number | null; parentId: string | null; title: string; detail: string | null; area: string | null; kind: string;
   status: string; priority: string | null; effort: string | null; askedBy: string | null; claimedBy: string | null;
   claimedAt: Date | null; releasedIn: string | null; releasedEntry: string | null; releasedAt: Date | null;
   editedBy: string | null; editedAt: Date | null; createdAt: Date; movedAt: Date;
@@ -72,6 +76,7 @@ function view(row: Row, now = new Date()): BoardTicketView {
   return {
     ...row,
     seq: row.seq ?? null,
+    parentId: row.parentId ?? null,
     shortId: formatShortId(row.projectKey, row.seq),
     status: isTicketStatus(row.status) ? row.status : "open",
     priority: (row.priority as TicketPriority | null) ?? null,
@@ -122,6 +127,31 @@ export async function getTicket(projectKey: string, idOrShortId: string): Promis
   const find = () => prisma.boardTicket.findFirst({ where: { id, projectKey } });
   const row = await find();
   return row ? view(await settledRow(projectKey, row, find)) : null;
+}
+
+/** The single-ticket read: the ticket, and its family and related tickets as short ids (invariants 17, 18). */
+export type BoardTicketDetailView = BoardTicketView & { parent: string | null; children: string[]; related: string[] };
+
+/**
+ * `getTicket`, plus two more reads for the family (the ticket's parent and
+ * the tickets under it, one query) and one or two for its related links. The
+ * list does not carry them: it has `parentId` and nothing that costs a read
+ * per row.
+ */
+export async function getTicketDetail(projectKey: string, idOrShortId: string): Promise<BoardTicketDetailView | null> {
+  const ticket = await getTicket(projectKey, idOrShortId);
+  if (!ticket) return null;
+  const kin = await prisma.boardTicket.findMany({
+    where: { projectKey, OR: [{ parentId: ticket.id }, ...(ticket.parentId ? [{ id: ticket.parentId }] : [])] },
+    select: { id: true, seq: true },
+  });
+  const [parent] = shortIds(projectKey, kin.filter((row) => row.id === ticket.parentId));
+  return {
+    ...ticket,
+    parent: parent ?? null,
+    children: shortIds(projectKey, kin.filter((row) => row.id !== ticket.parentId)),
+    related: await relatedShortIds(projectKey, ticket.id),
+  };
 }
 
 /** Invariant 11. A client resolves a key to an id here, and addresses every write by the id. */
@@ -203,29 +233,73 @@ export type MoveOutcome =
   | { ok: true; ticket: BoardTicketView }
   | { ok: false; reason: "missing" | "illegal" | "held" | "done"; ticket: BoardTicketView | null; heldBy?: string | null };
 
+/** A refusal raised inside a transaction, so everything the transaction wrote goes with it. */
+class Refusal extends Error {
+  constructor(readonly problems: string[]) {
+    super(problems[0]);
+  }
+}
+
 /**
- * Invariant 15. A write that may change the title or detail, kept with its
- * history: one transaction that locks the row, reads the words as they stand,
- * runs `write` (the same conditional write as before, now on the transaction)
- * and, when it landed, writes a `BoardTicketEdit` row for each of title and
- * detail that differs. The row lock is what makes "as they stand" true: a
- * second revision waits, and reads what the first wrote. A write that carries
- * neither field needs no transaction and takes none.
+ * Invariant 17. Why `parentId` cannot be this ticket's parent, in words: it
+ * is the ticket itself, it is not a ticket of this project (another project's
+ * included), or it is below the ticket already. Read inside the transaction
+ * that holds the project's lock, so two requests cannot each pass this and
+ * together close a loop.
  */
-async function writeWithHistory(
+async function parentProblems(db: Pick<Prisma.TransactionClient, "boardTicket">, projectKey: string, id: string, parentId: string): Promise<string[]> {
+  if (parentId === id) return ["A ticket cannot be its own parent."];
+  const parent = await db.boardTicket.findFirst({ where: { id: parentId, projectKey }, select: { id: true } });
+  if (!parent) return ["The parent must be a ticket in this project."];
+  const parented = await db.boardTicket.findMany({ where: { projectKey, parentId: { not: null } }, select: { id: true, parentId: true } });
+  const parentOf = new Map(parented.flatMap((row) => (row.parentId ? [[row.id, row.parentId] as const] : [])));
+  return wouldCycle(id, parentId, parentOf) ? ["The parent is below this ticket; a ticket cannot sit under its own child."] : [];
+}
+
+/**
+ * Invariants 15 and 17. A write that may change the title or detail, or set
+ * a parent, in a transaction when it does. The transaction
+ *
+ * - takes the project's lock before a parent is set and checks it there, so
+ *   two requests cannot each pass the cycle check and together close a loop;
+ * - locks the row and reads its title and detail as they stand, runs `write`
+ *   (the same conditional write as before, now on the transaction) and, when
+ *   it landed, writes a `BoardTicketEdit` row for each of title and detail
+ *   that differs. The row lock is what makes "as they stand" true: a second
+ *   revision waits, and reads what the first wrote.
+ *
+ * A refusal thrown inside takes everything with it. A write that carries
+ * neither needs no transaction and takes none; clearing a parent is one.
+ */
+async function writeChange(
   projectKey: string,
   id: string,
-  text: TicketText | undefined,
+  change: TicketChange | undefined,
   actor: string,
   now: Date,
   write: (db: Pick<Prisma.TransactionClient, "boardTicket">) => Promise<{ count: number }>,
 ): Promise<{ count: number }> {
-  if (!text || (text.title === undefined && text.detail === undefined)) return write(prisma);
+  const text = change?.text;
+  const keepsHistory = text !== undefined && (text.title !== undefined || text.detail !== undefined);
+  const parentId = change?.parentId;
+  if (!keepsHistory && typeof parentId !== "string") return write(prisma);
   return prisma.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT "id" FROM "BoardTicket" WHERE "id" = ${id} AND "projectKey" = ${projectKey} FOR UPDATE`;
-    const before = await tx.boardTicket.findFirst({ where: { id, projectKey }, select: { title: true, detail: true } });
+    if (typeof parentId === "string") {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${projectKey}))`;
+      /* A done row refuses a parent change whatever it names (invariant 12): the conditional write below says so. */
+      const row = await tx.boardTicket.findFirst({ where: { id, projectKey }, select: { status: true } });
+      if (row && (TEXT_EDITABLE_FROM as readonly string[]).includes(row.status)) {
+        const problems = await parentProblems(tx, projectKey, id, parentId);
+        if (problems.length > 0) throw new Refusal(problems);
+      }
+    }
+    let before: { title: string; detail: string | null } | null = null;
+    if (keepsHistory) {
+      await tx.$queryRaw`SELECT "id" FROM "BoardTicket" WHERE "id" = ${id} AND "projectKey" = ${projectKey} FOR UPDATE`;
+      before = await tx.boardTicket.findFirst({ where: { id, projectKey }, select: { title: true, detail: true } });
+    }
     const result = await write(tx);
-    if (result.count === 1 && before) {
+    if (result.count === 1 && before && text) {
       for (const edit of editedWords(before, textData(text, actor, now))) {
         await tx.boardTicketEdit.create({ data: { ticketId: id, projectKey, ...edit, editedBy: actor } });
       }
@@ -234,6 +308,12 @@ async function writeWithHistory(
   }, SEQ_TX_OPTIONS);
 }
 
+/** What a PATCH changes besides status and grade: the words (invariant 12) and the parent (invariant 17). */
+export type TicketChange = { text?: TicketText; parentId?: string | null };
+
+/** Invariant 17. What a parent change writes; nothing of the words' `editedBy`. */
+const parentData = (change: TicketChange | undefined) => (change?.parentId === undefined ? {} : { parentId: change.parentId });
+
 /** Invariant 12. The fields a PATCH revises; an omitted field is left as it is. */
 export type TicketText = { title?: string; detail?: string | null; area?: string | null; askedBy?: string | null; kind?: TicketKind };
 
@@ -241,26 +321,28 @@ export type TicketText = { title?: string; detail?: string | null; area?: string
  * Invariant 4: one conditional write, then a re-read only to say why it
  * did not happen. Never read-then-write.
  *
- * `text` rides in the same write, so a refused move revises nothing. A move
- * never starts from `done`, so the words it carries are always editable.
+ * `change` (the words, the parent) rides in the same write, so a refused move
+ * revises nothing. A move never starts from `done`, so what it carries is
+ * always editable.
  */
 export async function moveTicket(
   projectKey: string,
   idOrShortId: string,
   to: TicketMoveTarget,
   actor: string,
-  text?: TicketText,
+  change?: TicketChange,
 ): Promise<MoveOutcome> {
+  const text = change?.text;
   const id = await resolveTicketId(projectKey, idOrShortId);
   const now = new Date();
   const before = await prisma.boardTicket.findFirst({ where: { id, projectKey }, select: { status: true } });
   if (!before || !isTicketStatus(before.status)) return { ok: false, reason: "missing", ticket: null };
   if (!canMove(before.status, to)) return { ok: false, reason: "illegal", ticket: await getTicket(projectKey, id) };
 
-  const moved = await writeWithHistory(projectKey, id, text, actor, now, (db) =>
+  const moved = await writeChange(projectKey, id, change, actor, now, (db) =>
     db.boardTicket.updateMany({
       where: moveWhere(id, projectKey, before.status as TicketStatus, actor, now),
-      data: { ...moveData(to, actor, now), ...(text ? textData(text, actor, now) : {}) },
+      data: { ...moveData(to, actor, now), ...(text ? textData(text, actor, now) : {}), ...parentData(change) },
     }),
   );
   changed(projectKey, moved.count > 0);
@@ -272,17 +354,20 @@ export async function moveTicket(
 }
 
 /**
- * Invariant 12: a revision of the words, conditional on the row not being
- * `done`. It is not a move, so it carries no claim condition and `movedAt`
- * stays (invariant 8); the re-read only says why nothing was written.
+ * Invariants 12 and 17: a revision of the words, or a change of parent,
+ * conditional on the row not being `done`. It is not a move, so it carries no
+ * claim condition and `movedAt` stays (invariant 8); a parent change is not a
+ * revision of words and leaves `editedBy` alone. The re-read only says why
+ * nothing was written.
  */
-export async function reviseTicket(projectKey: string, idOrShortId: string, text: TicketText, actor: string): Promise<MoveOutcome> {
+export async function reviseTicket(projectKey: string, idOrShortId: string, change: TicketChange, actor: string): Promise<MoveOutcome> {
   const id = await resolveTicketId(projectKey, idOrShortId);
   const now = new Date();
-  const revised = await writeWithHistory(projectKey, id, text, actor, now, (db) =>
+  const text = change.text;
+  const revised = await writeChange(projectKey, id, change, actor, now, (db) =>
     db.boardTicket.updateMany({
       where: { id, projectKey, status: { in: [...TEXT_EDITABLE_FROM] } },
-      data: textData(text, actor, now),
+      data: { ...(text ? textData(text, actor, now) : {}), ...parentData(change) },
     }),
   );
   changed(projectKey, revised.count > 0);
@@ -306,11 +391,16 @@ export async function gradeTicket(projectKey: string, idOrShortId: string, grade
   return updated.count === 1 ? getTicket(projectKey, id) : null;
 }
 
-/** What `PATCH tickets/[id]` and `POST tickets/bulk` both take: a move, a revision, and a grade, in one body. */
+/**
+ * What `PATCH tickets/[id]` and `POST tickets/bulk` both take: a move, a
+ * revision, a parent (a short id or cuid, or null to clear it) and a grade,
+ * in one body.
+ */
 export type TicketPatch = {
   status?: TicketMoveTarget;
   priority?: TicketPriority | null;
   effort?: TicketEffort | null;
+  parentId?: string | null;
 } & TicketText;
 
 export type PatchOutcome =
@@ -328,8 +418,10 @@ function patchText(patch: TicketPatch): TicketText | null {
  * The one write behind both a single PATCH and a bulk one: the words are
  * checked, then a move carries them (or they are revised alone), then the
  * grade - the same order `PATCH tickets/[id]` has always used, so a refused
- * move or revision still writes no grade. `actor` is unused when the patch
- * neither moves nor revises anything (a grade alone needs nobody named).
+ * move or revision still writes no grade. A parent (invariant 17) rides with
+ * the move or the revision and is refused with the same 422 as a cap. `actor`
+ * is unused when the patch neither moves nor revises anything (a grade alone
+ * needs nobody named).
  */
 export async function patchTicket(projectKey: string, idOrShortId: string, patch: TicketPatch, actor: string): Promise<PatchOutcome> {
   /* Resolved once here; the move, revision and grade below then see the cuid and look nothing up. */
@@ -339,12 +431,20 @@ export async function patchTicket(projectKey: string, idOrShortId: string, patch
     const problems = textProblems(text);
     if (problems.length > 0) return { ok: false, reason: "invalid", problems };
   }
-  if (patch.status !== undefined) {
-    const outcome = await moveTicket(projectKey, id, patch.status, actor, text ?? undefined);
-    if (!outcome.ok) return outcome;
-  } else if (text) {
-    const outcome = await reviseTicket(projectKey, id, text, actor);
-    if (!outcome.ok) return outcome;
+  /* Invariant 17: a short id names the parent as it names any ticket; one that finds nothing stays as typed and is refused in words. */
+  const parentId = typeof patch.parentId === "string" ? await resolveTicketId(projectKey, patch.parentId) : patch.parentId;
+  const change: TicketChange = { text: text ?? undefined, parentId };
+  try {
+    if (patch.status !== undefined) {
+      const outcome = await moveTicket(projectKey, id, patch.status, actor, change);
+      if (!outcome.ok) return outcome;
+    } else if (text || parentId !== undefined) {
+      const outcome = await reviseTicket(projectKey, id, change, actor);
+      if (!outcome.ok) return outcome;
+    }
+  } catch (error) {
+    if (error instanceof Refusal) return { ok: false, reason: "invalid", problems: error.problems };
+    throw error;
   }
   const ticket = await gradeTicket(projectKey, id, { priority: patch.priority, effort: patch.effort });
   return ticket ? { ok: true, ticket } : { ok: false, reason: "missing", ticket: null };

@@ -3,13 +3,16 @@ import { z } from "zod";
 
 import { isResponse, notModified, patchResponse, readJson, requireCaller, taggedJson } from "@/lib/board/http";
 import { TICKET_EFFORTS, TICKET_KINDS, TICKET_LIMITS, TICKET_MOVE_TARGETS, TICKET_PRIORITIES } from "@/lib/board/rules";
-import { boardReadTag, getTicket, patchTicket } from "@/lib/board/server";
+import { boardReadTag, getTicketDetail, patchTicket } from "@/lib/board/server";
 
 export const runtime = "nodejs";
 
 type Ctx = { params: Promise<{ projectKey: string; ticketId: string }> };
 
-/** With an ETag from the board's version, like the list (`tickets/route.ts`): 304 and no query when it still matches. */
+/**
+ * With an ETag from the board's version, like the list (`tickets/route.ts`): 304 and no query when it still matches.
+ * Carries the ticket's `parent`, `children` and `related` as short ids (invariants 17, 18).
+ */
 export async function GET(req: NextRequest, ctx: Ctx) {
   const { projectKey, ticketId } = await ctx.params;
   const caller = requireCaller(req, projectKey, false);
@@ -17,7 +20,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
   const etag = await boardReadTag(projectKey, `id:${ticketId}`);
   const unchanged = notModified(req, etag);
   if (unchanged) return unchanged;
-  const ticket = await getTicket(projectKey, ticketId);
+  const ticket = await getTicketDetail(projectKey, ticketId);
   return ticket ? taggedJson(etag, { ok: true, ticket }) : NextResponse.json({ ok: false, error: "missing" }, { status: 404 });
 }
 
@@ -34,10 +37,11 @@ const patchSchema = z
     area: z.string().max(TICKET_LIMITS.area * 4).nullable().optional(),
     askedBy: z.string().max(TICKET_LIMITS.askedBy * 4).nullable().optional(),
     kind: z.enum(TICKET_KINDS).optional(),
+    parentId: z.string().min(1).max(64).nullable().optional(),
   })
   .refine((body) => Object.keys(body).length > 0, { message: "Nothing to change." });
 
-const NEEDS_ACTOR_FIELDS = ["title", "detail", "area", "askedBy", "kind"] as const;
+const NEEDS_ACTOR_FIELDS = ["title", "detail", "area", "askedBy", "kind", "parentId"] as const;
 
 /**
  * The words are checked first; then the move, once, carrying the words in
@@ -46,6 +50,11 @@ const NEEDS_ACTOR_FIELDS = ["title", "detail", "area", "askedBy", "kind"] as con
  * carrying several leaves the row where it was. Null for a grade means
  * ungrade; null or empty for a detail/area/askedBy clears it; omitted means
  * untouched.
+ *
+ * `parentId` is a short id or cuid of a ticket in this project, or null to
+ * clear it; it rides with the move or the revision and is refused 422 for a
+ * ticket that is not this project's or sits below this one, 409 `done` on a
+ * done row (invariants 12, 17).
  *
  * A key is refused by name rather than dropped as an unknown field, since
  * silently ignoring it would read as the change having been made: a key is

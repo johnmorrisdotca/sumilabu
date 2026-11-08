@@ -58,6 +58,7 @@ Every row has these. The middle columns give each repository's name for them.
 | `releasedAt` | via `filedAs` (entry's `releasedAt`) | `releasedAt` | The release instant. Written by the release tool only. |
 | `editedBy` | none | none | The actor who last revised `title`, `detail`, `area`, `askedBy` or `kind`. Written by the service. See invariant 12. |
 | `editedAt` | none | none | When they did. Null on a row never revised. |
+| `parentId` | none | none | The ticket this one sits under, in the same project, or null. Set or cleared by `PATCH`. See invariant 17. |
 
 ## Invariants
 
@@ -315,6 +316,54 @@ Numbered so a ticket and a test can cite them.
     renews the board's version (see "Reading cheaply"). Notes go with their
     ticket by the foreign key.
 
+17. **A ticket may sit under one parent in its project.** `parentId` is the
+    id of another ticket of the same project, or null. `PATCH tickets/{id}`
+    (and a `bulk` row) sets it with a short id or a cuid, or clears it with
+    `null`; the ticket read then names its `parent`, its `children` and its
+    `related` tickets as short ids, and every ticket in a list or a read
+    carries `parentId`, the cuid.
+
+    - **Same project, no loops.** A parent that is not a ticket of this
+      project (another project's included, by cuid or by its short id) or
+      that nobody holds is 422 `The parent must be a ticket in this project.`
+      A parent that is the ticket, or any ticket below it, is 422 too, in
+      words that say which. The check runs after the project's lock is taken
+      and in the same transaction as the write, so two requests that would
+      each close a loop with the other cannot both land: one is refused.
+    - **A parent change on a `done` row is refused, 409 `done`**, set or
+      cleared, whatever it names, for invariant 12's reason: `done` is a fact
+      about a release. A ticket may be put under a `done` parent.
+    - **It is not a revision of words.** It needs an actor (invariant 5) and
+      rides in the move's or the revision's own conditional write, so a
+      refused move or word revises no parent and a refused parent moves and
+      revises nothing; but it writes no `editedBy`, no `editedAt`, no
+      `movedAt` and no history row.
+    - A deleted parent leaves its children without one (`ON DELETE SET
+      NULL`); nothing in the API deletes a ticket.
+
+18. **Two tickets may be related, and it reads both ways.** `POST
+    tickets/{id}/links` takes `{ otherId }` (a short id or a cuid) and an
+    actor and answers `{ ok: true, created, related }`, 201 when the link is
+    new and 200 when the pair was already linked; `DELETE
+    tickets/{id}/links/{otherId}` removes it and answers `{ ok: true,
+    removed, related }`, 200 even when the pair was not linked, as deleting a
+    setting that is not there is. `related` is the ticket's linked tickets as
+    short ids, in the order of their numbers.
+
+    - **One row for the pair**, the lower id first (`BoardTicketLink`,
+      unique on `(lowId, highId)`), so a link added from either end is the
+      same link and is read from both.
+    - **Same project only.** A ticket that is itself, not in this project
+      (another project's included) or nobody holds is 422; the ticket in the
+      path missing is 404.
+    - **Allowed on a `done` row**, adding and removing: a link is a pointer
+      beside the release record, and rewrites none of the words invariant 12
+      freezes. Links go with either ticket by the foreign key.
+    - Adding or removing a link renews the board's version (see "Reading
+      cheaply"), so the ticket read of either end is never answered 304 with
+      the old `related`. Repeating a link that exists, or removing one that
+      does not, changes nothing and renews nothing.
+
 ## Reference shapes
 
 The lease and claim rules, as UmaKuma has them in `src/lib/ticketClaims.ts`.
@@ -366,6 +415,12 @@ export function draftProblems(draft: { title: string; detail: string; askedBy: s
 - A `done` row's title and detail are frozen with its stamp (invariant 12).
   The alternative was letting a shipped row be reworded, which Itsutsu's own
   board allowed before the move to the service.
+- Parents and related links stay inside one project (invariants 17, 18).
+  The alternative was links across projects (spx-stats to modules). A board
+  token reaches exactly one project (see "Tokens and projects"), so a link
+  to another project's ticket would have to be read, checked and shown with
+  a token that is not that project's. A cross-project reference stays a
+  short id written in a ticket's detail or a note.
 - A `done` row takes notes (invariant 16). John agreed 2026-11-08: a note
   adds without rewriting the release record. The alternative was refusing
   notes on `done` as words are, which would leave a shipped ticket no place
@@ -442,8 +497,8 @@ Every `200` of `GET tickets` (any filter, or `?key=`), `GET tickets/{id}`,
 with no body while nothing on that board has changed, and the service
 answers it without a database query (SUMILABU-15). The tag is worked out
 from the board's version, which every write to that board (a create, a move,
-a revision, a grade, a ship, a stamp, an unship, an import, a report filed
-as a ticket, a note) renews, and from the clock, so a hold whose lease runs out
+a revision, a grade, a parent, a link or an unlink, a ship, a stamp, an
+unship, an import, a report filed as a ticket, a note) renews, and from the clock, so a hold whose lease runs out
 (invariant 3) changes it with no write. A tag is opaque: compare it, never
 parse it. It names no caller and no token, and the answers are
 `Cache-Control: private, no-cache`, so no shared cache keeps one. A client

@@ -26,11 +26,12 @@ const updateSchema = z.object({
   area: z.string().max(TICKET_LIMITS.area * 4).nullable().optional(),
   askedBy: z.string().max(TICKET_LIMITS.askedBy * 4).nullable().optional(),
   kind: z.enum(TICKET_KINDS).optional(),
+  parentId: z.string().min(1).max(64).nullable().optional(),
 });
 
 const bulkSchema = z.object({ updates: z.array(updateSchema).min(1).max(MAX_BULK) });
 
-const NEEDS_ACTOR_FIELDS = ["status", "title", "detail", "area", "askedBy", "kind"] as const;
+const NEEDS_ACTOR_FIELDS = ["status", "title", "detail", "area", "askedBy", "kind", "parentId"] as const;
 
 function outcomeJson(id: string, outcome: PatchOutcome) {
   if (outcome.ok) return { id, ok: true as const, ticket: outcome.ticket };

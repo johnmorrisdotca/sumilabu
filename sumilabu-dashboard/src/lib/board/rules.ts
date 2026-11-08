@@ -304,6 +304,26 @@ export function editedWords(
   });
 }
 
+/**
+ * Invariant 17. Would putting `id` under `parentId` close a loop? True when
+ * `parentId` is `id` or any of its descendants, found by walking up from the
+ * new parent through `parentOf` (child id to parent id) and meeting `id`. A
+ * loop already in the data ends the walk rather than the process.
+ */
+export function wouldCycle(id: string, parentId: string, parentOf: ReadonlyMap<string, string>): boolean {
+  const seen = new Set<string>();
+  for (let at: string | undefined = parentId; at !== undefined && !seen.has(at); at = parentOf.get(at)) {
+    if (at === id) return true;
+    seen.add(at);
+  }
+  return false;
+}
+
+/** Invariant 18. A link is one pair, stored lower id first, so either end names it. */
+export function linkPair(a: string, b: string): [low: string, high: string] {
+  return a < b ? [a, b] : [b, a];
+}
+
 /** Invariant 7. Ungraded sorts last on both axes. */
 function rank<T extends string>(order: readonly T[], value: T | null): number {
   return value === null ? order.length : order.indexOf(value);

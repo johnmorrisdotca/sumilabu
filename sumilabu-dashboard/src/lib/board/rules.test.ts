@@ -22,6 +22,7 @@ import {
   heldNow,
   isSettingKey,
   keyProblems,
+  linkPair,
   moveData,
   moveWhere,
   noteProblems,
@@ -30,6 +31,7 @@ import {
   textData,
   textProblems,
   ticketPrefix,
+  wouldCycle,
 } from "./rules";
 
 /**
@@ -218,6 +220,34 @@ describe("notes and edit history", () => {
     expect(editedWords(before, textData({ detail: "" }, "a", new Date()))).toEqual([{ field: "detail", oldValue: "Old detail", newValue: null }]);
     expect(editedWords({ title: "Old title here", detail: null }, textData({ detail: "  " }, "a", new Date()))).toEqual([]);
     expect(editedWords(before, textData({ area: "x", askedBy: "y", kind: "fix" }, "a", new Date()))).toEqual([]);
+  });
+});
+
+/* Invariants 17 and 18. */
+describe("parents and links", () => {
+  const parentOf = new Map([["b", "a"], ["c", "b"], ["x", "y"]]);
+
+  it("finds a loop when the new parent is the ticket or anything below it", () => {
+    expect(wouldCycle("a", "a", parentOf)).toBe(true);
+    expect(wouldCycle("a", "b", parentOf)).toBe(true);
+    expect(wouldCycle("a", "c", parentOf)).toBe(true);
+    expect(wouldCycle("b", "c", parentOf)).toBe(true);
+  });
+
+  it("allows a parent that is above, beside or apart", () => {
+    expect(wouldCycle("c", "a", parentOf)).toBe(false);
+    expect(wouldCycle("c", "b", parentOf)).toBe(false);
+    expect(wouldCycle("b", "x", parentOf)).toBe(false);
+    expect(wouldCycle("a", "z", new Map())).toBe(false);
+  });
+
+  it("ends on a loop already in the data", () => {
+    expect(wouldCycle("a", "p", new Map([["p", "q"], ["q", "p"]]))).toBe(false);
+  });
+
+  it("stores a link pair lower id first, whichever end names it", () => {
+    expect(linkPair("b", "a")).toEqual(["a", "b"]);
+    expect(linkPair("a", "b")).toEqual(["a", "b"]);
   });
 });
 
