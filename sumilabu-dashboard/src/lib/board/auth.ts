@@ -86,15 +86,36 @@ function readTokens(raw: string | undefined): Record<string, string> {
   }
 }
 
+/** The prefix of a setting that holds one project's board key by itself. */
+const OWN_BOARD_TOKEN_PREFIX = "BOARD_TOKEN_FOR_";
+
 /**
- * A scope's map. The board's has a second setting, BOARD_TOKENS_EXTRA_JSON, so a
- * project can be given a board without touching the first: Vercel will not show a
- * sensitive value back, so that one cannot be read and added to. A project in both
- * keeps the first setting's key, and a bad second setting breaks nobody.
+ * Board keys held one to a setting: `BOARD_TOKEN_FOR_KAMON_CRESTS` is the key of
+ * the project `kamon-crests` (the name after the prefix, in lower case, with
+ * each underscore read as a hyphen). An empty value is no key.
+ */
+function ownBoardTokens(env: Record<string, string | undefined>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [name, value] of Object.entries(env)) {
+    if (!name.startsWith(OWN_BOARD_TOKEN_PREFIX) || !value) continue;
+    const projectKey = name.slice(OWN_BOARD_TOKEN_PREFIX.length).toLowerCase().replaceAll("_", "-");
+    if (projectKey.length > 0) out[projectKey] = value;
+  }
+  return out;
+}
+
+/**
+ * A scope's map. The board's has two more sources, so a project can be given a
+ * board without touching the first: Vercel will not show a sensitive value back,
+ * so a map cannot be read and added to. BOARD_TOKENS_EXTRA_JSON is a second map,
+ * and a `BOARD_TOKEN_FOR_<PROJECT>` setting holds one project's key by itself, so
+ * adding a project rewrites nothing that another project depends on. A project
+ * named in more than one keeps the first setting's key, then the second map's;
+ * a bad second setting breaks nobody.
  */
 function tokenMap(scope: TokenScope, env: Record<string, string | undefined> = process.env): Record<string, string> {
   const main = readTokens(env[TOKEN_ENV[scope]]);
-  return scope === TOKEN_SCOPES.board ? { ...readTokens(env.BOARD_TOKENS_EXTRA_JSON), ...main } : main;
+  return scope === TOKEN_SCOPES.board ? { ...ownBoardTokens(env), ...readTokens(env.BOARD_TOKENS_EXTRA_JSON), ...main } : main;
 }
 
 /**

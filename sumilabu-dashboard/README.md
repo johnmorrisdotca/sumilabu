@@ -31,7 +31,7 @@ cp env/.env.example .env.local
 - `PROJECT_TOKENS_JSON` (optional per-project token map)
 - `EXPECTED_HEARTBEAT_SECONDS`, `STALE_AFTER_SECONDS` (optional)
 - `DASHBOARD_UTC_OFFSET_HOURS` (optional, default `-8`)
-- `BOARD_TOKENS_JSON`, `BOARD_TOKENS_EXTRA_JSON`, `SETTINGS_TOKENS_JSON`, `REPORTS_TOKENS_JSON` (the board; see below)
+- `BOARD_TOKENS_JSON`, `BOARD_TOKENS_EXTRA_JSON`, `BOARD_TOKEN_FOR_<PROJECT>`, `SETTINGS_TOKENS_JSON`, `REPORTS_TOKENS_JSON` (the board; see below)
 - `CALENDAR_ICS_URL`, `CALENDAR_TOKEN` (optional, the MagTag's calendar)
 - `AUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `SUMILABU_ADMIN_EMAILS`, `NEXTAUTH_URL` (the pages' Google sign-in; see "Who may use it" below)
 
@@ -332,9 +332,14 @@ ticket routes take `BOARD_TOKENS_JSON` (`{ "umakuma": "…", "itsutsu": "…" }`
 the key every agent's worktree holds) and the settings routes take
 `SETTINGS_TOKENS_JSON` (same shape; only a site's production deployment holds
 it, because a setting decides who may sign up). Neither accepts the other. A
-project with no token has no board. A new project goes in
-`BOARD_TOKENS_EXTRA_JSON`, the same shape and board routes only, because Vercel
-will not show the first map back to add to; a project in both keeps the first's key. Each site also has a `<key>-dev` project
+project with no token has no board. A new project gets a setting of its own,
+`BOARD_TOKEN_FOR_<PROJECT>` (`BOARD_TOKEN_FOR_KAMON_CRESTS` is the board key of
+`kamon-crests`: upper case, each hyphen an underscore), board routes only, so
+adding one rewrites no setting another project depends on. Vercel will not show
+a sensitive value back, so neither map can be read and added to;
+`BOARD_TOKENS_EXTRA_JSON`, the same shape as the first map, holds the projects
+added before that. A project named in more than one keeps the first map's key,
+then the second's. Each site also has a `<key>-dev` project
 (`umakuma-dev`, `itsutsu-dev`) with its own entry in both maps, so local and
 test runs never touch the real rows. Every write also sends
 `X-Board-Actor: <who>` - there is no anonymous move.

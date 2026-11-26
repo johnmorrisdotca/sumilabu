@@ -34,6 +34,33 @@ describe("BOARD_TOKENS_EXTRA_JSON", () => {
   });
 });
 
+describe("BOARD_TOKEN_FOR_<PROJECT>", () => {
+  const env = {
+    BOARD_TOKENS_JSON: JSON.stringify({ umakuma: "board-real" }),
+    BOARD_TOKENS_EXTRA_JSON: JSON.stringify({ hotaru: "board-extra" }),
+    BOARD_TOKEN_FOR_KAMON_CRESTS: "board-own",
+    BOARD_TOKEN_FOR_UMAKUMA: "not-this-one",
+    BOARD_TOKEN_FOR_HOTARU: "nor-this-one",
+    BOARD_TOKEN_FOR_EMPTY: "",
+  };
+
+  it("gives one project a board from a setting of its own", () => {
+    expect(tokenFor(TOKEN_SCOPES.board, "kamon-crests", env)).toBe("board-own");
+    expect(boardProjectKeys(TOKEN_SCOPES.board, env)).toEqual(["hotaru", "kamon-crests", "umakuma"]);
+  });
+
+  it("can never replace a key either map holds", () => {
+    expect(tokenFor(TOKEN_SCOPES.board, "umakuma", env)).toBe("board-real");
+    expect(tokenFor(TOKEN_SCOPES.board, "hotaru", env)).toBe("board-extra");
+  });
+
+  it("opens nothing but the board, and an empty value is no key", () => {
+    expect(tokenFor(TOKEN_SCOPES.settings, "kamon-crests", env)).toBeNull();
+    expect(tokenFor(TOKEN_SCOPES.reports, "kamon-crests", env)).toBeNull();
+    expect(tokenFor(TOKEN_SCOPES.board, "empty", env)).toBeNull();
+  });
+});
+
 describe("tokenFor", () => {
   const env = {
     BOARD_TOKENS_JSON: JSON.stringify({ umakuma: "board-real", "umakuma-dev": "board-dev" }),
